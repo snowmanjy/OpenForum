@@ -20,6 +20,8 @@ public class Thread {
 
     private final List<Object> domainEvents = new ArrayList<>();
 
+    // TODO: Refactor to 'Write-Only Aggregate' if post count exceeds 1,000 for
+    // performance.
     private final List<Post> posts = new ArrayList<>();
 
     private Thread(Builder builder) {
@@ -94,23 +96,29 @@ public class Thread {
         }
     }
 
-    public void addPost(Post post) {
-        validatePostThreadId(post)
-                .flatMap(this::validateThreadNotClosed)
-                .ifPresent(posts::add);
-    }
-
-    private Optional<Post> validatePostThreadId(Post post) {
-        return post.getThreadId().equals(this.id)
-                ? Optional.of(post)
-                : Optional.empty();
-    }
-
-    private Optional<Post> validateThreadNotClosed(Post post) {
+    public Post addPost(String content, UUID authorId, boolean isBot) {
+        // 1. Enforce Invariant (The DDD Win)
         if (this.status == ThreadStatus.CLOSED) {
-            throw new IllegalArgumentException("Thread is closed");
+            throw new IllegalStateException("Cannot add post to a closed thread.");
         }
-        return Optional.of(post);
+
+        // 2. Create the Entity (Thread acts as Factory)
+        Post newPost = PostFactory.create(
+                this.id,
+                authorId,
+                content,
+                null, // replyToId
+                Map.of(),
+                isBot);
+
+        // 3. Update Thread State (The Cohesion Win)
+        // We don't need to load the List<Post> to update a counter or timestamp!
+        // this.lastActivityAt = LocalDateTime.now();
+        // this.postCount++;
+
+        // 4. OPTIONAL: Do NOT add to 'this.posts' list if optimizing for scale.
+        // Just return it for the repo to save.
+        return newPost;
     }
 
     public List<Post> getPosts() {
