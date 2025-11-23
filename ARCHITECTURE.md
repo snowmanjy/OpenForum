@@ -57,6 +57,7 @@ Controllers → Use Cases (Services) → Domain Entities → Repositories
 - **Hidden Constructors:** Hide public constructors of Aggregates (`private` or `protected`).
   - Use **Factory classes** for creating new instances with invariant enforcement.
   - Use a static `reconstitute` method on the Aggregate for Infrastructure/Repositories to restore state from the database without triggering domain validation logic.
+- **Builder pattern:** use the builder pattern instead of constructors with lots of parameters.
 
 ### 1.3 Architecture Pattern: Clean Architecture / DDD / TDD
 

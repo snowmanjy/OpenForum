@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class MemberRepositoryImpl implements MemberRepository {
@@ -27,8 +28,15 @@ public class MemberRepositoryImpl implements MemberRepository {
 
     @Override
     @Transactional
-    public void save(Member member) {
+    public Member save(Member member) {
         memberJpaRepository.save(toEntity(member));
+        return member;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Member> findById(UUID id) {
+        return memberJpaRepository.findById(id).map(this::toDomain);
     }
 
     private Member toDomain(MemberEntity entity) {

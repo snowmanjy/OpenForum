@@ -14,6 +14,22 @@ public class PostFactory {
                 .version(1L)
                 .replyToPostId(replyToPostId)
                 .metadata(metadata)
+                .isNew(true)
+                .build();
+    }
+
+    public static Post create(UUID threadId, UUID authorId, String content, UUID replyToPostId,
+            Map<String, Object> metadata, boolean isBot) {
+        return Post.builder()
+                .id(UUID.randomUUID())
+                .threadId(threadId)
+                .authorId(authorId)
+                .content(content)
+                .version(1L)
+                .replyToPostId(replyToPostId)
+                .metadata(metadata)
+                .isNew(true)
+                .isBot(isBot)
                 .build();
     }
 }

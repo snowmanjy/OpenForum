@@ -1,5 +1,10 @@
 package com.openforum.domain.aggregate;
 
+import com.openforum.domain.events.PostCreatedEvent;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -13,8 +18,9 @@ public class Post {
     private final UUID replyToPostId;
     private final Map<String, Object> metadata;
 
+    private final List<Object> domainEvents = new ArrayList<>();
+
     private Post(Builder builder) {
-            
         this.id = Objects.requireNonNull(builder.id, "id must not be null");
         this.threadId = Objects.requireNonNull(builder.threadId, "threadId must not be null");
         this.authorId = Objects.requireNonNull(builder.authorId, "authorId must not be null");
@@ -22,6 +28,11 @@ public class Post {
         this.version = builder.version;
         this.replyToPostId = builder.replyToPostId;
         this.metadata = builder.metadata != null ? Map.copyOf(builder.metadata) : Map.of();
+
+        if (builder.isNew) {
+            this.domainEvents
+                    .add(new PostCreatedEvent(id, threadId, authorId, content, builder.isBot, LocalDateTime.now()));
+        }
     }
 
     public static Builder builder() {
@@ -36,6 +47,8 @@ public class Post {
         private Long version;
         private UUID replyToPostId;
         private Map<String, Object> metadata;
+        private boolean isNew = false;
+        private boolean isBot = false;
 
         public Builder id(UUID id) {
             this.id = id;
@@ -71,6 +84,16 @@ public class Post {
             this.metadata = metadata;
             return this;
         }
+        
+        public Builder isNew(boolean isNew) {
+            this.isNew = isNew;
+            return this;
+        }
+        
+        public Builder isBot(boolean isBot) {
+            this.isBot = isBot;
+            return this;
+        }
 
         public Post build() {
             return new Post(this);
@@ -104,4 +127,8 @@ public class Post {
     public Map<String, Object> getMetadata() {
         return metadata;
     }
-}
+
+    public List<Object> pollEvents() {
+        List<Object> events = new ArrayList<>(domainEvents);
+        domainEvents.clear();return events;
+}}
