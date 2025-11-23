@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openforum.application.service.ThreadService;
 import com.openforum.domain.aggregate.Member;
 import com.openforum.domain.aggregate.Thread;
-import com.openforum.domain.factory.ThreadFactory;
+import com.openforum.domain.aggregate.ThreadFactory;
 import com.openforum.domain.repository.MemberRepository;
 import com.openforum.rest.auth.JwtAuthenticationFilter;
 import com.openforum.rest.config.SecurityConfig;

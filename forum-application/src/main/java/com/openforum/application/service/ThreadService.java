@@ -1,7 +1,7 @@
 package com.openforum.application.service;
 
 import com.openforum.domain.aggregate.Thread;
-import com.openforum.domain.factory.ThreadFactory;
+import com.openforum.domain.aggregate.ThreadFactory;
 import com.openforum.domain.repository.ThreadRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -19,20 +19,89 @@ public class Thread {
 
     private final List<Object> domainEvents = new ArrayList<>();
 
-    public Thread(UUID id, String tenantId, UUID authorId, String title, Map<String, Object> metadata) {
-        this(id, tenantId, authorId, title, ThreadStatus.OPEN, metadata, null);
-        this.domainEvents.add(new ThreadCreatedEvent(id, tenantId, authorId, title, LocalDateTime.now()));
+    private final List<Post> posts = new ArrayList<>();
+
+    private Thread(Builder builder) {
+        this.id = builder.id;
+        this.tenantId = builder.tenantId;
+        this.authorId = builder.authorId;
+        this.title = builder.title;
+        this.status = builder.status;
+        this.metadata = builder.metadata != null ? Map.copyOf(builder.metadata) : Map.of();
+        this.version = builder.version;
+        if (builder.isNew) {
+            this.domainEvents.add(new ThreadCreatedEvent(id, tenantId, authorId, title, LocalDateTime.now()));
+        }
     }
 
-    public Thread(UUID id, String tenantId, UUID authorId, String title, ThreadStatus status,
-            Map<String, Object> metadata, Long version) {
-        this.id = id;
-        this.tenantId = tenantId;
-        this.authorId = authorId;
-        this.title = title;
-        this.status = status;
-        this.metadata = metadata != null ? Map.copyOf(metadata) : Map.of();
-        this.version = version;
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private UUID id;
+        private String tenantId;
+        private UUID authorId;
+        private String title;
+        private ThreadStatus status = ThreadStatus.OPEN;
+        private Map<String, Object> metadata;
+        private Long version;
+        private boolean isNew = false;
+
+        public Builder id(UUID id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder tenantId(String tenantId) {
+            this.tenantId = tenantId;
+            return this;
+        }
+
+        public Builder authorId(UUID authorId) {
+            this.authorId = authorId;
+            return this;
+        }
+
+        public Builder title(String title) {
+            this.title = title;
+            return this;
+        }
+
+        public Builder status(ThreadStatus status) {
+            this.status = status;
+            return this;
+        }
+
+        public Builder metadata(Map<String, Object> metadata) {
+            this.metadata = metadata;
+            return this;
+        }
+
+        public Builder version(Long version) {
+            this.version = version;
+            return this;
+        }
+
+        public Builder isNew(boolean isNew) {
+            this.isNew = isNew;
+            return this;
+        }
+
+        public Thread build() {
+            return new Thread(this);
+        }
+    }
+
+    public void addPost(Post post) {
+        if (!post.getThreadId().equals(this.id)) {
+            throw new IllegalArgumentException("Post threadId does not match Thread id");
+        }
+        this.posts.add(post);
+    }
+
+    public List<Post> getPosts() {
+        return List.copyOf(posts);
     }
 
     public List<Object> pollEvents() {

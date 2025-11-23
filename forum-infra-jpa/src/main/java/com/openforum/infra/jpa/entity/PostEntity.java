@@ -1,0 +1,84 @@
+package com.openforum.infra.jpa.entity;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.util.Map;
+import java.util.UUID;
+
+@Entity
+@Table(name = "posts")
+public class PostEntity {
+
+    @Id
+    private UUID id;
+
+    private UUID threadId;
+    private UUID authorId;
+    private String content;
+    private Long version;
+    private UUID replyToPostId;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> metadata;
+
+    // Getters and Setters
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public UUID getThreadId() {
+        return threadId;
+    }
+
+    public void setThreadId(UUID threadId) {
+        this.threadId = threadId;
+    }
+
+    public UUID getAuthorId() {
+        return authorId;
+    }
+
+    public void setAuthorId(UUID authorId) {
+        this.authorId = authorId;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
+    public void setVersion(Long version) {
+        this.version = version;
+    }
+
+    public UUID getReplyToPostId() {
+        return replyToPostId;
+    }
+
+    public void setReplyToPostId(UUID replyToPostId) {
+        this.replyToPostId = replyToPostId;
+    }
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
+}

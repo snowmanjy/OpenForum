@@ -1,0 +1,4 @@
+CREATE TABLE tenants (
+    id VARCHAR(255) PRIMARY KEY,
+    config JSONB NOT NULL
+);
