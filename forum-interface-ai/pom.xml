@@ -23,7 +23,17 @@
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
         
-        <!-- Placeholder for Spring AI or other LLM clients -->
+        <!-- Spring AI for LLM integration -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+        </dependency>
+        
+        <!-- Spring Security Crypto for API key encryption -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
         
         <dependency>
             <groupId>org.springframework.boot</groupId>
