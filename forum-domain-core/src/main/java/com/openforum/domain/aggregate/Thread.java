@@ -125,6 +125,18 @@ public class Thread {
         return List.copyOf(posts);
     }
 
+    /**
+     * Adds an imported post during bulk migration.
+     * This bypasses normal invariant checks since we're reconstituting historical
+     * data.
+     * Should ONLY be called by ThreadFactory.createImported().
+     * 
+     * @param post Pre-existing post to add
+     */
+    void addImportedPost(Post post) {
+        this.posts.add(post);
+    }
+
     public List<Object> pollEvents() {
         List<Object> events = new ArrayList<>(this.domainEvents);
         this.domainEvents.clear();

@@ -4,15 +4,21 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openforum.domain.aggregate.Thread;
 import com.openforum.domain.repository.ThreadRepository;
+import com.openforum.domain.events.PostImportedEvent;
+import com.openforum.domain.events.ThreadImportedEvent;
 import com.openforum.infra.jpa.entity.OutboxEventEntity;
 import com.openforum.infra.jpa.entity.ThreadEntity;
 import com.openforum.infra.jpa.mapper.ThreadMapper;
 import com.openforum.infra.jpa.repository.OutboxEventJpaRepository;
 import com.openforum.infra.jpa.repository.ThreadJpaRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,15 +30,18 @@ public class ThreadRepositoryImpl implements ThreadRepository {
     private final OutboxEventJpaRepository outboxEventJpaRepository;
     private final ThreadMapper threadMapper;
     private final ObjectMapper objectMapper;
+    private final JdbcTemplate jdbcTemplate;
 
     public ThreadRepositoryImpl(ThreadJpaRepository threadJpaRepository,
             OutboxEventJpaRepository outboxEventJpaRepository,
             ThreadMapper threadMapper,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            JdbcTemplate jdbcTemplate) {
         this.threadJpaRepository = threadJpaRepository;
         this.outboxEventJpaRepository = outboxEventJpaRepository;
         this.threadMapper = threadMapper;
         this.objectMapper = objectMapper;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     /**
@@ -87,6 +96,136 @@ public class ThreadRepositoryImpl implements ThreadRepository {
     public Optional<Thread> findById(UUID id) {
         return threadJpaRepository.findById(id)
                 .map(threadMapper::toDomain);
+    }
+
+    /**
+     * Batch saves multiple Thread aggregates and their domain events atomically
+     * using JDBC.
+     * <p>
+     * This implementation uses {@link JdbcTemplate} to perform efficient batch
+     * INSERTs,
+     * bypassing JPA's first-level cache and "isNew" checks. This is critical for
+     * bulk imports
+     * where entities have pre-assigned IDs (which JPA would interpret as updates).
+     * <p>
+     * <strong>Scope:</strong>
+     * <ul>
+     * <li>Inserts Threads</li>
+     * <li>Inserts Posts (which are part of the Thread aggregate)</li>
+     * <li>Inserts Outbox Events (if any)</li>
+     * </ul>
+     * 
+     * @param threads List of thread aggregates to save
+     * @throws RuntimeException if any database operation fails
+     */
+    @Override
+    @Transactional
+    public void saveAll(List<Thread> threads) {
+        if (threads.isEmpty()) {
+            return;
+        }
+
+        // 1. Batch Insert Threads
+        String threadSql = """
+                INSERT INTO threads (id, tenant_id, author_id, title, status, metadata, version)
+                VALUES (?, ?, ?, ?, ?, ? FORMAT JSON, ?)
+                """;
+
+        jdbcTemplate.batchUpdate(threadSql, threads, threads.size(), (ps, thread) -> {
+            ps.setObject(1, thread.getId());
+            ps.setString(2, thread.getTenantId());
+            ps.setObject(3, thread.getAuthorId());
+            ps.setString(4, thread.getTitle());
+            ps.setString(5, thread.getStatus().name());
+            try {
+                ps.setString(6, objectMapper.writeValueAsString(thread.getMetadata()));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to serialize thread metadata", e);
+            }
+            ps.setLong(7, thread.getVersion());
+        });
+
+        // 2. Batch Insert Posts
+        // Flatten all posts from all threads into a single list
+        List<com.openforum.domain.aggregate.Post> allPosts = threads.stream()
+                .flatMap(t -> t.getPosts().stream())
+                .toList();
+
+        if (!allPosts.isEmpty()) {
+            String postSql = """
+                    INSERT INTO posts (id, thread_id, author_id, content, reply_to_post_id, metadata, version)
+                    VALUES (?, ?, ?, ?, ?, ? FORMAT JSON, ?)
+                    """;
+
+            jdbcTemplate.batchUpdate(postSql, allPosts, allPosts.size(), (ps, post) -> {
+                ps.setObject(1, post.getId());
+                ps.setObject(2, post.getThreadId());
+                ps.setObject(3, post.getAuthorId());
+                ps.setString(4, post.getContent());
+                ps.setObject(5, post.getReplyToPostId()); // Handles null automatically
+                try {
+                    ps.setString(6, objectMapper.writeValueAsString(post.getMetadata()));
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException("Failed to serialize post metadata", e);
+                }
+                ps.setLong(7, post.getVersion());
+            });
+        }
+
+        // 3. Batch Insert Events
+        // We need to insert two types of events:
+        // A. Domain events that were already in the outbox (usually empty for imports,
+        // but good to keep)
+        // B. "Imported" events for Data Lake sync (ThreadImportedEvent,
+        // PostImportedEvent)
+
+        List<OutboxEventEntity> allEvents = new ArrayList<>();
+
+        // A. Existing Domain Events
+        allEvents.addAll(threads.stream()
+                .flatMap(thread -> thread.pollEvents().stream())
+                .map(this::toOutboxEntity)
+                .toList());
+
+        // B. Generate Sync Events for Data Lake
+        LocalDateTime now = LocalDateTime.now();
+        for (Thread thread : threads) {
+            // ThreadImportedEvent
+            ThreadImportedEvent threadEvent = new ThreadImportedEvent(
+                    thread.getId(),
+                    thread.getTenantId(),
+                    thread.getAuthorId(),
+                    thread.getTitle(),
+                    now);
+            allEvents.add(toOutboxEntity(threadEvent));
+
+            // PostImportedEvent for each post
+            for (com.openforum.domain.aggregate.Post post : thread.getPosts()) {
+                PostImportedEvent postEvent = new PostImportedEvent(
+                        post.getId(),
+                        post.getThreadId(),
+                        post.getAuthorId(),
+                        post.getContent(),
+                        false, // isBot is not persisted in Post aggregate, defaulting to false
+                        now);
+                allEvents.add(toOutboxEntity(postEvent));
+            }
+        }
+
+        if (!allEvents.isEmpty()) {
+            String eventSql = """
+                    INSERT INTO outbox_events (id, aggregate_id, type, payload, created_at)
+                    VALUES (?, ?, ?, ? FORMAT JSON, ?)
+                    """;
+
+            jdbcTemplate.batchUpdate(eventSql, allEvents, allEvents.size(), (ps, event) -> {
+                ps.setObject(1, event.getId());
+                ps.setObject(2, event.getAggregateId()); // Might be null
+                ps.setString(3, event.getType());
+                ps.setString(4, event.getPayload());
+                ps.setTimestamp(5, Timestamp.valueOf(event.getCreatedAt()));
+            });
+        }
     }
 
     private OutboxEventEntity toOutboxEntity(Object event) {

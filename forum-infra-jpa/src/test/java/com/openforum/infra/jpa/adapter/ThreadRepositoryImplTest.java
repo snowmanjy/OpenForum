@@ -159,4 +159,89 @@ class ThreadRepositoryImplTest {
                 .anyMatch(e -> e.getPayload().contains("Consistency Test"));
         assertThat(eventContainsTitle).isTrue();
     }
+
+    @Test
+    void shouldSaveAllThreadsWithImportEvents() {
+        // Given: Create imported threads
+        Thread thread1 = ThreadFactory.createImported(
+                UUID.randomUUID(), "tenant-import", UUID.randomUUID(), "Import 1",
+                com.openforum.domain.aggregate.ThreadStatus.OPEN, java.time.LocalDateTime.now(), Map.of(), List.of());
+
+        Thread thread2 = ThreadFactory.createImported(
+                UUID.randomUUID(), "tenant-import", UUID.randomUUID(), "Import 2",
+                com.openforum.domain.aggregate.ThreadStatus.CLOSED, java.time.LocalDateTime.now(), Map.of(), List.of());
+
+        int initialEventCount = outboxEventJpaRepository.findAll().size();
+
+        // When: Batch save
+        threadRepository.saveAll(List.of(thread1, thread2));
+
+        // Then: Threads should be saved
+        assertThat(threadRepository.findById(thread1.getId())).isPresent();
+        assertThat(threadRepository.findById(thread2.getId())).isPresent();
+
+        // Critical: Sync events (ThreadImportedEvent) SHOULD be added to outbox for
+        // Data Lake
+        List<OutboxEventEntity> currentEvents = outboxEventJpaRepository.findAll();
+        assertThat(currentEvents).hasSize(initialEventCount + 2);
+
+        boolean hasImportEvent1 = currentEvents.stream()
+                .anyMatch(e -> e.getType().equals("ThreadImportedEvent") && e.getPayload().contains("Import 1"));
+        boolean hasImportEvent2 = currentEvents.stream()
+                .anyMatch(e -> e.getType().equals("ThreadImportedEvent") && e.getPayload().contains("Import 2"));
+
+        assertThat(hasImportEvent1).isTrue();
+        assertThat(hasImportEvent2).isTrue();
+    }
+
+    @Test
+    void shouldGenerateEventsForImportedPosts() {
+        // Given: Create thread with posts
+        UUID threadId = UUID.randomUUID();
+        UUID authorId = UUID.randomUUID();
+        UUID postId = UUID.randomUUID();
+
+        ThreadFactory.ImportedPostData postData = new ThreadFactory.ImportedPostData(
+                postId,
+                authorId,
+                "Imported Post Content",
+                null,
+                Map.of(),
+                false,
+                java.time.LocalDateTime.now());
+
+        Thread thread = ThreadFactory.createImported(
+                threadId,
+                "tenant-import",
+                authorId,
+                "Thread with Posts",
+                com.openforum.domain.aggregate.ThreadStatus.OPEN,
+                java.time.LocalDateTime.now(),
+                Map.of(),
+                List.of(postData));
+
+        int initialEventCount = outboxEventJpaRepository.findAll().size();
+
+        // When: Batch save
+        threadRepository.saveAll(List.of(thread));
+
+        // Then: Thread and Post should be saved (verified by repo, but we trust saveAll
+        // logic from previous tests)
+
+        // Critical: Check for PostImportedEvent
+        List<OutboxEventEntity> currentEvents = outboxEventJpaRepository.findAll();
+        // Expect: 1 ThreadImportedEvent + 1 PostImportedEvent
+        assertThat(currentEvents).hasSize(initialEventCount + 2);
+
+        boolean hasThreadEvent = currentEvents.stream()
+                .anyMatch(
+                        e -> e.getType().equals("ThreadImportedEvent") && e.getPayload().contains("Thread with Posts"));
+
+        boolean hasPostEvent = currentEvents.stream()
+                .anyMatch(e -> e.getType().equals("PostImportedEvent")
+                        && e.getPayload().contains("Imported Post Content"));
+
+        assertThat(hasThreadEvent).isTrue();
+        assertThat(hasPostEvent).isTrue();
+    }
 }
