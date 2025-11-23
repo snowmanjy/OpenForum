@@ -35,18 +35,52 @@ public class ThreadRepositoryImpl implements ThreadRepository {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Saves a Thread aggregate and its domain events atomically.
+     * <p>
+     * <strong>ACID Guarantees:</strong>
+     * <ul>
+     * <li><strong>Atomicity:</strong> Thread entity and all outbox events are saved
+     * in a single transaction.
+     * If any event serialization or save fails, the entire transaction rolls
+     * back.</li>
+     * <li><strong>Consistency:</strong> Thread state and events are always in sync
+     * - no partial saves.</li>
+     * <li><strong>Isolation:</strong> Default isolation level (READ_COMMITTED)
+     * prevents dirty reads.</li>
+     * <li><strong>Durability:</strong> Once committed, both thread and events are
+     * persisted.</li>
+     * </ul>
+     * <p>
+     * <strong>Failure Scenarios:</strong>
+     * <ul>
+     * <li>If {@link ThreadJpaRepository#save} fails → entire transaction rolls
+     * back</li>
+     * <li>If event serialization fails → {@link RuntimeException} thrown,
+     * transaction rolls back</li>
+     * <li>If {@link OutboxEventJpaRepository#save} fails → transaction rolls
+     * back</li>
+     * </ul>
+     *
+     * @param thread the thread aggregate to save with its domain events
+     * @throws RuntimeException if event serialization fails or any database
+     *                          operation fails,
+     *                          triggering automatic rollback
+     */
     @Override
     @Transactional
     public void save(Thread thread) {
-        // 1. Save Thread Entity
+        // Step 1: Save Thread Entity (if this fails, entire transaction rolls back)
         ThreadEntity entity = threadMapper.toEntity(thread);
         threadJpaRepository.save(entity);
 
-        // 2. Poll and Save Events
+        // Step 2: Poll and Save Events atomically
+        // If ANY event fails to serialize or save, the ENTIRE transaction (including
+        // Thread save) rolls back
         List<Object> events = thread.pollEvents();
         events.stream()
-                .map(this::toOutboxEntity)
-                .forEach(outboxEventJpaRepository::save);
+                .map(this::toOutboxEntity) // Throws RuntimeException if serialization fails
+                .forEach(outboxEventJpaRepository::save); // Any save failure triggers rollback
     }
 
     @Override

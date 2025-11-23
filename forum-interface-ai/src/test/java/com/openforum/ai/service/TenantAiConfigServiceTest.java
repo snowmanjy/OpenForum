@@ -2,6 +2,7 @@ package com.openforum.ai.service;
 
 import com.openforum.ai.config.TenantAiConfig;
 import com.openforum.domain.aggregate.Tenant;
+import com.openforum.domain.aggregate.TenantFactory;
 import com.openforum.domain.repository.TenantRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,10 +38,7 @@ class TenantAiConfigServiceTest {
         config.put("ai.systemPrompt", "Be helpful");
         config.put("ai.apiKey", "key123");
 
-        Tenant tenant = Tenant.builder()
-                .id("tenant123")
-                .config(config)
-                .build();
+        Tenant tenant = TenantFactory.create("tenant123", config);
 
         when(tenantRepository.findById("tenant123")).thenReturn(Optional.of(tenant));
 

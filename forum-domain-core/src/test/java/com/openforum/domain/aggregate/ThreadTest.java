@@ -6,7 +6,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.assertj.core.api.Assertions.*;
 
 class ThreadTest {
 
@@ -20,20 +21,106 @@ class ThreadTest {
         Thread thread = ThreadFactory.create(tenantId, authorId, title, metadata);
 
         List<Object> events = thread.pollEvents();
-        assertEquals(1, events.size());
-        assertTrue(events.get(0) instanceof ThreadCreatedEvent);
+        assertThat(events).hasSize(1);
+        assertThat(events.get(0)).isInstanceOf(ThreadCreatedEvent.class);
 
         ThreadCreatedEvent event = (ThreadCreatedEvent) events.get(0);
-        assertEquals(thread.getId(), event.threadId());
-        assertEquals(title, event.title());
+        assertThat(event.threadId()).isEqualTo(thread.getId());
+        assertThat(event.title()).isEqualTo(title);
     }
 
     @Test
     void should_clear_events_after_polling() {
         Thread thread = ThreadFactory.create("t1", UUID.randomUUID(), "Title", Map.of());
 
-        assertFalse(thread.pollEvents().isEmpty());
-        assertTrue(thread.pollEvents().isEmpty());
+        assertThat(thread.pollEvents()).isNotEmpty();
+        assertThat(thread.pollEvents()).isEmpty();
+    }
+
+    @Test
+    void shouldAddPostSuccessfully() {
+        // Given
+        UUID threadId = UUID.randomUUID();
+        Thread thread = Thread.builder()
+                .id(threadId)
+                .tenantId("tenant123")
+                .authorId(UUID.randomUUID())
+                .title("Test Thread")
+                .status(ThreadStatus.OPEN)
+                .build();
+
+        Post post = Post.builder()
+                .id(UUID.randomUUID())
+                .threadId(threadId)
+                .authorId(UUID.randomUUID())
+                .content("Test post content")
+                .version(1L)
+                .build();
+
+        // When
+        thread.addPost(post);
+
+        // Then
+        assertThat(thread.getPosts()).hasSize(1);
+        assertThat(thread.getPosts().get(0)).isEqualTo(post);
+    }
+
+    @Test
+    void shouldNotAddPostWhenThreadIdDoesNotMatch() {
+        // Given
+        UUID threadId = UUID.randomUUID();
+        UUID differentThreadId = UUID.randomUUID();
+
+        Thread thread = Thread.builder()
+                .id(threadId)
+                .tenantId("tenant123")
+                .authorId(UUID.randomUUID())
+                .title("Test Thread")
+                .status(ThreadStatus.OPEN)
+                .build();
+
+        Post post = Post.builder()
+                .id(UUID.randomUUID())
+                .threadId(differentThreadId) // Different thread ID
+                .authorId(UUID.randomUUID())
+                .content("Test post content")
+                .version(1L)
+                .build();
+
+        // When
+        thread.addPost(post);
+
+        // Then - post is not added (validation chain short-circuits)
+        assertThat(thread.getPosts()).isEmpty();
+    }
+
+    @Test
+    void shouldThrowExceptionWhenAddingPostToClosedThread() {
+        // Given
+        UUID threadId = UUID.randomUUID();
+
+        Thread thread = Thread.builder()
+                .id(threadId)
+                .tenantId("tenant123")
+                .authorId(UUID.randomUUID())
+                .title("Test Thread")
+                .status(ThreadStatus.CLOSED) // Thread is closed
+                .build();
+
+        Post post = Post.builder()
+                .id(UUID.randomUUID())
+                .threadId(threadId)
+                .authorId(UUID.randomUUID())
+                .content("Test post content")
+                .version(1L)
+                .build();
+
+        // When/Then
+        assertThatThrownBy(() -> thread.addPost(post))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Thread is closed");
+
+        assertThat(thread.getPosts()).isEmpty();
     }
 
     @Test
@@ -43,6 +130,6 @@ class ThreadTest {
         List<Object> events1 = thread.pollEvents();
         List<Object> events2 = thread.pollEvents();
 
-        assertNotSame(events1, events2);
+        assertThat(events1).isNotSameAs(events2);
     }
 }
