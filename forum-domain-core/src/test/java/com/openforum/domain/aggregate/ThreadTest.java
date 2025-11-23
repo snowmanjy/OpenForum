@@ -1,6 +1,7 @@
 package com.openforum.domain.aggregate;
 
 import com.openforum.domain.events.ThreadCreatedEvent;
+import com.openforum.domain.factory.ThreadFactory;
 import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
@@ -11,20 +12,19 @@ class ThreadTest {
 
     @Test
     void should_accumulate_event_on_creation() {
-        UUID id = UUID.randomUUID();
         UUID authorId = UUID.randomUUID();
         String tenantId = "tenant-1";
         String title = "Test Thread";
         Map<String, Object> metadata = Map.of("key", "value");
 
-        Thread thread = new Thread(id, tenantId, authorId, title, metadata);
+        Thread thread = ThreadFactory.create(tenantId, authorId, title, metadata);
 
         List<Object> events = thread.pollEvents();
         assertEquals(1, events.size());
         assertTrue(events.get(0) instanceof ThreadCreatedEvent);
 
         ThreadCreatedEvent event = (ThreadCreatedEvent) events.get(0);
-        assertEquals(id, event.threadId());
+        assertEquals(thread.getId(), event.threadId());
         assertEquals(title, event.title());
     }
 

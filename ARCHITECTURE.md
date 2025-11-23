@@ -41,14 +41,22 @@ Controllers → Use Cases (Services) → Domain Entities → Repositories
 - **Search:** Elasticsearch (later phase) or Postgres Full Text Search (initial phase)
 - **API Style:** REST (primary), following CloudEvents for domain events.
 
-### 1.3 Coding Style Constraints
+### 1.2 Coding Style Constraints
 
 - **Functional Paradigm:** Prefer Java Streams and functional interfaces over imperative loops.
   - **Bad:** `for (Event e : events) { save(e); }`
   - **Good:** `events.stream().forEach(this::save);`
 - **Immutability:** Use `final` keywords, Java Records, and `List.of()`/`Map.of()` factories wherever possible.
 
-### 1.2 Architecture Pattern: Clean Architecture / DDD / TDD
+### 1.4 Factory & Creation Patterns
+
+- **Complex Validation:** Use a dedicated Factory class (e.g., `ThreadFactory`) when creation logic involves complex validation or invariants (e.g., checking for required keys in a metadata map).
+  - **Do not** put complex validation logic inside the Aggregate constructor or static factory methods on the Aggregate itself.
+- **Hidden Constructors:** Hide public constructors of Aggregates (`private` or `protected`).
+  - Use **Factory classes** for creating new instances with invariant enforcement.
+  - Use a static `reconstitute` method on the Aggregate for Infrastructure/Repositories to restore state from the database without triggering domain validation logic.
+
+### 1.3 Architecture Pattern: Clean Architecture / DDD / TDD
 
 We strictly separate the **Domain** from the **Infrastructure**.
 
@@ -70,6 +78,20 @@ root/
 ├── forum-interface-ai/      # [SPRING] AI "Member" Integration (LLM Client, Event Listeners)
 └── forum-boot/              # [SPRING BOOT] Main entry point, configuration assembly
 ```
+
+### Constraint: Layered Isolation
+
+#### Strict Layering: Controllers (Interface Layer) MUST NEVER depend on Repositories (Infrastructure Layer)
+
+#### Mandatory Service Layer: All Controller logic must delegate to an Application Service in forum-application
+
+#### Responsibility: The Application Service is the Transaction Boundary (@Transactional) and is responsible for
+
+- Loading Aggregates via Repositories.
+
+- Invoking Domain Logic on the Aggregate.
+
+- Saving state changes.
 
 -----
 

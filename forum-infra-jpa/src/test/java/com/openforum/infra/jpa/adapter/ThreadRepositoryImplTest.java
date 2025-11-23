@@ -1,6 +1,7 @@
 package com.openforum.infra.jpa.adapter;
 
 import com.openforum.domain.aggregate.Thread;
+import com.openforum.domain.factory.ThreadFactory;
 import com.openforum.domain.repository.ThreadRepository;
 import com.openforum.infra.jpa.config.JpaTestConfig;
 import com.openforum.infra.jpa.entity.OutboxEventEntity;
@@ -40,8 +41,8 @@ class ThreadRepositoryImplTest {
     @Test
     void should_save_thread_and_events_atomically() {
         // Given
-        UUID id = UUID.randomUUID();
-        Thread thread = new Thread(id, "tenant-1", UUID.randomUUID(), "Integration Test", Map.of("key", "value"));
+        Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), "Integration Test", Map.of("key", "value"));
+        UUID id = thread.getId();
 
         // When
         threadRepository.save(thread);
