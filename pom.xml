@@ -20,9 +20,11 @@
         <module>forum-application</module>
         <module>forum-infra-jpa</module>
         <module>forum-interface-rest</module>
+        <module>forum-interface-admin</module>
         <module>forum-interface-ai</module>
         <module>forum-boot</module>
     </modules>
+
 
     <properties>
         <java.version>21</java.version>

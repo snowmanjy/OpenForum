@@ -89,6 +89,34 @@ public class ThreadRepositoryImpl implements ThreadRepository {
                 .map(threadMapper::toDomain);
     }
 
+    /**
+     * Batch saves multiple Thread aggregates and their domain events atomically.
+     * <p>
+     * For bulk imports, imported threads will have empty event lists (isNew=false),
+     * so the outbox will naturally remain empty for historical data.
+     * 
+     * @param threads List of thread aggregates to save
+     * @throws RuntimeException if event serialization fails or any database
+     *                          operation fails
+     */
+    @Override
+    @Transactional
+    public void saveAll(List<Thread> threads) {
+        // Step 1: Batch save all Thread entities
+        List<ThreadEntity> entities = threads.stream()
+                .map(threadMapper::toEntity)
+                .toList();
+        threadJpaRepository.saveAll(entities);
+
+        // Step 2: Poll and save events from all threads
+        // For imported threads, pollEvents() returns empty list, so outbox is naturally
+        // empty
+        threads.stream()
+                .flatMap(thread -> thread.pollEvents().stream())
+                .map(this::toOutboxEntity)
+                .forEach(outboxEventJpaRepository::save);
+    }
+
     private OutboxEventEntity toOutboxEntity(Object event) {
         try {
             OutboxEventEntity entity = new OutboxEventEntity();
