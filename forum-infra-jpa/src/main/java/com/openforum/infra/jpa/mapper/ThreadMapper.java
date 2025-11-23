@@ -20,13 +20,14 @@ public class ThreadMapper {
     }
 
     public Thread toDomain(ThreadEntity entity) {
-        return new Thread(
-                entity.getId(),
-                entity.getTenantId(),
-                entity.getAuthorId(),
-                entity.getTitle(),
-                entity.getStatus(),
-                entity.getMetadata(),
-                entity.getVersion());
+        return Thread.builder()
+                .id(entity.getId())
+                .tenantId(entity.getTenantId())
+                .authorId(entity.getAuthorId())
+                .title(entity.getTitle())
+                .status(entity.getStatus())
+                .metadata(entity.getMetadata())
+                .version(entity.getVersion())
+                .build();
     }
 }

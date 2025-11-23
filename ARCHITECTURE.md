@@ -29,7 +29,7 @@ Controllers → Use Cases (Services) → Domain Entities → Repositories
 
 ## 1\. Project Overview & Constraints
 
-**System Goal:** Build a DDD-based, headless, multi-tenant forum platform optimized for B2B embedding, mobile-first usage, and AI-native features.
+**System Goal:** Build the high-performance, DDD based, headless Engine for a multi-tenant community platform. Scope: This project contains ONLY the domain logic, data storage, and API. It does not contain specific SaaS business logic (billing, legacy adapters).
 
 ### 1.1 Tech Stack (Strict)
 
@@ -40,13 +40,15 @@ Controllers → Use Cases (Services) → Domain Entities → Repositories
 - **ORM:** Hibernate 6.x (Must use native `JSONB` support via `@JdbcTypeCode(SqlTypes.JSON)`)
 - **Search:** Elasticsearch (later phase) or Postgres Full Text Search (initial phase)
 - **API Style:** REST (primary), following CloudEvents for domain events.
+- **Messaging: Kafka (via Debezium/Outbox Pattern)
 
 ### 1.2 Coding Style Constraints
 
 - **Functional Paradigm:** Prefer Java Streams and functional interfaces over imperative loops.
   - **Bad:** `for (Event e : events) { save(e); }`
-  - **Good:** `events.stream().forEach(this::save);`
+  - **Good:** `events.stream().map(this::toEntity).forEach(repo::save);`
 - **Immutability:** Use `final` keywords, Java Records, and `List.of()`/`Map.of()` factories wherever possible.
+- **Layering:** Controllers MUST call Services. Services MUST call Repositories. Never skip a layer.
 
 ### 1.4 Factory & Creation Patterns
 
@@ -72,10 +74,11 @@ The project must be organized into the following Maven modules:
 ```text
 root/
 ├── forum-domain-core/       # [PURE JAVA] Aggregates, Value Objects, Domain Events, Repository Interfaces
-├── forum-application/       # [SPRING] Application Services, Transaction Boundaries, Use Cases
-├── forum-infra-jpa/         # [SPRING DATA] JPA Entities (Adapters), Database Config, Flyway/Liquibase
-├── forum-interface-rest/    # [SPRING WEB] REST Controllers, DTOs, Exception Handling
-├── forum-interface-ai/      # [SPRING] AI "Member" Integration (LLM Client, Event Listeners)
+├── forum-application/       # [SPRING] Transactional Services
+├── forum-infra-jpa/         # [SPRING DATA] Postgres & Outbox Pattern
+├── forum-interface-rest/    # [SPRING WEB] Public API for SaaS UI
+├── forum-interface-admin/   # [SPRING WEB] Internal/Bulk API for SaaS Backend
+├── forum-interface-ai/      # [SPRING] AI "Member" Integration (LLM Client & Listeners)
 └── forum-boot/              # [SPRING BOOT] Main entry point, configuration assembly
 ```
 
@@ -107,13 +110,17 @@ root/
 - **Title:** String
 - **Status:** Enum (OPEN, CLOSED, ARCHIVED)
 - **Metadata:** `Map<String, Object>` (Crucial: This stores vertical-specific data like "deal\_irr", "pet\_breed", etc. Persisted as JSONB).
+- **Posts:** `List<Post>` (Note: For performance, infrastructure implementation may load this lazily or strictly manage the collection size).
 
-**2. Post**
+**2. Post** (Entity within Thread Aggregate)
 
 - **ID:** UUID
-- **ThreadID:** UUID
+- **ThreadID:** UUID (Parent Reference)
+- **AuthorID:** UUID (Reference to Member)
 - **Content:** String (Markdown supported)
 - **Version:** Long (Optimistic Locking for offline-sync conflict resolution)
+- **ReplyToPostID:** UUID (Optional, for nested threading)
+- **Metadata:** `Map<String, Object>` (Stores: Reactions ({"likes": 10}), AI Analysis ({"sentiment": "negative"}), etc. Persisted as JSONB).
 
 **3. Member (User Profile)**
 
@@ -122,51 +129,48 @@ root/
 - **IsBot:** Boolean (True for AI agents)
 - **Reputation:** Integer
 
-### 3.2 Domain Events
+**4. Tenant (Aggregate Root)**
+
+- **ID:** String (Provided by SaaS Platform)
+- **Config:** `Map<String, Object>` (Crucial: This stores runtime flags: isInviteOnly, aiEnabled, allowedVerticals, etc. Persisted as JSONB).
+
+### 3.2 Domain Events Lifecycle (The Outbox Pattern)
 
 - `ThreadCreatedEvent`
 - `PostCreatedEvent`
 - `ThreadClosedEvent`
 
-Constraint: State-Carried Events & Outbox Pattern
+To ensure data consistency and enable the Data Lake:
 
-Philosophy: Domain Events are the source of truth for future Reporting Services (Data Lake).
+Accumulation: Aggregates MUST NOT publish events directly. They must maintain a `private List<Object> domainEvents and expose a pollEvents() method.
 
-Payloads: Events must carry the full state of the change, not just the ID.
+#### Constraint: State-Carried Events & Outbox Pattern
 
-Example: ThreadUpdatedEvent must contain both oldStatus and newStatus, plus the current metadata snapshot.
+- **Philosophy:** Domain Events are the source of truth for future Reporting Services (Data Lake).
+- **Payloads:** Events must carry the full state of the change, not just the ID.
+- **Example:** `ThreadUpdatedEvent` must contain both `oldStatus` and `newStatus`, plus the current metadata snapshot.
+- **Persistence:** We implement the Transactional Outbox Pattern.
 
-Persistence: We implement the Transactional Outbox Pattern.
+When the `ThreadRepository` saves an aggregate, it must strictly also save an `OutboxEvent` entity in the same ACID transaction.
 
-When the ThreadRepository saves an aggregate, it must strictly also save an OutboxEvent entity in the same ACID transaction.
+**Table Schema (`outbox_events`):**
 
-Table Schema (outbox_events):
+- `id`: UUID
+- `aggregate_id`: UUID
+- `type`: String (e.g., "ThreadCreated")
+- `payload`: JSONB (The actual event data)
+- `created_at`: Timestamp
 
-id: UUID
+**Why:** This allows us to use a CDC connector (Debezium) on the `outbox_events` table later to populate our Data Lake without locking the main entity tables.
 
-aggregate_id: UUID
+#### Infrastructure: Async Messaging
 
-type: String (e.g., "ThreadCreated")
-
-payload: JSONB (The actual event data)
-
-created_at: Timestamp
-
-Why: This allows us to use a CDC connector (Debezium) on the outbox_events table later to populate our Data Lake without locking the main entity tables.
-
-Infrastructure: Async Messaging
-
-Broker: Kafka
-
-Producer Strategy: Transactional Outbox (Postgres -> Debezium -> Kafka).
-
-Topic Strategy:
-
-Topic: forum-events-v1
-
-Key: tenant_id (Ensures all events for a tenant are ordered) OR thread_id (finer granularity).
-
-Payload: JSON (CloudEvents standard recommended).
+- **Broker:** Kafka
+- **Producer Strategy:** Transactional Outbox (Postgres -> Debezium -> Kafka).
+- **Topic Strategy:**
+  - **Topic:** `forum-events-v1`
+  - **Key:** `tenant_id` (Ensures all events for a tenant are ordered) OR `thread_id` (finer granularity).
+  - **Payload:** JSON (CloudEvents standard recommended).
 
 ### 3.3 Domain Event Lifecycle (Strict)
 
@@ -193,7 +197,7 @@ The Domain Core code knows nothing about the database or the outbox table. It si
 
 ### 4.1 Authentication: "Trusted Parent" (Multipass)
 
-- **Philosophy:** We do not own user credentials. We trust the embedding application.
+- **Philosophy:** We do not own user credentials. We trust the the SaaS Platform.
 - **Mechanism:** JWT Passthrough.
 - **Implementation:**
   - `forum-interface-rest` contains a Security Filter.
@@ -219,18 +223,36 @@ The Domain Core code knows nothing about the database or the outbox table. It si
     5. Service calls `replyToThread` acting as the AI User.
     6. **Safety:** The listener MUST ignore posts where `author.isBot() == true` to prevent infinite loops.
 
------
+### 4.4 Bulk Ingestion (The SaaS Bridge)
 
-## 5\. API & Mobile Considerations
+- To support the SaaS project's migration tools, `forum-interface-admin` must expose high-throughput endpoints.
+- **Endpoint:** `POST /admin/v1/bulk/threads`
+- **Behavior:**
+  - Accepts a batch of Thread DTOs (e.g., 100-1000 items).
+  - Persists them efficiently.
+  - **Silent Mode:** Does NOT generate `ThreadCreated` notification events (to prevent spamming users during migration imports). It MAY generate "Audit" events for the Data Lake.
 
-- **Sync Protocol:**
-  - Mobile clients use "Pull" sync initially.
-  - `GET /api/v1/threads/sync?since={timestamp}`
-- **Conflict Resolution:**
-  - Posts must have a `version` field.
-  - Updates must send `expectedVersion`.
-  - Server throws `OptimisticLockException` if versions mismatch (Client must resolve).
+## 5\. The "SaaS Contract" (How the wrapper Saas project talks to us)
 
+### 5.1 Multi-Tenancy
+
+The Core does not manage "Subscriptions."
+
+It trusts the TenantID passed in the header X-Tenant-ID.
+
+It trusts the User passed in the JWT.
+
+### 5.2 Bulk Ingestion (Replacing Migration Module)
+
+To support the SaaS layer's migration tools, the Core must expose a specialized Bulk Interface in forum-interface-admin.
+
+Requirement: High-throughput writing without triggering downstream notification storms (e.g., "Don't email 10k users during an import").
+
+Method: POST /admin/v1/bulk/threads
+
+Accepts: List of Thread DTOs.
+
+Behavior: Persists data but suppresses ThreadCreated notification events (or marks them as "Historical")
 -----
 
 ## 6\. Implementation Phases (For Agent Execution)
@@ -255,3 +277,16 @@ The Domain Core code knows nothing about the database or the outbox table. It si
 
 - Implement `ThreadController`.
 - Implement `JwtAuthenticationFilter` (The "Trusted Parent" logic).
+
+## 7\. Agent Implementation Rules (For Antigravity)
+
+**Rule 1: No Dual Writes**
+Never write code that saves to the DB and then sends to Kafka/API in the same method. Always use the Outbox table.
+
+**Rule 2: Vertical Flexibility**
+Do not create hardcoded Java classes for Vertical data (e.g., no PetThread.java). Always use the Thread.metadata Map/JSONB strategy.
+
+**Rule 3: Test Separation**
+
+- forum-domain-core: Unit tests only (No Spring, No DB).
+- forum-infra-jpa: Integration tests with Testcontainers (Postgres).

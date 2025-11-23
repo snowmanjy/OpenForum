@@ -1,7 +1,7 @@
 package com.openforum.domain.aggregate;
 
 import com.openforum.domain.events.ThreadCreatedEvent;
-import com.openforum.domain.factory.ThreadFactory;
+
 import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +30,7 @@ class ThreadTest {
 
     @Test
     void should_clear_events_after_polling() {
-        Thread thread = new Thread(UUID.randomUUID(), "t1", UUID.randomUUID(), "Title", Map.of());
+        Thread thread = ThreadFactory.create("t1", UUID.randomUUID(), "Title", Map.of());
 
         assertFalse(thread.pollEvents().isEmpty());
         assertTrue(thread.pollEvents().isEmpty());
@@ -38,7 +38,7 @@ class ThreadTest {
 
     @Test
     void should_return_new_list_on_poll() {
-        Thread thread = new Thread(UUID.randomUUID(), "t1", UUID.randomUUID(), "Title", Map.of());
+        Thread thread = ThreadFactory.create("t1", UUID.randomUUID(), "Title", Map.of());
 
         List<Object> events1 = thread.pollEvents();
         List<Object> events2 = thread.pollEvents();
