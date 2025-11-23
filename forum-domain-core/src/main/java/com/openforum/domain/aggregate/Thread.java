@@ -6,6 +6,7 @@ import java.util.ArrayList;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 public class Thread {
@@ -94,10 +95,22 @@ public class Thread {
     }
 
     public void addPost(Post post) {
-        if (!post.getThreadId().equals(this.id)) {
-            throw new IllegalArgumentException("Post threadId does not match Thread id");
+        validatePostThreadId(post)
+                .flatMap(this::validateThreadNotClosed)
+                .ifPresent(posts::add);
+    }
+
+    private Optional<Post> validatePostThreadId(Post post) {
+        return post.getThreadId().equals(this.id)
+                ? Optional.of(post)
+                : Optional.empty();
+    }
+
+    private Optional<Post> validateThreadNotClosed(Post post) {
+        if (this.status == ThreadStatus.CLOSED) {
+            throw new IllegalArgumentException("Thread is closed");
         }
-        this.posts.add(post);
+        return Optional.of(post);
     }
 
     public List<Post> getPosts() {
