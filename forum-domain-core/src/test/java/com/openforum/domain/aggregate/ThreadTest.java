@@ -41,6 +41,7 @@ class ThreadTest {
     void shouldAddPostSuccessfully() {
         // Given
         UUID threadId = UUID.randomUUID();
+        UUID authorId = UUID.randomUUID();
         Thread thread = Thread.builder()
                 .id(threadId)
                 .tenantId("tenant123")
@@ -49,27 +50,21 @@ class ThreadTest {
                 .status(ThreadStatus.OPEN)
                 .build();
 
-        Post post = Post.builder()
-                .id(UUID.randomUUID())
-                .threadId(threadId)
-                .authorId(UUID.randomUUID())
-                .content("Test post content")
-                .version(1L)
-                .build();
-
         // When
-        thread.addPost(post);
+        Post createdPost = thread.addPost("Test post content", authorId, false);
 
         // Then
-        assertThat(thread.getPosts()).hasSize(1);
-        assertThat(thread.getPosts().get(0)).isEqualTo(post);
+        assertThat(createdPost).isNotNull();
+        assertThat(createdPost.getThreadId()).isEqualTo(threadId);
+        assertThat(createdPost.getAuthorId()).isEqualTo(authorId);
+        assertThat(createdPost.getContent()).isEqualTo("Test post content");
     }
 
     @Test
-    void shouldNotAddPostWhenThreadIdDoesNotMatch() {
+    void shouldCreatePostWithCorrectThreadId() {
         // Given
         UUID threadId = UUID.randomUUID();
-        UUID differentThreadId = UUID.randomUUID();
+        UUID authorId = UUID.randomUUID();
 
         Thread thread = Thread.builder()
                 .id(threadId)
@@ -79,25 +74,18 @@ class ThreadTest {
                 .status(ThreadStatus.OPEN)
                 .build();
 
-        Post post = Post.builder()
-                .id(UUID.randomUUID())
-                .threadId(differentThreadId) // Different thread ID
-                .authorId(UUID.randomUUID())
-                .content("Test post content")
-                .version(1L)
-                .build();
-
         // When
-        thread.addPost(post);
+        Post createdPost = thread.addPost("Test post content", authorId, true);
 
-        // Then - post is not added (validation chain short-circuits)
-        assertThat(thread.getPosts()).isEmpty();
+        // Then - Thread creates the Post with correct threadId
+        assertThat(createdPost.getThreadId()).isEqualTo(threadId);
     }
 
     @Test
     void shouldThrowExceptionWhenAddingPostToClosedThread() {
         // Given
         UUID threadId = UUID.randomUUID();
+        UUID authorId = UUID.randomUUID();
 
         Thread thread = Thread.builder()
                 .id(threadId)
@@ -107,20 +95,10 @@ class ThreadTest {
                 .status(ThreadStatus.CLOSED) // Thread is closed
                 .build();
 
-        Post post = Post.builder()
-                .id(UUID.randomUUID())
-                .threadId(threadId)
-                .authorId(UUID.randomUUID())
-                .content("Test post content")
-                .version(1L)
-                .build();
-
         // When/Then
-        assertThatThrownBy(() -> thread.addPost(post))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Thread is closed");
-
-        assertThat(thread.getPosts()).isEmpty();
+        assertThatThrownBy(() -> thread.addPost("Test post content", authorId, false))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Cannot add post to a closed thread.");
     }
 
     @Test
