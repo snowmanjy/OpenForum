@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.dao.DataAccessException;
 
 import java.util.Map;
@@ -32,139 +33,143 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ThreadRepositoryImplRollbackTest {
 
-    @Mock
-    private ThreadJpaRepository threadJpaRepository;
+        @Mock
+        private ThreadJpaRepository threadJpaRepository;
 
-    @Mock
-    private OutboxEventJpaRepository outboxEventJpaRepository;
+        @Mock
+        private OutboxEventJpaRepository outboxEventJpaRepository;
 
-    @Mock
-    private ThreadMapper threadMapper;
+        @Mock
+        private ThreadMapper threadMapper;
 
-    @Mock
-    private ObjectMapper objectMapper;
+        @Mock
+        private ObjectMapper objectMapper;
 
-    private ThreadRepositoryImpl threadRepository;
+        @Mock
+        private JdbcTemplate jdbcTemplate;
 
-    @BeforeEach
-    void setUp() {
-        threadRepository = new ThreadRepositoryImpl(
-                threadJpaRepository,
-                outboxEventJpaRepository,
-                threadMapper,
-                objectMapper);
-    }
+        private ThreadRepositoryImpl threadRepository;
 
-    @Test
-    void shouldThrowExceptionWhenEventSerializationFails() throws JsonProcessingException {
-        // Given: Thread with event that will fail to serialize
-        Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), "Test", Map.of());
-        ThreadEntity mockEntity = new ThreadEntity();
+        @BeforeEach
+        void setUp() {
+                threadRepository = new ThreadRepositoryImpl(
+                                threadJpaRepository,
+                                outboxEventJpaRepository,
+                                threadMapper,
+                                objectMapper,
+                                jdbcTemplate);
+        }
 
-        when(threadMapper.toEntity(thread)).thenReturn(mockEntity);
-        when(threadJpaRepository.save(mockEntity)).thenReturn(mockEntity);
+        @Test
+        void shouldThrowExceptionWhenEventSerializationFails() throws JsonProcessingException {
+                // Given: Thread with event that will fail to serialize
+                Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), "Test", Map.of());
+                ThreadEntity mockEntity = new ThreadEntity();
 
-        // Mock ObjectMapper to throw exception during event serialization
-        when(objectMapper.writeValueAsString(any()))
-                .thenThrow(new JsonProcessingException("Serialization failed") {
-                });
+                when(threadMapper.toEntity(thread)).thenReturn(mockEntity);
+                when(threadJpaRepository.save(mockEntity)).thenReturn(mockEntity);
 
-        // When/Then: Should throw RuntimeException (which triggers rollback)
-        assertThatThrownBy(() -> threadRepository.save(thread))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Failed to serialize event");
+                // Mock ObjectMapper to throw exception during event serialization
+                when(objectMapper.writeValueAsString(any()))
+                                .thenThrow(new JsonProcessingException("Serialization failed") {
+                                });
 
-        // Verify: Thread save was attempted (but will be rolled back by transaction
-        // manager)
-        verify(threadJpaRepository).save(mockEntity);
-        // Event save was never attempted because serialization failed first
-        verify(outboxEventJpaRepository, never()).save(any());
-    }
+                // When/Then: Should throw RuntimeException (which triggers rollback)
+                assertThatThrownBy(() -> threadRepository.save(thread))
+                                .isInstanceOf(RuntimeException.class)
+                                .hasMessageContaining("Failed to serialize event");
 
-    @Test
-    void shouldThrowExceptionWhenEventSaveFails() throws JsonProcessingException {
-        // Given: Thread with successfully serializable event, but save fails
-        Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), "Test", Map.of());
-        ThreadEntity mockEntity = new ThreadEntity();
+                // Verify: Thread save was attempted (but will be rolled back by transaction
+                // manager)
+                verify(threadJpaRepository).save(mockEntity);
+                // Event save was never attempted because serialization failed first
+                verify(outboxEventJpaRepository, never()).save(any());
+        }
 
-        when(threadMapper.toEntity(thread)).thenReturn(mockEntity);
-        when(threadJpaRepository.save(mockEntity)).thenReturn(mockEntity);
-        when(objectMapper.writeValueAsString(any())).thenReturn("{\"event\":\"data\"}");
+        @Test
+        void shouldThrowExceptionWhenEventSaveFails() throws JsonProcessingException {
+                // Given: Thread with successfully serializable event, but save fails
+                Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), "Test", Map.of());
+                ThreadEntity mockEntity = new ThreadEntity();
 
-        // Mock event save to fail
-        when(outboxEventJpaRepository.save(any(OutboxEventEntity.class)))
-                .thenThrow(new DataAccessException("Database error") {
-                });
+                when(threadMapper.toEntity(thread)).thenReturn(mockEntity);
+                when(threadJpaRepository.save(mockEntity)).thenReturn(mockEntity);
+                when(objectMapper.writeValueAsString(any())).thenReturn("{\"event\":\"data\"}");
 
-        // When/Then: Should propagate exception (triggering rollback)
-        assertThatThrownBy(() -> threadRepository.save(thread))
-                .isInstanceOf(DataAccessException.class)
-                .hasMessageContaining("Database error");
+                // Mock event save to fail
+                when(outboxEventJpaRepository.save(any(OutboxEventEntity.class)))
+                                .thenThrow(new DataAccessException("Database error") {
+                                });
 
-        // Verify: Both operations were attempted
-        verify(threadJpaRepository).save(mockEntity);
-        verify(outboxEventJpaRepository).save(any(OutboxEventEntity.class));
-    }
+                // When/Then: Should propagate exception (triggering rollback)
+                assertThatThrownBy(() -> threadRepository.save(thread))
+                                .isInstanceOf(DataAccessException.class)
+                                .hasMessageContaining("Database error");
 
-    @Test
-    void shouldThrowExceptionWhenThreadSaveFails() {
-        // Given: Thread save itself fails
-        Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), "Test", Map.of());
-        ThreadEntity mockEntity = new ThreadEntity();
+                // Verify: Both operations were attempted
+                verify(threadJpaRepository).save(mockEntity);
+                verify(outboxEventJpaRepository).save(any(OutboxEventEntity.class));
+        }
 
-        when(threadMapper.toEntity(thread)).thenReturn(mockEntity);
-        when(threadJpaRepository.save(mockEntity))
-                .thenThrow(new DataAccessException("Thread save failed") {
-                });
+        @Test
+        void shouldThrowExceptionWhenThreadSaveFails() {
+                // Given: Thread save itself fails
+                Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), "Test", Map.of());
+                ThreadEntity mockEntity = new ThreadEntity();
 
-        // When/Then: Should propagate exception
-        assertThatThrownBy(() -> threadRepository.save(thread))
-                .isInstanceOf(DataAccessException.class)
-                .hasMessageContaining("Thread save failed");
+                when(threadMapper.toEntity(thread)).thenReturn(mockEntity);
+                when(threadJpaRepository.save(mockEntity))
+                                .thenThrow(new DataAccessException("Thread save failed") {
+                                });
 
-        // Verify: Event save was never attempted
-        verify(threadJpaRepository).save(mockEntity);
-        verify(outboxEventJpaRepository, never()).save(any());
-    }
+                // When/Then: Should propagate exception
+                assertThatThrownBy(() -> threadRepository.save(thread))
+                                .isInstanceOf(DataAccessException.class)
+                                .hasMessageContaining("Thread save failed");
 
-    @Test
-    void shouldPropagateMapperException() {
-        // Given: Mapper throws exception
-        Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), "Test", Map.of());
+                // Verify: Event save was never attempted
+                verify(threadJpaRepository).save(mockEntity);
+                verify(outboxEventJpaRepository, never()).save(any());
+        }
 
-        when(threadMapper.toEntity(thread))
-                .thenThrow(new IllegalArgumentException("Mapping failed"));
+        @Test
+        void shouldPropagateMapperException() {
+                // Given: Mapper throws exception
+                Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), "Test", Map.of());
 
-        // When/Then: Should propagate exception
-        assertThatThrownBy(() -> threadRepository.save(thread))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Mapping failed");
+                when(threadMapper.toEntity(thread))
+                                .thenThrow(new IllegalArgumentException("Mapping failed"));
 
-        // Verify: Nothing was saved
-        verify(threadJpaRepository, never()).save(any());
-        verify(outboxEventJpaRepository, never()).save(any());
-    }
+                // When/Then: Should propagate exception
+                assertThatThrownBy(() -> threadRepository.save(thread))
+                                .isInstanceOf(IllegalArgumentException.class)
+                                .hasMessageContaining("Mapping failed");
 
-    @Test
-    void shouldHandleMultipleEventsWithOneFailure() throws JsonProcessingException {
-        // Given: Thread with 2 events, second event save fails
-        Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), "Test", Map.of());
-        // Thread.pollEvents() will return 1 event from ThreadCreatedEvent
-        ThreadEntity mockEntity = new ThreadEntity();
+                // Verify: Nothing was saved
+                verify(threadJpaRepository, never()).save(any());
+                verify(outboxEventJpaRepository, never()).save(any());
+        }
 
-        when(threadMapper.toEntity(thread)).thenReturn(mockEntity);
-        when(threadJpaRepository.save(mockEntity)).thenReturn(mockEntity);
-        when(objectMapper.writeValueAsString(any())).thenReturn("{\"event\":\"data\"}");
+        @Test
+        void shouldHandleMultipleEventsWithOneFailure() throws JsonProcessingException {
+                // Given: Thread with 2 events, second event save fails
+                Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), "Test", Map.of());
+                // Thread.pollEvents() will return 1 event from ThreadCreatedEvent
+                ThreadEntity mockEntity = new ThreadEntity();
 
-        // First save succeeds, but if there were a second, it would fail
-        // Since ThreadFactory only creates 1 event, we just verify the behavior
-        when(outboxEventJpaRepository.save(any(OutboxEventEntity.class)))
-                .thenReturn(new OutboxEventEntity());
+                when(threadMapper.toEntity(thread)).thenReturn(mockEntity);
+                when(threadJpaRepository.save(mockEntity)).thenReturn(mockEntity);
+                when(objectMapper.writeValueAsString(any())).thenReturn("{\"event\":\"data\"}");
 
-        // When: Save succeeds with single event
-        threadRepository.save(thread);
+                // First save succeeds, but if there were a second, it would fail
+                // Since ThreadFactory only creates 1 event, we just verify the behavior
+                when(outboxEventJpaRepository.save(any(OutboxEventEntity.class)))
+                                .thenReturn(new OutboxEventEntity());
 
-        // Then: Verify single event was saved
-        verify(outboxEventJpaRepository, times(1)).save(any(OutboxEventEntity.class));
-    }
+                // When: Save succeeds with single event
+                threadRepository.save(thread);
+
+                // Then: Verify single event was saved
+                verify(outboxEventJpaRepository, times(1)).save(any(OutboxEventEntity.class));
+        }
 }
