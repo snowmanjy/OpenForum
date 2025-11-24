@@ -29,11 +29,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(ThreadController.class)
+@WebMvcTest(controllers = ThreadController.class,
+        excludeAutoConfiguration = {
+                org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration.class,
+                org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class
+        })
 @Import({ SecurityConfig.class, MemberJwtAuthenticationConverter.class })
 class ThreadControllerTest {
-    // Note: IntegrationTestApplication is excluded from component scanning because
-    // @WebMvcTest provides a minimal Spring context. Full integration tests use IntegrationTestApplication.
+    // Note: @WebMvcTest is a sliced test that only loads web layer
+    // We exclude JPA/DataSource auto-configuration and mock all dependencies
 
     @Autowired
     private MockMvc mockMvc;
