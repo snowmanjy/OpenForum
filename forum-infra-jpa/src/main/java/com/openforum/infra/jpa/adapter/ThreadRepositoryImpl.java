@@ -128,7 +128,7 @@ public class ThreadRepositoryImpl implements ThreadRepository {
         // 1. Batch Insert Threads
         String threadSql = """
                 INSERT INTO threads (id, tenant_id, author_id, title, status, metadata, version)
-                VALUES (?, ?, ?, ?, ?, ? FORMAT JSON, ?)
+                VALUES (?, ?, ?, ?, ?, ?::jsonb, ?)
                 """;
 
         jdbcTemplate.batchUpdate(threadSql, threads, threads.size(), (ps, thread) -> {
@@ -154,7 +154,7 @@ public class ThreadRepositoryImpl implements ThreadRepository {
         if (!allPosts.isEmpty()) {
             String postSql = """
                     INSERT INTO posts (id, thread_id, author_id, content, reply_to_post_id, metadata, version)
-                    VALUES (?, ?, ?, ?, ?, ? FORMAT JSON, ?)
+                    VALUES (?, ?, ?, ?, ?, ?::jsonb, ?)
                     """;
 
             jdbcTemplate.batchUpdate(postSql, allPosts, allPosts.size(), (ps, post) -> {
@@ -215,7 +215,7 @@ public class ThreadRepositoryImpl implements ThreadRepository {
         if (!allEvents.isEmpty()) {
             String eventSql = """
                     INSERT INTO outbox_events (id, aggregate_id, type, payload, created_at)
-                    VALUES (?, ?, ?, ? FORMAT JSON, ?)
+                    VALUES (?, ?, ?, ?::jsonb, ?)
                     """;
 
             jdbcTemplate.batchUpdate(eventSql, allEvents, allEvents.size(), (ps, event) -> {
