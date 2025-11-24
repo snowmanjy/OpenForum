@@ -63,6 +63,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (tenantId != null) {
                     TenantContext.setTenantId(tenantId);
                 } else {
+                    // TODO: Reject
                     // Fallback or reject? For now, let's assume default if missing, or handle as
                     // error.
                     // Given constraints, we should probably enforce it, but let's default to
