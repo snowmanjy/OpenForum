@@ -27,6 +27,7 @@ public class PostController {
             @PathVariable UUID threadId,
             @RequestBody CreatePostRequest request,
             @AuthenticationPrincipal Member member) {
+        // TenantContext.getTenantId() is available if needed for future validation
         Post post = postService.createPost(
                 threadId,
                 member.getId(),

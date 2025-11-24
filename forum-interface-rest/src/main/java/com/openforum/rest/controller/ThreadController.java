@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+import com.openforum.rest.context.TenantContext;
+
 @RestController
 @RequestMapping("/api/v1/threads")
 public class ThreadController {
@@ -27,9 +29,7 @@ public class ThreadController {
             @RequestBody CreateThreadRequest request,
             @AuthenticationPrincipal Member member) {
 
-        // Assuming tenantId is derived or fixed for now.
-        // In a real multi-tenant app, it might come from the token or URL.
-        String tenantId = "default-tenant";
+        String tenantId = TenantContext.getTenantId();
 
         Thread thread = threadService.createThread(tenantId, member.getId(), request.title());
 
