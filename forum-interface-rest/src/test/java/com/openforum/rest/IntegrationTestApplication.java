@@ -6,23 +6,23 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 /**
- * Test application configuration supporting both WebMvcTest and SpringBootTest.
+ * Full integration test application configuration for @SpringBootTest.
+ *
+ * This configuration loads the COMPLETE application context including:
+ * - REST controllers (com.openforum.rest)
+ * - Application services (com.openforum.application)
+ * - JPA infrastructure (com.openforum.infra.jpa)
  *
  * Used by:
- * - @WebMvcTest(ThreadController.class): Only loads web context, excludes JPA
- *   Infrastructure is mocked via @MockBean
- * - @SpringBootTest(classes = TestApplication.class): Loads full context including JPA
- *   Used by integration tests like JwtAuthenticationIntegrationTest
+ * - JwtAuthenticationIntegrationTest (full Spring Security + JWT + JPA integration)
  *
- * Component Scanning:
- * - Scans com.openforum base package to find:
- *   - REST controllers (com.openforum.rest)
- *   - Application services (com.openforum.application)
- *   - JPA adapters (com.openforum.infra.jpa.adapter)
+ * NOT used by:
+ * - @WebMvcTest sliced tests (use WebMvcTestConfig instead)
  *
  * JPA Configuration:
- * - @EnableJpaRepositories: Scans for Spring Data JPA repositories
- * - @EntityScan: Scans for JPA entities
+ * - H2 in-memory database with PostgreSQL compatibility mode
+ * - Hibernate auto-creates schema (Flyway disabled for tests)
+ * - Spring Data JPA repositories enabled
  */
 @SpringBootApplication
 @ComponentScan(basePackages = {
@@ -32,5 +32,5 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 })
 @EnableJpaRepositories(basePackages = "com.openforum.infra.jpa.repository")
 @EntityScan(basePackages = "com.openforum.infra.jpa.entity")
-public class TestApplication {
+public class IntegrationTestApplication {
 }

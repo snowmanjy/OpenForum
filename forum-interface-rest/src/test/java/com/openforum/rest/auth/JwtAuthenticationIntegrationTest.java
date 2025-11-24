@@ -2,7 +2,7 @@ package com.openforum.rest.auth;
 
 import com.openforum.domain.aggregate.Member;
 import com.openforum.domain.repository.MemberRepository;
-import com.openforum.rest.TestApplication;
+import com.openforum.rest.IntegrationTestApplication;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
@@ -48,7 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Architecture: These are full integration tests that test the entire auth flow
  * from HTTP request through Spring Security to domain model.
  */
-@SpringBootTest(classes = TestApplication.class)
+@SpringBootTest(classes = IntegrationTestApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
