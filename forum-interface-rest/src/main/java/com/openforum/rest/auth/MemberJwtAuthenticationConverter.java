@@ -3,6 +3,7 @@ package com.openforum.rest.auth;
 import com.openforum.domain.aggregate.Member;
 import com.openforum.domain.repository.MemberRepository;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,8 +17,10 @@ import java.util.Optional;
 /**
  * Converts a validated JWT into a Spring Security Authentication object.
  *
- * This converter implements the "Trusted Parent" pattern with JIT (Just-In-Time) provisioning:
- * - JWT signature has already been validated by Spring Security OAuth2 Resource Server
+ * This converter implements the "Trusted Parent" pattern with JIT
+ * (Just-In-Time) provisioning:
+ * - JWT signature has already been validated by Spring Security OAuth2 Resource
+ * Server
  * - Extracts user claims (sub, email, name) from the JWT
  * - Automatically creates a Member if one doesn't exist (JIT provisioning)
  * - Returns Authentication with Member as principal
@@ -28,7 +31,7 @@ import java.util.Optional;
  * - Follows Clean Architecture: JWT → Converter → Domain Model
  */
 @Component
-public class MemberJwtAuthenticationConverter implements Converter<Jwt, Authentication> {
+public class MemberJwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticationToken> {
 
     private final MemberRepository memberRepository;
 
@@ -37,7 +40,7 @@ public class MemberJwtAuthenticationConverter implements Converter<Jwt, Authenti
     }
 
     @Override
-    public Authentication convert(Jwt jwt) {
+    public AbstractAuthenticationToken convert(Jwt jwt) {
         return extractMemberFromJwt(jwt)
                 .map(this::createAuthentication)
                 .orElse(null);
@@ -60,9 +63,8 @@ public class MemberJwtAuthenticationConverter implements Converter<Jwt, Authenti
 
         // JIT Provisioning: Find existing member or create new one
         return Optional.of(
-            memberRepository.findByExternalId(externalId)
-                    .orElseGet(() -> createNewMember(externalId, email, name))
-        );
+                memberRepository.findByExternalId(externalId)
+                        .orElseGet(() -> createNewMember(externalId, email, name)));
     }
 
     /**
@@ -83,7 +85,7 @@ public class MemberJwtAuthenticationConverter implements Converter<Jwt, Authenti
     /**
      * Creates Spring Security Authentication object with Member as principal.
      */
-    private Authentication createAuthentication(Member member) {
+    private AbstractAuthenticationToken createAuthentication(Member member) {
         Collection<? extends GrantedAuthority> authorities = Collections.emptyList();
         return new UsernamePasswordAuthenticationToken(member, null, authorities);
     }

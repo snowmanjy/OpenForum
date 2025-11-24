@@ -6,7 +6,7 @@ import com.openforum.domain.aggregate.Member;
 import com.openforum.domain.aggregate.Thread;
 import com.openforum.domain.aggregate.ThreadFactory;
 import com.openforum.domain.repository.MemberRepository;
-import com.openforum.rest.auth.JwtAuthenticationFilter;
+import com.openforum.rest.auth.MemberJwtAuthenticationConverter;
 import com.openforum.rest.config.SecurityConfig;
 import com.openforum.rest.controller.dto.CreateThreadRequest;
 import org.junit.jupiter.api.Test;
@@ -30,8 +30,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ThreadController.class)
-@Import({ SecurityConfig.class, JwtAuthenticationFilter.class })
+@Import({ SecurityConfig.class, MemberJwtAuthenticationConverter.class })
 class ThreadControllerTest {
+    // Note: IntegrationTestApplication is excluded from component scanning because
+    // @WebMvcTest provides a minimal Spring context. Full integration tests use IntegrationTestApplication.
 
     @Autowired
     private MockMvc mockMvc;
@@ -44,6 +46,9 @@ class ThreadControllerTest {
 
     @MockBean
     private MemberRepository memberRepository;
+
+    @MockBean
+    private org.springframework.security.oauth2.jwt.JwtDecoder jwtDecoder;
 
     @Test
     void createThread_shouldReturnCreated_whenAuthenticated() throws Exception {
@@ -58,6 +63,16 @@ class ThreadControllerTest {
 
         CreateThreadRequest request = new CreateThreadRequest("Test Thread", "Content");
         Thread thread = ThreadFactory.create("default-tenant", member.getId(), "Test Thread", java.util.Map.of());
+
+        // Mock JwtDecoder to return a valid Jwt
+        org.springframework.security.oauth2.jwt.Jwt jwt = org.springframework.security.oauth2.jwt.Jwt
+                .withTokenValue("token")
+                .header("alg", "none")
+                .subject(externalId)
+                .claim("email", email)
+                .claim("name", name)
+                .build();
+        when(jwtDecoder.decode(anyString())).thenReturn(jwt);
 
         when(threadService.createThread(anyString(), any(UUID.class), anyString())).thenReturn(thread);
 
@@ -96,6 +111,16 @@ class ThreadControllerTest {
         // Note: Thread.create generates a random ID. We can't easily set it without
         // reflection or a constructor.
         // For this test, we just use the ID from the created thread object.
+
+        // Mock JwtDecoder
+        org.springframework.security.oauth2.jwt.Jwt jwt = org.springframework.security.oauth2.jwt.Jwt
+                .withTokenValue("token")
+                .header("alg", "none")
+                .subject(externalId)
+                .claim("email", "test@example.com")
+                .claim("name", "Test User")
+                .build();
+        when(jwtDecoder.decode(anyString())).thenReturn(jwt);
 
         when(threadService.getThread(any(UUID.class))).thenReturn(Optional.of(thread));
 

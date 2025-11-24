@@ -2,6 +2,7 @@ package com.openforum.rest.auth;
 
 import com.openforum.domain.aggregate.Member;
 import com.openforum.domain.repository.MemberRepository;
+import com.openforum.rest.TestApplication;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSSigner;
@@ -47,7 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Architecture: These are full integration tests that test the entire auth flow
  * from HTTP request through Spring Security to domain model.
  */
-@SpringBootTest
+@SpringBootTest(classes = TestApplication.class)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @Transactional
@@ -74,11 +75,12 @@ class JwtAuthenticationIntegrationTest {
         // Given: A valid JWT with signature
         String jwt = createValidJwt("user-123", "john@example.com", "John Doe");
 
-        // When: Making an authenticated request
-        mockMvc.perform(get("/api/v1/threads/test-endpoint")
+        // When: Making an authenticated request to a real endpoint
+        // (Using a non-existent thread ID will return 404, proving auth passed)
+        mockMvc.perform(get("/api/v1/threads/" + UUID.randomUUID())
                         .header("Authorization", "Bearer " + jwt))
-                // Then: Request is authenticated (may fail with 404 if endpoint doesn't exist, but not 401/403)
-                .andExpect(status().isNotFound()); // Endpoint doesn't exist, but we passed auth
+                // Then: Request is authenticated (404 = auth passed, thread not found)
+                .andExpect(status().isNotFound());
 
         // And: Member was created via JIT provisioning
         Member member = memberRepository.findByExternalId("user-123").orElseThrow();
@@ -137,9 +139,9 @@ class JwtAuthenticationIntegrationTest {
 
         // When: Authenticating with JWT for same external ID
         String jwt = createValidJwt("existing-user", "updated@example.com", "Updated Name");
-        mockMvc.perform(get("/api/v1/threads/test-endpoint")
+        mockMvc.perform(get("/api/v1/threads/" + UUID.randomUUID())
                         .header("Authorization", "Bearer " + jwt))
-                .andExpect(status().isNotFound()); // Passed auth
+                .andExpect(status().isNotFound()); // Passed auth, thread not found
 
         // Then: Existing member is reused (not duplicated)
         Member reloadedMember = memberRepository.findByExternalId("existing-user").orElseThrow();
@@ -153,9 +155,9 @@ class JwtAuthenticationIntegrationTest {
         String jwt = createJwtWithoutEmail("user-no-email");
 
         // When: Making request
-        mockMvc.perform(get("/api/v1/threads/test-endpoint")
+        mockMvc.perform(get("/api/v1/threads/" + UUID.randomUUID())
                         .header("Authorization", "Bearer " + jwt))
-                .andExpect(status().isNotFound()); // Passed auth
+                .andExpect(status().isNotFound()); // Passed auth, thread not found
 
         // Then: Member is created with default email
         Member member = memberRepository.findByExternalId("user-no-email").orElseThrow();
