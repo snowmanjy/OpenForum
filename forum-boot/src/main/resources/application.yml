@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: openforum
+
+  # Database Configuration (override via environment variables in production)
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/openforum_db}
+    username: ${SPRING_DATASOURCE_USERNAME:openforum}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+
+  # JPA/Hibernate Configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate # Flyway handles schema
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 20
+
+  # Flyway Migration
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  # JWT Configuration (Trusted Parent Pattern)
+  # Configure ONE of the following:
+  # Option 1: Use JWKS endpoint (recommended for production)
+  # Option 2: Use public key file (simpler for single-key scenarios)
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Option 1: JWKS endpoint (uncomment for production)
+          # jwk-set-uri: ${JWT_JWKS_URI:https://your-auth-server.com/.well-known/jwks.json}
+
+          # Option 2: Public key file (for testing/development)
+          # Store public key in PEM format in resources/public-key.pem
+          public-key-location: ${JWT_PUBLIC_KEY_LOCATION:classpath:public-key.pem}
+
+          # Optional: Validate issuer claim
+          # issuer-uri: ${JWT_ISSUER_URI:https://your-auth-server.com}
+
+# Logging
+logging:
+  level:
+    com.openforum: INFO
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
