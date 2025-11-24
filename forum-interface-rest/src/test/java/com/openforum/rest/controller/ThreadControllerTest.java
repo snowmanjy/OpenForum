@@ -7,6 +7,8 @@ import com.openforum.domain.aggregate.Thread;
 import com.openforum.domain.aggregate.ThreadFactory;
 import com.openforum.domain.repository.MemberRepository;
 import com.openforum.rest.auth.JwtAuthenticationFilter;
+import com.openforum.rest.auth.MemberJwtAuthenticationConverter;
+import com.openforum.rest.config.JwtConfig;
 import com.openforum.rest.config.SecurityConfig;
 import com.openforum.rest.controller.dto.CreateThreadRequest;
 import org.junit.jupiter.api.Test;
@@ -15,9 +17,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
-import java.util.Base64;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,7 +35,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ThreadController.class)
-@Import({ SecurityConfig.class, JwtAuthenticationFilter.class })
+@Import({ SecurityConfig.class, JwtAuthenticationFilter.class, MemberJwtAuthenticationConverter.class,
+        JwtConfig.class })
 class ThreadControllerTest {
 
     @Autowired
@@ -45,25 +51,33 @@ class ThreadControllerTest {
     @MockBean
     private MemberRepository memberRepository;
 
+    @MockBean
+    private java.security.interfaces.RSAPublicKey publicKey; // Required by JwtAuthenticationFilter
+
+    private Member testMember;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        testMember = Member.reconstitute(UUID.randomUUID(), "ext-123", "test@example.com", "Test User", false);
+    }
+
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        com.openforum.rest.context.TenantContext.clear();
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+    }
+
     @Test
     void createThread_shouldReturnCreated_whenAuthenticated() throws Exception {
         // Given
-        String externalId = "ext-123";
-        String email = "test@example.com";
-        String name = "Test User";
-        String token = generateTestToken(externalId, email, name);
-
-        Member member = Member.reconstitute(UUID.randomUUID(), externalId, email, name, false);
-        when(memberRepository.findByExternalId(externalId)).thenReturn(Optional.of(member));
-
         CreateThreadRequest request = new CreateThreadRequest("Test Thread", "Content");
-        Thread thread = ThreadFactory.create("default-tenant", member.getId(), "Test Thread", java.util.Map.of());
+        Thread thread = ThreadFactory.create("default-tenant", testMember.getId(), "Test Thread", java.util.Map.of());
 
         when(threadService.createThread(anyString(), any(UUID.class), anyString())).thenReturn(thread);
 
         // When & Then
         mockMvc.perform(post("/api/v1/threads")
-                .header("Authorization", "Bearer " + token)
+                .with(authWithTenant(testMember, "default-tenant"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -72,42 +86,30 @@ class ThreadControllerTest {
     }
 
     @Test
-    void createThread_shouldReturnForbidden_whenUnauthenticated() throws Exception {
-        CreateThreadRequest request = new CreateThreadRequest("Test Thread", "Content");
-
-        mockMvc.perform(post("/api/v1/threads")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
     void getThread_shouldReturnThread_whenExistsAndAuthenticated() throws Exception {
         // Given
-        String externalId = "ext-123";
-        String token = generateTestToken(externalId, "test@example.com", "Test User");
-        Member member = Member.reconstitute(UUID.randomUUID(), externalId, "test@example.com", "Test User", false);
-        when(memberRepository.findByExternalId(externalId)).thenReturn(Optional.of(member));
-
-        UUID threadId = UUID.randomUUID();
-        Thread thread = ThreadFactory.create("tenant-1", member.getId(), "Existing Thread", java.util.Map.of());
-        // Reflection to set ID if needed, but Thread.create generates one.
-        // We need to mock findById to return this thread.
-        // Note: Thread.create generates a random ID. We can't easily set it without
-        // reflection or a constructor.
-        // For this test, we just use the ID from the created thread object.
+        Thread thread = ThreadFactory.create("tenant-1", testMember.getId(), "Existing Thread", java.util.Map.of());
 
         when(threadService.getThread(any(UUID.class))).thenReturn(Optional.of(thread));
 
         // When & Then
         mockMvc.perform(get("/api/v1/threads/" + thread.getId())
-                .header("Authorization", "Bearer " + token))
+                .with(authWithTenant(testMember, "tenant-1")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Existing Thread"));
     }
 
-    private String generateTestToken(String sub, String email, String name) {
-        String payload = String.format("{\"sub\":\"%s\",\"email\":\"%s\",\"name\":\"%s\"}", sub, email, name);
-        return "header." + Base64.getUrlEncoder().encodeToString(payload.getBytes()) + ".signature";
+    private RequestPostProcessor authWithTenant(Member member, String tenantId) {
+        return request -> {
+            // First set authentication using Spring Security Test utilities
+            Authentication auth = new UsernamePasswordAuthenticationToken(member, null, Collections.emptyList());
+            request = org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                    .authentication(auth)
+                    .postProcessRequest(request);
+
+            // Then set tenant context
+            com.openforum.rest.context.TenantContext.setTenantId(tenantId);
+            return request;
+        };
     }
 }

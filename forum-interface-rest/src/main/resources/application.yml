@@ -1,0 +1,26 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: forum-interface-rest
+  datasource:
+    url: jdbc:postgresql://localhost:5432/forum
+    username: postgres
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+jwt:
+  public-key: ${JWT_PUBLIC_KEY_LOCATION:classpath:public-key.pem}
