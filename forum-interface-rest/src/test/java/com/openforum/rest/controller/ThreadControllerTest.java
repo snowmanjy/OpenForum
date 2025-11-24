@@ -35,19 +35,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class,
                 org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration.class
         },
-        properties = {
-                "spring.main.allow-bean-definition-overriding=true"
-        })
 @Import({ SecurityConfig.class, MemberJwtAuthenticationConverter.class })
 @org.springframework.boot.test.autoconfigure.OverrideAutoConfiguration(enabled = false)
 class ThreadControllerTest {
-    // Note: @WebMvcTest is a sliced test that only loads web layer
     // We exclude all JPA/DataSource/Hibernate auto-configuration and mock all dependencies
     // TestApplication's component scanning is effectively bypassed for this test
-
-    @Autowired
-    private MockMvc mockMvc;
-
+    // Note: @WebMvcTest only loads web layer. IntegrationTestApplication is not auto-detected.
+    // All dependencies are mocked. No JPA infrastructure is loaded.
     @Autowired
     private ObjectMapper objectMapper;
 
