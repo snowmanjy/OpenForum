@@ -282,6 +282,15 @@ If you have ideas or find issues, feel free to open an Issue or PR.
 
 ---
 
-## License
+## License & Usage
 
 OpenForum is licensed under the [Apache 2.0 License](./LICENSE).
+
+This means you are free to:
+
+- Use it in open-source or closed-source projects
+- Embed it in commercial products
+- Run it as part of a hosted/SaaS offering
+
+We welcome contributions, but you are not *obligated* to open-source your own extensions.
+
