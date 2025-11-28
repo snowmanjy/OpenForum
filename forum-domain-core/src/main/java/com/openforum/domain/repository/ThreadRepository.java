@@ -10,5 +10,7 @@ public interface ThreadRepository {
 
     void saveAll(List<Thread> threads);
 
+    List<Thread> search(String tenantId, String query, int page, int size);
+
     Optional<Thread> findById(UUID id);
 }

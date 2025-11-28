@@ -22,6 +22,7 @@ public class ThreadEntity {
 
     private String tenantId;
     private UUID authorId;
+    private UUID categoryId;
     private String title;
 
     @Enumerated(EnumType.STRING)
@@ -56,6 +57,14 @@ public class ThreadEntity {
 
     public void setAuthorId(UUID authorId) {
         this.authorId = authorId;
+    }
+
+    public UUID getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(UUID categoryId) {
+        this.categoryId = categoryId;
     }
 
     public String getTitle() {

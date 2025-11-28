@@ -13,6 +13,7 @@ public class Thread {
     private final UUID id;
     private final String tenantId;
     private final UUID authorId;
+    private final UUID categoryId;
     private String title;
     private ThreadStatus status;
     private final Map<String, Object> metadata;
@@ -28,6 +29,7 @@ public class Thread {
         this.id = builder.id;
         this.tenantId = builder.tenantId;
         this.authorId = builder.authorId;
+        this.categoryId = builder.categoryId;
         this.title = builder.title;
         this.status = builder.status;
         this.metadata = builder.metadata != null ? Map.copyOf(builder.metadata) : Map.of();
@@ -45,6 +47,7 @@ public class Thread {
         private UUID id;
         private String tenantId;
         private UUID authorId;
+        private UUID categoryId;
         private String title;
         private ThreadStatus status = ThreadStatus.OPEN;
         private Map<String, Object> metadata;
@@ -63,6 +66,11 @@ public class Thread {
 
         public Builder authorId(UUID authorId) {
             this.authorId = authorId;
+            return this;
+        }
+
+        public Builder categoryId(UUID categoryId) {
+            this.categoryId = categoryId;
             return this;
         }
 
@@ -153,6 +161,10 @@ public class Thread {
 
     public UUID getAuthorId() {
         return authorId;
+    }
+
+    public UUID getCategoryId() {
+        return categoryId;
     }
 
     public String getTitle() {

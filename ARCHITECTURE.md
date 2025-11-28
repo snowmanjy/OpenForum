@@ -318,11 +318,48 @@ Behavior: Persists data but suppresses ThreadCreated notification events (or mar
 - **Public:**
   - `POST /api/v1/threads/{threadId}/subscriptions`: Subscribe.
   - `DELETE /api/v1/threads/{threadId}/subscriptions`: Unsubscribe.
+  - `GET /api/v1/threads/{threadId}/subscribers`: Get all subscribers for a thread.
   - `GET /api/v1/subscriptions`: List my subscriptions (Paginated).
     - Response: `{ data: [{ threadId, threadTitle, subscribedAt }], page, total }`
-- **Internal:**
-  - `GET /api/v1/threads/{threadId}/subscribers`: Get all subscribers for a thread.
-r IDs to notify.
+
+**Phase 2.2: Categories & Search**
+
+**Goal:** Organize threads into categories and provide full-text search capabilities.
+
+**1. Categories (Domain & Infra)**
+
+- **Aggregate:** `Category`
+  - `id`: UUID
+  - `tenantId`: String
+  - `name`: String
+  - `slug`: String (Unique per tenant)
+  - `description`: String
+  - `isReadOnly`: Boolean
+- **Constraints:** Unique Index on `(tenant_id, slug)`.
+- **API:** `CategoryController` (CRUD).
+
+**2. Thread Linking**
+
+- **Refactor:** Add `categoryId` (UUID) to `Thread` aggregate.
+- **Migration:** Add `category_id` column to `threads` table.
+
+**3. Full-Text Search (Postgres)**
+
+- **Strategy:** Use PostgreSQL native Full-Text Search (FTS).
+- **Schema:** Add `search_vector` (tsvector) column to `threads`.
+- **Index:** GIN Index on `search_vector`.
+- **Update Logic:** Generated Column or Trigger to update `search_vector` from `title` + `metadata`.
+- **Query:** `SELECT * FROM threads WHERE tenant_id = :tenantId AND search_vector @@ websearch_to_tsquery('english', :query)`
+
+**4. Subscription Logic Update**
+
+- **DTO:** `SubscriptionDto` (Generic: `targetId`, `targetType`, `title`, `subscribedAt`).
+- **Service:** `SubscriptionService` handles both `THREAD` and `CATEGORY` targets.
+- **Validation:** Ensure `TargetType.CATEGORY` subscriptions validate against `CategoryRepository`.
+- **API:**
+  - `POST /api/v1/categories/{categoryId}/subscriptions`
+  - `DELETE /api/v1/categories/{categoryId}/subscriptions`
+  - `GET /api/v1/subscriptions` returns mixed list of threads and categories.
 
 ## 8\. Agent Implementation Rules (For Antigravity)
 

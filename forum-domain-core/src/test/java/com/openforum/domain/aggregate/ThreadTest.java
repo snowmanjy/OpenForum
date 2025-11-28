@@ -18,7 +18,7 @@ class ThreadTest {
         String title = "Test Thread";
         Map<String, Object> metadata = Map.of("key", "value");
 
-        Thread thread = ThreadFactory.create(tenantId, authorId, title, metadata);
+        Thread thread = ThreadFactory.create(tenantId, authorId, null, title, metadata);
 
         List<Object> events = thread.pollEvents();
         assertThat(events).hasSize(1);
@@ -31,7 +31,7 @@ class ThreadTest {
 
     @Test
     void should_clear_events_after_polling() {
-        Thread thread = ThreadFactory.create("t1", UUID.randomUUID(), "Title", Map.of());
+        Thread thread = ThreadFactory.create("t1", UUID.randomUUID(), null, "Title", Map.of());
 
         assertThat(thread.pollEvents()).isNotEmpty();
         assertThat(thread.pollEvents()).isEmpty();
@@ -103,7 +103,7 @@ class ThreadTest {
 
     @Test
     void should_return_new_list_on_poll() {
-        Thread thread = ThreadFactory.create("t1", UUID.randomUUID(), "Title", Map.of());
+        Thread thread = ThreadFactory.create("t1", UUID.randomUUID(), null, "Title", Map.of());
 
         List<Object> events1 = thread.pollEvents();
         List<Object> events2 = thread.pollEvents();

@@ -12,6 +12,7 @@ public class ThreadMapper {
         entity.setId(domain.getId());
         entity.setTenantId(domain.getTenantId());
         entity.setAuthorId(domain.getAuthorId());
+        entity.setCategoryId(domain.getCategoryId());
         entity.setTitle(domain.getTitle());
         entity.setStatus(domain.getStatus());
         entity.setMetadata(domain.getMetadata());
@@ -24,6 +25,7 @@ public class ThreadMapper {
                 .id(entity.getId())
                 .tenantId(entity.getTenantId())
                 .authorId(entity.getAuthorId())
+                .categoryId(entity.getCategoryId())
                 .title(entity.getTitle())
                 .status(entity.getStatus())
                 .metadata(entity.getMetadata())

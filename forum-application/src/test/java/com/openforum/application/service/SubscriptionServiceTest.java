@@ -1,6 +1,5 @@
 package com.openforum.application.service;
 
-import com.openforum.application.dto.SubscriptionWithThreadDto;
 import com.openforum.domain.aggregate.Subscription;
 import com.openforum.domain.aggregate.Thread;
 import com.openforum.domain.repository.SubscriptionRepository;
@@ -17,7 +16,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -30,6 +28,9 @@ class SubscriptionServiceTest {
 
     @Mock
     private ThreadRepository threadRepository;
+
+    @Mock
+    private com.openforum.domain.repository.CategoryRepository categoryRepository;
 
     @InjectMocks
     private SubscriptionService subscriptionService;
@@ -50,11 +51,13 @@ class SubscriptionServiceTest {
         when(threadRepository.findById(threadId)).thenReturn(Optional.of(thread));
 
         // When
-        List<SubscriptionWithThreadDto> result = subscriptionService.getSubscriptionsForUser("tenant-1", userId, 0, 10);
+        List<com.openforum.application.dto.SubscriptionDto> result = subscriptionService.getSubscriptionsForUser("tenant-1", userId, 0, 10);
 
         // Then
+                
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getThreadId()).isEqualTo(threadId);
-        assertThat(result.get(0).getThreadTitle()).isEqualTo(threadTitle);
+        assertThat(result.get(0).targetId()).isEqualTo(threadId);
+        assertThat(result.get(0).title()).isEqualTo(threadTitle);
+        assertThat(result.get(0).targetType()).isEqualTo(TargetType.THREAD);
     }
 }

@@ -50,7 +50,7 @@ class ThreadRepositoryImplTest {
         @Test
         void should_save_thread_and_events_atomically() {
                 // Given
-                Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), "Integration Test",
+                Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), null, "Integration Test",
                                 Map.of("key", "value"));
                 UUID id = thread.getId();
 
@@ -74,12 +74,12 @@ class ThreadRepositoryImplTest {
         void shouldSaveAllThreadsWithImportEvents() {
                 // Given
                 Thread thread1 = ThreadFactory.createImported(
-                                UUID.randomUUID(), "tenant-import", UUID.randomUUID(), "Import 1",
+                                UUID.randomUUID(), "tenant-import", UUID.randomUUID(), null, "Import 1",
                                 com.openforum.domain.aggregate.ThreadStatus.OPEN, java.time.LocalDateTime.now(),
                                 Map.of(), List.of());
 
                 Thread thread2 = ThreadFactory.createImported(
-                                UUID.randomUUID(), "tenant-import", UUID.randomUUID(), "Import 2",
+                                UUID.randomUUID(), "tenant-import", UUID.randomUUID(), null, "Import 2",
                                 com.openforum.domain.aggregate.ThreadStatus.CLOSED, java.time.LocalDateTime.now(),
                                 Map.of(), List.of());
 
@@ -112,7 +112,7 @@ class ThreadRepositoryImplTest {
                                 java.time.LocalDateTime.now());
 
                 Thread thread = ThreadFactory.createImported(
-                                threadId, "tenant-import", authorId, "Thread with Post",
+                                threadId, "tenant-import", authorId, null, "Thread with Post",
                                 com.openforum.domain.aggregate.ThreadStatus.OPEN, java.time.LocalDateTime.now(),
                                 Map.of(), List.of(postData));
 
