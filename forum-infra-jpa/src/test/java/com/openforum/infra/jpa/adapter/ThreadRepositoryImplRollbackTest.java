@@ -63,7 +63,7 @@ class ThreadRepositoryImplRollbackTest {
         @Test
         void shouldThrowExceptionWhenEventSerializationFails() throws JsonProcessingException {
                 // Given: Thread with event that will fail to serialize
-                Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), "Test", Map.of());
+                Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), null, "Test", Map.of());
                 ThreadEntity mockEntity = new ThreadEntity();
 
                 when(threadMapper.toEntity(thread)).thenReturn(mockEntity);
@@ -89,7 +89,7 @@ class ThreadRepositoryImplRollbackTest {
         @Test
         void shouldThrowExceptionWhenEventSaveFails() throws JsonProcessingException {
                 // Given: Thread with successfully serializable event, but save fails
-                Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), "Test", Map.of());
+                Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), null, "Test", Map.of());
                 ThreadEntity mockEntity = new ThreadEntity();
 
                 when(threadMapper.toEntity(thread)).thenReturn(mockEntity);
@@ -114,7 +114,7 @@ class ThreadRepositoryImplRollbackTest {
         @Test
         void shouldThrowExceptionWhenThreadSaveFails() {
                 // Given: Thread save itself fails
-                Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), "Test", Map.of());
+                Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), null, "Test", Map.of());
                 ThreadEntity mockEntity = new ThreadEntity();
 
                 when(threadMapper.toEntity(thread)).thenReturn(mockEntity);
@@ -135,7 +135,7 @@ class ThreadRepositoryImplRollbackTest {
         @Test
         void shouldPropagateMapperException() {
                 // Given: Mapper throws exception
-                Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), "Test", Map.of());
+                Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), null, "Test", Map.of());
 
                 when(threadMapper.toEntity(thread))
                                 .thenThrow(new IllegalArgumentException("Mapping failed"));
@@ -153,7 +153,7 @@ class ThreadRepositoryImplRollbackTest {
         @Test
         void shouldHandleMultipleEventsWithOneFailure() throws JsonProcessingException {
                 // Given: Thread with 2 events, second event save fails
-                Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), "Test", Map.of());
+                Thread thread = ThreadFactory.create("tenant-1", UUID.randomUUID(), null, "Test", Map.of());
                 // Thread.pollEvents() will return 1 event from ThreadCreatedEvent
                 ThreadEntity mockEntity = new ThreadEntity();
 

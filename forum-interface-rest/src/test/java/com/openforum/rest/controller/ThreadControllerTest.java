@@ -71,7 +71,8 @@ class ThreadControllerTest {
     void createThread_shouldReturnCreated_whenAuthenticated() throws Exception {
         // Given
         CreateThreadRequest request = new CreateThreadRequest("Test Thread", "Content");
-        Thread thread = ThreadFactory.create("default-tenant", testMember.getId(), "Test Thread", java.util.Map.of());
+        Thread thread = ThreadFactory.create("default-tenant", testMember.getId(), null, "Test Thread",
+                java.util.Map.of());
 
         when(threadService.createThread(anyString(), any(UUID.class), anyString())).thenReturn(thread);
 
@@ -88,7 +89,8 @@ class ThreadControllerTest {
     @Test
     void getThread_shouldReturnThread_whenExistsAndAuthenticated() throws Exception {
         // Given
-        Thread thread = ThreadFactory.create("tenant-1", testMember.getId(), "Existing Thread", java.util.Map.of());
+        Thread thread = ThreadFactory.create("tenant-1", testMember.getId(), null, "Existing Thread",
+                java.util.Map.of());
 
         when(threadService.getThread(any(UUID.class))).thenReturn(Optional.of(thread));
 

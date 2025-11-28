@@ -26,7 +26,7 @@ public class SubscriptionController {
             @AuthenticationPrincipal Member member) {
 
         String tenantId = TenantContext.getTenantId();
-        subscriptionService.subscribe(tenantId, member.getId(), threadId);
+        subscriptionService.subscribe(tenantId, member.getId(), threadId, com.openforum.domain.valueobject.TargetType.THREAD);
         return ResponseEntity.ok().build();
     }
 
@@ -37,6 +37,26 @@ public class SubscriptionController {
 
         String tenantId = TenantContext.getTenantId();
         subscriptionService.unsubscribe(tenantId, member.getId(), threadId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/categories/{categoryId}/subscriptions")
+    public ResponseEntity<Void> subscribeCategory(
+            @PathVariable UUID categoryId,
+            @AuthenticationPrincipal Member member) {
+
+        String tenantId = TenantContext.getTenantId();
+        subscriptionService.subscribe(tenantId, member.getId(), categoryId, com.openforum.domain.valueobject.TargetType.CATEGORY);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/categories/{categoryId}/subscriptions")
+    public ResponseEntity<Void> unsubscribeCategory(
+            @PathVariable UUID categoryId,
+            @AuthenticationPrincipal Member member) {
+
+        String tenantId = TenantContext.getTenantId();
+        subscriptionService.unsubscribe(tenantId, member.getId(), categoryId);
         return ResponseEntity.noContent().build();
     }
 
@@ -56,28 +76,8 @@ public class SubscriptionController {
             @RequestParam(defaultValue = "10") int size) {
 
         String tenantId = TenantContext.getTenantId();
-        List<com.openforum.application.dto.SubscriptionWithThreadDto> subscriptions = subscriptionService
+        List<com.openforum.application.dto.SubscriptionDto> subscriptions = subscriptionService
                 .getSubscriptionsForUser(tenantId, member.getId(), page, size);
-
-        // We need total count for pagination metadata.
-        // Ideally SubscriptionService should return a Page object or similar wrapper.
-        // For this task, I'll add a count method to service or just return the list for
-        // now as per requirement "Response: { data: [...], page, total }"
-        // I need to fetch total count.
-        // I'll add countSubscriptionsForUser to SubscriptionService or just use
-        // repository directly if I could (but I can't here).
-        // Let's assume for now I'll just return the data and page, and maybe mock total
-        // or fetch it if I update service.
-        // Wait, the requirement asked for "total".
-        // I should update SubscriptionService to return a Page/Wrapper or add a count
-        // method.
-        // I added `countByUserId` to repository. I should add
-        // `countSubscriptionsForUser` to Service.
-        // But I didn't add it to Service yet.
-        // I will add it to Service in next step or just use a placeholder total for now
-        // to get it compiling, then fix.
-        // Actually, I can't easily add it to service without another edit.
-        // I'll use a placeholder for total for this step and fix it immediately after.
 
         long total = subscriptionService.countSubscriptionsForUser(member.getId());
 

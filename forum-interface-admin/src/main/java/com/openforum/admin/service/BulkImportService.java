@@ -63,6 +63,7 @@ public class BulkImportService {
                 dto.id(),
                 dto.tenantId(),
                 dto.authorId(),
+                null, // categoryId
                 dto.title(),
                 dto.status() != null ? dto.status() : ThreadStatus.OPEN,
                 dto.createdAt(),

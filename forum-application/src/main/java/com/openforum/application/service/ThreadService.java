@@ -20,7 +20,7 @@ public class ThreadService {
 
     @Transactional
     public Thread createThread(String tenantId, UUID authorId, String title) {
-        Thread thread = ThreadFactory.create(tenantId, authorId, title, java.util.Map.of());
+        Thread thread = ThreadFactory.create(tenantId, authorId, null, title, java.util.Map.of());
         threadRepository.save(thread);
         return thread;
     }

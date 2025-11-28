@@ -11,6 +11,7 @@ import com.openforum.infra.jpa.entity.ThreadEntity;
 import com.openforum.infra.jpa.mapper.ThreadMapper;
 import com.openforum.infra.jpa.repository.OutboxEventJpaRepository;
 import com.openforum.infra.jpa.repository.ThreadJpaRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -142,7 +143,7 @@ public class ThreadRepositoryImpl implements ThreadRepository {
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("Failed to serialize thread metadata", e);
             }
-            ps.setLong(7, thread.getVersion());
+            ps.setObject(7, thread.getVersion() != null ? thread.getVersion() : 0L);
         });
 
         // 2. Batch Insert Posts
@@ -168,7 +169,7 @@ public class ThreadRepositoryImpl implements ThreadRepository {
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException("Failed to serialize post metadata", e);
                 }
-                ps.setLong(7, post.getVersion());
+                ps.setObject(7, post.getVersion() != null ? post.getVersion() : 0L);
             });
         }
 
@@ -226,6 +227,14 @@ public class ThreadRepositoryImpl implements ThreadRepository {
                 ps.setTimestamp(5, Timestamp.valueOf(event.getCreatedAt()));
             });
         }
+    }
+
+    @Override
+    public List<Thread> search(String tenantId, String query, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        return threadJpaRepository.search(tenantId, query, pageRequest)
+                .map(threadMapper::toDomain)
+                .getContent();
     }
 
     private OutboxEventEntity toOutboxEntity(Object event) {
