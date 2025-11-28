@@ -256,7 +256,7 @@ Accepts: List of Thread DTOs.
 Behavior: Persists data but suppresses ThreadCreated notification events (or marks them as "Historical")
 -----
 
-## 6\. Implementation Phases (For Agent Execution)
+## 7\. Implementation Phases (For Agent Execution)
 
 **Phase 1: The Skeleton**
 
@@ -279,7 +279,52 @@ Behavior: Persists data but suppresses ThreadCreated notification events (or mar
 - Implement `ThreadController`.
 - Implement `JwtAuthenticationFilter` (The "Trusted Parent" logic).
 
-## 7\. Agent Implementation Rules (For Antigravity)
+**Phase 5: Subscriptions (Core)**
+
+**Goal:** Allow users to subscribe to threads and efficiently query subscribers for notification dispatch.
+
+**1. Domain Model (forum-domain-core)**
+
+- **New Aggregate:** `Subscription`
+  - `id`: UUID
+  - `tenantId`: String
+  - `userId`: UUID
+  - `targetId`: UUID (The Thread ID)
+  - `targetType`: Enum (THREAD)
+  - `createdAt`: LocalDateTime
+- **Business Rule:** A user can only subscribe to a thread once.
+
+### 5.2. Infrastructure
+
+- **Table:** `subscriptions`
+- **Constraints:**
+  - PK: `id`
+  - Unique: `(user_id, target_id)`
+- **Indices:**
+  - `idx_subscription_target`: `(target_id)` (For notification dispatch)
+  - `idx_subscription_user`: `(user_id)` (For "My Subscriptions" list)
+
+### 5.3. Application Service
+
+- **Service:** `SubscriptionService`
+- **Methods:**
+  - `subscribe(tenantId, userId, threadId)`: Idempotent.
+  - `unsubscribe(tenantId, userId, threadId)`: Idempotent.
+  - `getSubscribers(threadId)`: Returns list of User IDs.
+  - `getSubscriptionsForUser(tenantId, userId, page)`: Returns `SubscriptionWithThreadDto` (Aggregate Stitching: Fetches Thread titles).
+
+### 5.4. API
+
+- **Public:**
+  - `POST /api/v1/threads/{threadId}/subscriptions`: Subscribe.
+  - `DELETE /api/v1/threads/{threadId}/subscriptions`: Unsubscribe.
+  - `GET /api/v1/subscriptions`: List my subscriptions (Paginated).
+    - Response: `{ data: [{ threadId, threadTitle, subscribedAt }], page, total }`
+- **Internal:**
+  - `GET /api/v1/threads/{threadId}/subscribers`: Get all subscribers for a thread.
+r IDs to notify.
+
+## 8\. Agent Implementation Rules (For Antigravity)
 
 **Rule 1: No Dual Writes**
 Never write code that saves to the DB and then sends to Kafka/API in the same method. Always use the Outbox table.
