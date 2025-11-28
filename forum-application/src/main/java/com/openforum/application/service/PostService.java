@@ -49,11 +49,6 @@ public class PostService {
         // 3. Create and Save
         Post post = PostFactory.create(threadId, authorId, content, replyToPostId, metadata, member.isBot());
 
-        Post savedPost = postRepository.save(post);
-
-        // Publish events
-        savedPost.pollEvents().forEach(eventPublisher::publishEvent);
-
-        return savedPost;
+        return postRepository.save(post);
     }
 }
