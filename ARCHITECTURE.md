@@ -256,7 +256,7 @@ Accepts: List of Thread DTOs.
 Behavior: Persists data but suppresses ThreadCreated notification events (or marks them as "Historical")
 -----
 
-## 6\. Implementation Phases (For Agent Execution)
+## 7\. Implementation Phases (For Agent Execution)
 
 **Phase 1: The Skeleton**
 
@@ -279,7 +279,42 @@ Behavior: Persists data but suppresses ThreadCreated notification events (or mar
 - Implement `ThreadController`.
 - Implement `JwtAuthenticationFilter` (The "Trusted Parent" logic).
 
-## 7\. Agent Implementation Rules (For Antigravity)
+**Phase 5: Subscriptions (Core)**
+
+**Goal:** Allow users to subscribe to threads and efficiently query subscribers for notification dispatch.
+
+**1. Domain Model (forum-domain-core)**
+
+- **New Aggregate:** `Subscription`
+  - `id`: UUID
+  - `tenantId`: String
+  - `userId`: UUID
+  - `targetId`: UUID (The Thread ID)
+  - `targetType`: Enum (THREAD)
+  - `createdAt`: LocalDateTime
+- **Business Rule:** A user can only subscribe to a thread once.
+
+**2. Infrastructure (forum-infra-jpa)**
+
+- **Entity:** `SubscriptionEntity`
+  - Standard JPA mapping.
+  - **Composite Unique Constraint:** `(user_id, target_id)` to prevent duplicates at the DB level.
+  - **Index:** `idx_subscription_target` on `target_id` (Critical for performance: "Get all users watching Thread X").
+
+**3. Application Service (forum-application)**
+
+- **Service:** `SubscriptionService`
+  - `subscribe(tenantId, userId, threadId)`: Idempotent (if already subscribed, do nothing or return existing).
+  - `unsubscribe(...)`: Removes the record.
+  - `getSubscribers(threadId)`: Returns a list of Member IDs.
+
+**4. API (forum-interface-rest)**
+
+- `POST /api/v1/threads/{threadId}/subscriptions`: Create subscription.
+- `DELETE /api/v1/threads/{threadId}/subscriptions`: Remove subscription.
+- **Internal API (for SaaS):** `GET /api/v1/threads/{threadId}/subscribers`: Returns list of User IDs to notify.
+
+## 8\. Agent Implementation Rules (For Antigravity)
 
 **Rule 1: No Dual Writes**
 Never write code that saves to the DB and then sends to Kafka/API in the same method. Always use the Outbox table.
