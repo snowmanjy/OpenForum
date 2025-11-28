@@ -10,7 +10,8 @@ import java.util.UUID;
 @Table(name = "subscriptions", uniqueConstraints = {
         @UniqueConstraint(name = "uk_subscription_user_target", columnNames = { "user_id", "target_id" })
 }, indexes = {
-        @Index(name = "idx_subscription_target", columnList = "target_id")
+        @Index(name = "idx_subscription_target", columnList = "target_id"),
+        @Index(name = "idx_subscription_user", columnList = "user_id")
 })
 public class SubscriptionEntity {
 

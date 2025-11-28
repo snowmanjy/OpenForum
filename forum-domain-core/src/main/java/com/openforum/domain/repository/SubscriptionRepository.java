@@ -13,4 +13,8 @@ public interface SubscriptionRepository {
     List<Subscription> findByTarget(UUID targetId);
 
     boolean exists(UUID userId, UUID targetId);
+
+    List<Subscription> findByUserId(UUID userId, int page, int size);
+
+    long countByUserId(UUID userId);
 }

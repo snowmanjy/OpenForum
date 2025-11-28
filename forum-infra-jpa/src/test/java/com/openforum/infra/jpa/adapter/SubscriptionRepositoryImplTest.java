@@ -97,4 +97,36 @@ class SubscriptionRepositoryImplTest {
         boolean exists = subscriptionRepository.exists(userId, targetId);
         assertThat(exists).isFalse();
     }
+
+    @Test
+    void should_find_subscriptions_by_user_id_paginated() {
+        // Given
+        UUID userId = UUID.randomUUID();
+        for (int i = 0; i < 5; i++) {
+            Subscription sub = Subscription.create("tenant-1", userId, UUID.randomUUID(), TargetType.THREAD);
+            subscriptionRepository.save(sub);
+        }
+
+        // When
+        List<Subscription> page1 = subscriptionRepository.findByUserId(userId, 0, 3);
+        List<Subscription> page2 = subscriptionRepository.findByUserId(userId, 1, 3);
+
+        // Then
+        assertThat(page1).hasSize(3);
+        assertThat(page2).hasSize(2);
+    }
+
+    @Test
+    void should_count_subscriptions_by_user_id() {
+        // Given
+        UUID userId = UUID.randomUUID();
+        subscriptionRepository.save(Subscription.create("tenant-1", userId, UUID.randomUUID(), TargetType.THREAD));
+        subscriptionRepository.save(Subscription.create("tenant-1", userId, UUID.randomUUID(), TargetType.THREAD));
+
+        // When
+        long count = subscriptionRepository.countByUserId(userId);
+
+        // Then
+        assertThat(count).isEqualTo(2);
+    }
 }

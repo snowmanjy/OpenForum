@@ -48,6 +48,20 @@ public class SubscriptionRepositoryImpl implements SubscriptionRepository {
         return jpaRepository.existsByUserIdAndTargetId(userId, targetId);
     }
 
+    @Override
+    public List<Subscription> findByUserId(UUID userId, int page, int size) {
+        org.springframework.data.domain.PageRequest pageRequest = org.springframework.data.domain.PageRequest.of(page,
+                size, org.springframework.data.domain.Sort.by("createdAt").descending());
+        return jpaRepository.findByUserId(userId, pageRequest).stream()
+                .map(this::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public long countByUserId(UUID userId) {
+        return jpaRepository.countByUserId(userId);
+    }
+
     private Subscription toDomain(SubscriptionEntity entity) {
         return Subscription.reconstitute(
                 entity.getId(),

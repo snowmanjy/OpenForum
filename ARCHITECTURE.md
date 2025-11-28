@@ -294,25 +294,35 @@ Behavior: Persists data but suppresses ThreadCreated notification events (or mar
   - `createdAt`: LocalDateTime
 - **Business Rule:** A user can only subscribe to a thread once.
 
-**2. Infrastructure (forum-infra-jpa)**
+### 5.2. Infrastructure
 
-- **Entity:** `SubscriptionEntity`
-  - Standard JPA mapping.
-  - **Composite Unique Constraint:** `(user_id, target_id)` to prevent duplicates at the DB level.
-  - **Index:** `idx_subscription_target` on `target_id` (Critical for performance: "Get all users watching Thread X").
+- **Table:** `subscriptions`
+- **Constraints:**
+  - PK: `id`
+  - Unique: `(user_id, target_id)`
+- **Indices:**
+  - `idx_subscription_target`: `(target_id)` (For notification dispatch)
+  - `idx_subscription_user`: `(user_id)` (For "My Subscriptions" list)
 
-**3. Application Service (forum-application)**
+### 5.3. Application Service
 
 - **Service:** `SubscriptionService`
-  - `subscribe(tenantId, userId, threadId)`: Idempotent (if already subscribed, do nothing or return existing).
-  - `unsubscribe(...)`: Removes the record.
-  - `getSubscribers(threadId)`: Returns a list of Member IDs.
+- **Methods:**
+  - `subscribe(tenantId, userId, threadId)`: Idempotent.
+  - `unsubscribe(tenantId, userId, threadId)`: Idempotent.
+  - `getSubscribers(threadId)`: Returns list of User IDs.
+  - `getSubscriptionsForUser(tenantId, userId, page)`: Returns `SubscriptionWithThreadDto` (Aggregate Stitching: Fetches Thread titles).
 
-**4. API (forum-interface-rest)**
+### 5.4. API
 
-- `POST /api/v1/threads/{threadId}/subscriptions`: Create subscription.
-- `DELETE /api/v1/threads/{threadId}/subscriptions`: Remove subscription.
-- **Internal API (for SaaS):** `GET /api/v1/threads/{threadId}/subscribers`: Returns list of User IDs to notify.
+- **Public:**
+  - `POST /api/v1/threads/{threadId}/subscriptions`: Subscribe.
+  - `DELETE /api/v1/threads/{threadId}/subscriptions`: Unsubscribe.
+  - `GET /api/v1/subscriptions`: List my subscriptions (Paginated).
+    - Response: `{ data: [{ threadId, threadTitle, subscribedAt }], page, total }`
+- **Internal:**
+  - `GET /api/v1/threads/{threadId}/subscribers`: Get all subscribers for a thread.
+r IDs to notify.
 
 ## 8\. Agent Implementation Rules (For Antigravity)
 

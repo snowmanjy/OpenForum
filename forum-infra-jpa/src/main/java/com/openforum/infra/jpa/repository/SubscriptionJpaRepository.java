@@ -1,6 +1,8 @@
 package com.openforum.infra.jpa.repository;
 
 import com.openforum.infra.jpa.entity.SubscriptionEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,4 +16,8 @@ public interface SubscriptionJpaRepository extends JpaRepository<SubscriptionEnt
     boolean existsByUserIdAndTargetId(UUID userId, UUID targetId);
 
     void deleteByTenantIdAndUserIdAndTargetId(String tenantId, UUID userId, UUID targetId);
+
+    Page<SubscriptionEntity> findByUserId(UUID userId, Pageable pageable);
+
+    long countByUserId(UUID userId);
 }
