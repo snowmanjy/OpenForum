@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1/threads/{threadId}")
+@RequestMapping("/api/v1")
 public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
@@ -20,7 +20,7 @@ public class SubscriptionController {
         this.subscriptionService = subscriptionService;
     }
 
-    @PostMapping("/subscriptions")
+    @PostMapping("/threads/{threadId}/subscriptions")
     public ResponseEntity<Void> subscribe(
             @PathVariable UUID threadId,
             @AuthenticationPrincipal Member member) {
@@ -30,7 +30,7 @@ public class SubscriptionController {
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/subscriptions")
+    @DeleteMapping("/threads/{threadId}/subscriptions")
     public ResponseEntity<Void> unsubscribe(
             @PathVariable UUID threadId,
             @AuthenticationPrincipal Member member) {
@@ -40,7 +40,7 @@ public class SubscriptionController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/subscribers")
+    @GetMapping("/threads/{threadId}/subscribers")
     public ResponseEntity<List<UUID>> getSubscribers(@PathVariable UUID threadId) {
         // Internal API - in real world might need special auth, but for now assuming
         // protected by network or role
