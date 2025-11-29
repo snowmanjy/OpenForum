@@ -17,8 +17,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
-import java.sql.Types;
-import java.time.LocalDateTime;
+
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -189,7 +189,7 @@ public class ThreadRepositoryImpl implements ThreadRepository {
                 .toList());
 
         // B. Generate Sync Events for Data Lake
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         for (Thread thread : threads) {
             // ThreadImportedEvent
             ThreadImportedEvent threadEvent = new ThreadImportedEvent(
@@ -224,7 +224,7 @@ public class ThreadRepositoryImpl implements ThreadRepository {
                 ps.setObject(2, event.getAggregateId()); // Might be null
                 ps.setString(3, event.getType());
                 ps.setString(4, event.getPayload());
-                ps.setTimestamp(5, Timestamp.valueOf(event.getCreatedAt()));
+                ps.setTimestamp(5, Timestamp.from(event.getCreatedAt()));
             });
         }
     }
@@ -252,7 +252,7 @@ public class ThreadRepositoryImpl implements ThreadRepository {
 
             entity.setType(event.getClass().getSimpleName());
             entity.setPayload(objectMapper.writeValueAsString(event));
-            entity.setCreatedAt(LocalDateTime.now());
+            entity.setCreatedAt(java.time.Instant.now());
             return entity;
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to serialize event", e);

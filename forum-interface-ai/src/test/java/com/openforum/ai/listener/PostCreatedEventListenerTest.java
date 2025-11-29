@@ -22,7 +22,7 @@ import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
 import org.springframework.ai.chat.client.ChatClient.CallResponseSpec;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -79,7 +79,7 @@ class PostCreatedEventListenerTest {
                                 UUID.randomUUID(),
                                 UUID.randomUUID(),
                                 "Bot content",
-                                LocalDateTime.now(),
+                                Instant.now(),
                                 true, // isBot = true
                                 List.of());
 
@@ -100,7 +100,7 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 UUID.randomUUID(),
                                 "User content",
-                                LocalDateTime.now(),
+                                Instant.now(),
                                 false,
                                 List.of());
 
@@ -135,7 +135,7 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 UUID.randomUUID(),
                                 "User content",
-                                LocalDateTime.now(),
+                                Instant.now(),
                                 false,
                                 List.of());
 
@@ -171,7 +171,7 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 authorId,
                                 "User question",
-                                LocalDateTime.now(),
+                                Instant.now(),
                                 false,
                                 List.of());
 
@@ -237,7 +237,7 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 UUID.randomUUID(),
                                 "User question",
-                                LocalDateTime.now(),
+                                Instant.now(),
                                 false,
                                 List.of());
 
@@ -272,7 +272,7 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 UUID.randomUUID(),
                                 "User question",
-                                LocalDateTime.now(),
+                                Instant.now(),
                                 false,
                                 List.of());
 
@@ -310,7 +310,7 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 UUID.randomUUID(),
                                 "User question",
-                                LocalDateTime.now(),
+                                Instant.now(),
                                 false,
                                 List.of());
 
@@ -351,7 +351,7 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 UUID.randomUUID(),
                                 "User question",
-                                LocalDateTime.now(),
+                                Instant.now(),
                                 false,
                                 List.of());
 
@@ -374,7 +374,7 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 UUID.randomUUID(),
                                 "User question",
-                                LocalDateTime.now(),
+                                Instant.now(),
                                 false,
                                 List.of());
 
@@ -423,7 +423,7 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 UUID.randomUUID(),
                                 "User question",
-                                LocalDateTime.now(),
+                                Instant.now(),
                                 false,
                                 List.of());
 

@@ -1,14 +1,14 @@
 package com.openforum.application.dto;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 public class SubscriptionWithThreadDto {
     private final UUID threadId;
     private final String threadTitle;
-    private final LocalDateTime subscribedAt;
+    private final Instant subscribedAt;
 
-    public SubscriptionWithThreadDto(UUID threadId, String threadTitle, LocalDateTime subscribedAt) {
+    public SubscriptionWithThreadDto(UUID threadId, String threadTitle, Instant subscribedAt) {
         this.threadId = threadId;
         this.threadTitle = threadTitle;
         this.subscribedAt = subscribedAt;
@@ -22,7 +22,7 @@ public class SubscriptionWithThreadDto {
         return threadTitle;
     }
 
-    public LocalDateTime getSubscribedAt() {
+    public Instant getSubscribedAt() {
         return subscribedAt;
     }
 }

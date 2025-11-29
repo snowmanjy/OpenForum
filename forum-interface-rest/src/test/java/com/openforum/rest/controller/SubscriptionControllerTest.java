@@ -18,7 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -36,116 +36,118 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(SubscriptionController.class)
 @Import({ SecurityConfig.class, JwtAuthenticationFilter.class, MemberJwtAuthenticationConverter.class,
-        JwtConfig.class })
+                JwtConfig.class })
 class SubscriptionControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockBean
-    private SubscriptionService subscriptionService;
+        @MockBean
+        private SubscriptionService subscriptionService;
 
-    @MockBean
-    private MemberRepository memberRepository;
+        @MockBean
+        private MemberRepository memberRepository;
 
-    @MockBean
-    private java.security.interfaces.RSAPublicKey publicKey;
+        @MockBean
+        private java.security.interfaces.RSAPublicKey publicKey;
 
-    private Member testMember;
+        private Member testMember;
 
-    @org.junit.jupiter.api.BeforeEach
-    void setUp() {
-        testMember = Member.reconstitute(UUID.randomUUID(), "ext-123", "test@example.com", "Test User", false);
-    }
+        @org.junit.jupiter.api.BeforeEach
+        void setUp() {
+                testMember = Member.reconstitute(UUID.randomUUID(), "ext-123", "test@example.com", "Test User", false);
+        }
 
-    @org.junit.jupiter.api.AfterEach
-    void tearDown() {
-        com.openforum.rest.context.TenantContext.clear();
-        org.springframework.security.core.context.SecurityContextHolder.clearContext();
-    }
+        @org.junit.jupiter.api.AfterEach
+        void tearDown() {
+                com.openforum.rest.context.TenantContext.clear();
+                org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        }
 
-    @Test
-    void subscribe_shouldReturnOk_whenAuthenticated() throws Exception {
-        // Given
-        UUID threadId = UUID.randomUUID();
-        doNothing().when(subscriptionService).subscribe(anyString(), any(UUID.class), any(UUID.class),
-                any(com.openforum.domain.valueobject.TargetType.class));
+        @Test
+        void subscribe_shouldReturnOk_whenAuthenticated() throws Exception {
+                // Given
+                UUID threadId = UUID.randomUUID();
+                doNothing().when(subscriptionService).subscribe(anyString(), any(UUID.class), any(UUID.class),
+                                any(com.openforum.domain.valueobject.TargetType.class));
 
-        // When & Then
-        mockMvc.perform(post("/api/v1/threads/" + threadId + "/subscriptions")
-                .with(authWithTenant(testMember, "default-tenant")))
-                .andExpect(status().isOk());
-    }
+                // When & Then
+                mockMvc.perform(post("/api/v1/threads/" + threadId + "/subscriptions")
+                                .with(authWithTenant(testMember, "default-tenant")))
+                                .andExpect(status().isOk());
+        }
 
-    @Test
-    void unsubscribe_shouldReturnNoContent_whenAuthenticated() throws Exception {
-        // Given
-        UUID threadId = UUID.randomUUID();
-        doNothing().when(subscriptionService).unsubscribe(anyString(), any(UUID.class), any(UUID.class));
+        @Test
+        void unsubscribe_shouldReturnNoContent_whenAuthenticated() throws Exception {
+                // Given
+                UUID threadId = UUID.randomUUID();
+                doNothing().when(subscriptionService).unsubscribe(anyString(), any(UUID.class), any(UUID.class));
 
-        // When & Then
-        mockMvc.perform(delete("/api/v1/threads/" + threadId + "/subscriptions")
-                .with(authWithTenant(testMember, "default-tenant")))
-                .andExpect(status().isNoContent());
-    }
+                // When & Then
+                mockMvc.perform(delete("/api/v1/threads/" + threadId + "/subscriptions")
+                                .with(authWithTenant(testMember, "default-tenant")))
+                                .andExpect(status().isNoContent());
+        }
 
-    @Test
-    void subscribeCategory_shouldReturnOk_whenAuthenticated() throws Exception {
-        // Given
-        UUID categoryId = UUID.randomUUID();
-        doNothing().when(subscriptionService).subscribe(anyString(), any(UUID.class), any(UUID.class),
-                any(com.openforum.domain.valueobject.TargetType.class));
+        @Test
+        void subscribeCategory_shouldReturnOk_whenAuthenticated() throws Exception {
+                // Given
+                UUID categoryId = UUID.randomUUID();
+                doNothing().when(subscriptionService).subscribe(anyString(), any(UUID.class), any(UUID.class),
+                                any(com.openforum.domain.valueobject.TargetType.class));
 
-        // When & Then
-        mockMvc.perform(post("/api/v1/categories/" + categoryId + "/subscriptions")
-                .with(authWithTenant(testMember, "default-tenant")))
-                .andExpect(status().isOk());
-    }
+                // When & Then
+                mockMvc.perform(post("/api/v1/categories/" + categoryId + "/subscriptions")
+                                .with(authWithTenant(testMember, "default-tenant")))
+                                .andExpect(status().isOk());
+        }
 
-    @Test
-    void unsubscribeCategory_shouldReturnNoContent_whenAuthenticated() throws Exception {
-        // Given
-        UUID categoryId = UUID.randomUUID();
-        doNothing().when(subscriptionService).unsubscribe(anyString(), any(UUID.class), any(UUID.class));
+        @Test
+        void unsubscribeCategory_shouldReturnNoContent_whenAuthenticated() throws Exception {
+                // Given
+                UUID categoryId = UUID.randomUUID();
+                doNothing().when(subscriptionService).unsubscribe(anyString(), any(UUID.class), any(UUID.class));
 
-        // When & Then
-        mockMvc.perform(delete("/api/v1/categories/" + categoryId + "/subscriptions")
-                .with(authWithTenant(testMember, "default-tenant")))
-                .andExpect(status().isNoContent());
-    }
+                // When & Then
+                mockMvc.perform(delete("/api/v1/categories/" + categoryId + "/subscriptions")
+                                .with(authWithTenant(testMember, "default-tenant")))
+                                .andExpect(status().isNoContent());
+        }
 
-    @Test
-    void getMySubscriptions_shouldReturnList_whenAuthenticated() throws Exception {
-        // Given
-        UUID threadId = UUID.randomUUID();
-        com.openforum.application.dto.SubscriptionDto dto = new com.openforum.application.dto.SubscriptionDto(
-                threadId, com.openforum.domain.valueobject.TargetType.THREAD, "Test Thread", LocalDateTime.now());
+        @Test
+        void getMySubscriptions_shouldReturnList_whenAuthenticated() throws Exception {
+                // Given
+                UUID threadId = UUID.randomUUID();
+                com.openforum.application.dto.SubscriptionDto dto = new com.openforum.application.dto.SubscriptionDto(
+                                threadId, com.openforum.domain.valueobject.TargetType.THREAD, "Test Thread",
+                                Instant.now());
 
-        when(subscriptionService.getSubscriptionsForUser(anyString(), any(UUID.class), anyInt(), anyInt()))
-                .thenReturn(List.of(dto));
-        when(subscriptionService.countSubscriptionsForUser(any(UUID.class))).thenReturn(1L);
+                when(subscriptionService.getSubscriptionsForUser(anyString(), any(UUID.class), anyInt(), anyInt()))
+                                .thenReturn(List.of(dto));
+                when(subscriptionService.countSubscriptionsForUser(any(UUID.class))).thenReturn(1L);
 
-        // When & Then
-        mockMvc.perform(get("/api/v1/subscriptions")
-                .with(authWithTenant(testMember, "default-tenant"))
-                .param("page", "0")
-                .param("size", "10"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].title").value("Test Thread"))
-                .andExpect(jsonPath("$.total").value(1));
-    }
+                // When & Then
+                mockMvc.perform(get("/api/v1/subscriptions")
+                                .with(authWithTenant(testMember, "default-tenant"))
+                                .param("page", "0")
+                                .param("size", "10"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.data[0].title").value("Test Thread"))
+                                .andExpect(jsonPath("$.total").value(1));
+        }
 
-    private RequestPostProcessor authWithTenant(Member member, String tenantId) {
-        return request -> {
-            Authentication auth = new UsernamePasswordAuthenticationToken(member, null, Collections.emptyList());
-            request = org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
-                    .authentication(auth)
-                    .postProcessRequest(request);
-            com.openforum.rest.context.TenantContext.setTenantId(tenantId);
-            return request;
-        };
-    }
+        private RequestPostProcessor authWithTenant(Member member, String tenantId) {
+                return request -> {
+                        Authentication auth = new UsernamePasswordAuthenticationToken(member, null,
+                                        Collections.emptyList());
+                        request = org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                                        .authentication(auth)
+                                        .postProcessRequest(request);
+                        com.openforum.rest.context.TenantContext.setTenantId(tenantId);
+                        return request;
+                };
+        }
 }

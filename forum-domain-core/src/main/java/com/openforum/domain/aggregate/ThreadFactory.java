@@ -1,6 +1,6 @@
 package com.openforum.domain.aggregate;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -42,7 +42,7 @@ public class ThreadFactory {
                         UUID categoryId,
                         String title,
                         ThreadStatus status,
-                        LocalDateTime createdAt,
+                        Instant createdAt,
                         Map<String, Object> metadata,
                         List<ImportedPostData> importedPosts) {
 
@@ -86,6 +86,6 @@ public class ThreadFactory {
                         UUID replyToPostId,
                         Map<String, Object> metadata,
                         boolean isBot,
-                        LocalDateTime createdAt) {
+                        Instant createdAt) {
         }
 }

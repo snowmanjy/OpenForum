@@ -2,7 +2,7 @@ package com.openforum.domain.aggregate;
 
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -18,7 +18,7 @@ class ThreadFactoryTest {
                 UUID authorId = UUID.randomUUID();
                 String tenantId = "tenant-123";
                 String title = "Imported Thread";
-                LocalDateTime createdAt = LocalDateTime.of(2023, 1, 1, 0, 0);
+                Instant createdAt = Instant.parse("2023-01-01T00:00:00Z");
 
                 ThreadFactory.ImportedPostData post1 = new ThreadFactory.ImportedPostData(
                                 UUID.randomUUID(),
@@ -27,7 +27,7 @@ class ThreadFactoryTest {
                                 null,
                                 Map.of("key", "value"),
                                 false,
-                                LocalDateTime.of(2023, 1, 1, 1, 0));
+                                Instant.parse("2023-01-01T01:00:00Z"));
 
                 ThreadFactory.ImportedPostData post2 = new ThreadFactory.ImportedPostData(
                                 UUID.randomUUID(),
@@ -36,7 +36,7 @@ class ThreadFactoryTest {
                                 null,
                                 Map.of(),
                                 true,
-                                LocalDateTime.of(2023, 1, 1, 2, 0));
+                                Instant.parse("2023-01-01T02:00:00Z"));
 
                 // When
                 Thread thread = ThreadFactory.createImported(
@@ -77,7 +77,7 @@ class ThreadFactoryTest {
                                 null,
                                 Map.of(),
                                 false,
-                                LocalDateTime.now());
+                                Instant.now());
 
                 // When
                 Thread thread = ThreadFactory.createImported(
@@ -87,7 +87,7 @@ class ThreadFactoryTest {
                                 null, // categoryId
                                 "Thread Title",
                                 ThreadStatus.OPEN,
-                                LocalDateTime.now(),
+                                Instant.now(),
                                 Map.of(),
                                 List.of(postData));
 
@@ -115,7 +115,7 @@ class ThreadFactoryTest {
                                 null,
                                 "Empty Thread",
                                 ThreadStatus.CLOSED,
-                                LocalDateTime.now(),
+                                Instant.now(),
                                 Map.of(),
                                 List.of());
 

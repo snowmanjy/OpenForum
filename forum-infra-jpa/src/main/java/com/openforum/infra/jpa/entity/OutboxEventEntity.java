@@ -6,7 +6,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -22,7 +22,7 @@ public class OutboxEventEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     private String payload;
 
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     // Getters and Setters
     public UUID getId() {
@@ -57,11 +57,11 @@ public class OutboxEventEntity {
         this.payload = payload;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 }
