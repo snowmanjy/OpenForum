@@ -5,8 +5,8 @@ spring:
   application:
     name: forum-interface-rest
   datasource:
-    url: jdbc:postgresql://localhost:5432/forum
-    username: postgres
+    url: jdbc:postgresql://localhost:5432/openforum_db
+    username: openforum
     password: password
   jpa:
     hibernate:
