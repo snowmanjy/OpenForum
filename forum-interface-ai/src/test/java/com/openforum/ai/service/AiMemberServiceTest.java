@@ -5,6 +5,7 @@ import com.openforum.domain.repository.MemberRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -13,6 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -22,7 +24,10 @@ class AiMemberServiceTest {
     @Mock
     private MemberRepository memberRepository;
 
+    @InjectMocks
     private AiMemberService aiMemberService;
+
+    private final String tenantId = "test-tenant";
 
     @BeforeEach
     void setUp() {
@@ -33,10 +38,11 @@ class AiMemberServiceTest {
     void shouldReturnExistingAiMember() {
         // Given
         Member existingMember = Member.create("ai-assistant", "ai@forum.local", "AI Assistant", true);
-        when(memberRepository.findByExternalId("ai-assistant")).thenReturn(Optional.of(existingMember));
+        when(memberRepository.findByExternalId(eq(tenantId), anyString()))
+                .thenReturn(Optional.of(existingMember));
 
         // When
-        Member result = aiMemberService.getOrCreateAiMember();
+        Member result = aiMemberService.getOrCreateAiMember(tenantId);
 
         // Then
         assertThat(result).isEqualTo(existingMember);
@@ -47,17 +53,17 @@ class AiMemberServiceTest {
     @Test
     void shouldCreateNewAiMemberWhenNotExists() {
         // Given
-        when(memberRepository.findByExternalId("ai-assistant")).thenReturn(Optional.empty());
+        when(memberRepository.findByExternalId(eq(tenantId), anyString())).thenReturn(Optional.empty());
         when(memberRepository.save(any(Member.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
-        Member result = aiMemberService.getOrCreateAiMember();
+        Member result = aiMemberService.getOrCreateAiMember(tenantId);
 
         // Then
         assertThat(result).isNotNull();
         assertThat(result.isBot()).isTrue();
         assertThat(result.getName()).isEqualTo("AI Assistant");
-        assertThat(result.getEmail()).isEqualTo("ai@forum.local");
+        assertThat(result.getEmail()).isEqualTo("ai@openforum.com");
         verify(memberRepository).save(any(Member.class));
     }
 }

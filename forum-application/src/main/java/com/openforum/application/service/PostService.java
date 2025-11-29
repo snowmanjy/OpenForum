@@ -5,6 +5,11 @@ import com.openforum.domain.aggregate.Post;
 import com.openforum.domain.aggregate.PostFactory;
 import com.openforum.domain.aggregate.Thread;
 import com.openforum.domain.aggregate.ThreadStatus;
+import com.openforum.domain.aggregate.Member;
+import com.openforum.domain.aggregate.Post;
+import com.openforum.domain.aggregate.PostFactory;
+import com.openforum.domain.aggregate.Thread;
+import com.openforum.domain.aggregate.ThreadStatus;
 import com.openforum.domain.repository.MemberRepository;
 import com.openforum.domain.repository.PostRepository;
 import com.openforum.domain.repository.ThreadRepository;
@@ -12,6 +17,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -33,22 +39,23 @@ public class PostService {
 
     @Transactional
     public Post createPost(UUID threadId, UUID authorId, String content, UUID replyToPostId,
-            Map<String, Object> metadata) {
-        // 1. Load Thread to enforce invariants (Critical Add)
+            Map<String, Object> metadata, List<UUID> mentionedUserIds) {
+        // 1. Verify thread exists
         Thread thread = threadRepository.findById(threadId)
-                .orElseThrow(() -> new IllegalArgumentException("Thread not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Thread not found: " + threadId));
 
         if (thread.getStatus() == ThreadStatus.CLOSED) {
             throw new IllegalStateException("Cannot reply to a closed thread.");
         }
 
-        // 2. Get member
+        // 2. Get member to check if bot
         Member member = memberRepository.findById(authorId)
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
-        // 3. Create and Save
-        Post post = PostFactory.create(threadId, authorId, content, replyToPostId, metadata, member.isBot());
+        // 3. Create post
+        Post post = PostFactory.create(threadId, authorId, content, replyToPostId, member.isBot(), mentionedUserIds);
+        postRepository.save(post);
 
-        return postRepository.save(post);
+        return post;
     }
 }

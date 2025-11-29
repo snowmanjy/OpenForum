@@ -2,6 +2,7 @@ package com.openforum.rest.auth;
 
 import com.openforum.domain.aggregate.Member;
 import com.openforum.domain.repository.MemberRepository;
+import com.openforum.rest.context.TenantContext;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -38,7 +39,8 @@ public class MemberJwtAuthenticationConverter implements Converter<Jwt, Abstract
             return Optional.empty();
         }
 
-        return memberRepository.findByExternalId(externalId)
+        String tenantId = TenantContext.getTenantId();
+        return memberRepository.findByExternalId(tenantId, externalId)
                 .or(() -> {
                     Member newMember = Member.create(externalId, email, name, false);
                     memberRepository.save(newMember);

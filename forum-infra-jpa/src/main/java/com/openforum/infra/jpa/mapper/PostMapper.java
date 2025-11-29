@@ -16,6 +16,7 @@ public class PostMapper {
         entity.setVersion(domain.getVersion());
         entity.setReplyToPostId(domain.getReplyToPostId());
         entity.setMetadata(domain.getMetadata());
+        entity.setMentionedUserIds(domain.getMentionedUserIds());
         return entity;
     }
 
@@ -28,6 +29,7 @@ public class PostMapper {
                 .version(entity.getVersion())
                 .replyToPostId(entity.getReplyToPostId())
                 .metadata(entity.getMetadata())
+                .mentionedUserIds(entity.getMentionedUserIds())
                 .build();
     }
 }

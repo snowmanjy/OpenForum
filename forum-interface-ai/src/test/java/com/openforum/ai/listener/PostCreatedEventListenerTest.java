@@ -79,8 +79,9 @@ class PostCreatedEventListenerTest {
                                 UUID.randomUUID(),
                                 UUID.randomUUID(),
                                 "Bot content",
+                                LocalDateTime.now(),
                                 true, // isBot = true
-                                LocalDateTime.now());
+                                List.of());
 
                 // When
                 listener.onPostCreated(event);
@@ -99,8 +100,9 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 UUID.randomUUID(),
                                 "User content",
+                                LocalDateTime.now(),
                                 false,
-                                LocalDateTime.now());
+                                List.of());
 
                 Thread thread = Thread.builder()
                                 .id(threadId)
@@ -133,8 +135,9 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 UUID.randomUUID(),
                                 "User content",
+                                LocalDateTime.now(),
                                 false,
-                                LocalDateTime.now());
+                                List.of());
 
                 Thread thread = Thread.builder()
                                 .id(threadId)
@@ -168,8 +171,9 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 authorId,
                                 "User question",
+                                LocalDateTime.now(),
                                 false,
-                                LocalDateTime.now());
+                                List.of());
 
                 Thread thread = Thread.builder()
                                 .id(threadId)
@@ -200,7 +204,7 @@ class PostCreatedEventListenerTest {
                 when(tenantAiConfigService.getConfig("tenant123")).thenReturn(Optional.of(config));
                 when(textEncryptor.decrypt("encrypted_key")).thenReturn("decrypted_api_key");
                 when(postRepository.findByThreadId(threadId, 10)).thenReturn(List.of(recentPost));
-                when(aiMemberService.getOrCreateAiMember()).thenReturn(aiMember);
+                when(aiMemberService.getOrCreateAiMember("tenant123")).thenReturn(aiMember);
 
                 // Mock ChatClient chain
                 when(chatClientFactory.createClient("decrypted_api_key", "gpt-4")).thenReturn(chatClient);
@@ -220,7 +224,8 @@ class PostCreatedEventListenerTest {
                                 eq(aiMember.getId()),
                                 eq("AI generated response"),
                                 eq(postId),
-                                eq(Map.of()));
+                                eq(Map.of()),
+                                eq(List.of()));
         }
 
         @Test
@@ -232,8 +237,9 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 UUID.randomUUID(),
                                 "User question",
+                                LocalDateTime.now(),
                                 false,
-                                LocalDateTime.now());
+                                List.of());
 
                 Thread thread = Thread.builder()
                                 .id(threadId)
@@ -266,8 +272,9 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 UUID.randomUUID(),
                                 "User question",
+                                LocalDateTime.now(),
                                 false,
-                                LocalDateTime.now());
+                                List.of());
 
                 Thread thread = Thread.builder()
                                 .id(threadId)
@@ -303,8 +310,9 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 UUID.randomUUID(),
                                 "User question",
+                                LocalDateTime.now(),
                                 false,
-                                LocalDateTime.now());
+                                List.of());
 
                 Thread thread = Thread.builder()
                                 .id(threadId)
@@ -343,8 +351,9 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 UUID.randomUUID(),
                                 "User question",
+                                LocalDateTime.now(),
                                 false,
-                                LocalDateTime.now());
+                                List.of());
 
                 when(threadRepository.findById(threadId)).thenReturn(Optional.empty());
 
@@ -365,8 +374,9 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 UUID.randomUUID(),
                                 "User question",
+                                LocalDateTime.now(),
                                 false,
-                                LocalDateTime.now());
+                                List.of());
 
                 Thread thread = Thread.builder()
                                 .id(threadId)
@@ -389,7 +399,7 @@ class PostCreatedEventListenerTest {
                 when(systemSpec.user(anyString())).thenReturn(requestSpec);
                 when(requestSpec.call()).thenReturn(callSpec);
                 when(callSpec.content()).thenReturn(""); // Empty response
-                when(aiMemberService.getOrCreateAiMember()).thenReturn(aiMember);
+                when(aiMemberService.getOrCreateAiMember("tenant123")).thenReturn(aiMember);
 
                 // When
                 listener.onPostCreated(event);
@@ -400,7 +410,8 @@ class PostCreatedEventListenerTest {
                                 eq(aiMember.getId()),
                                 eq(""), // Empty content
                                 any(),
-                                eq(Map.of()));
+                                eq(Map.of()),
+                                eq(List.of()));
         }
 
         @Test
@@ -412,8 +423,9 @@ class PostCreatedEventListenerTest {
                                 threadId,
                                 UUID.randomUUID(),
                                 "User question",
+                                LocalDateTime.now(),
                                 false,
-                                LocalDateTime.now());
+                                List.of());
 
                 Thread thread = Thread.builder()
                                 .id(threadId)
@@ -436,7 +448,7 @@ class PostCreatedEventListenerTest {
                 when(systemSpec.user(anyString())).thenReturn(requestSpec);
                 when(requestSpec.call()).thenReturn(callSpec);
                 when(callSpec.content()).thenReturn(null); // Null response
-                when(aiMemberService.getOrCreateAiMember()).thenReturn(aiMember);
+                when(aiMemberService.getOrCreateAiMember("tenant123")).thenReturn(aiMember);
 
                 // When
                 listener.onPostCreated(event);

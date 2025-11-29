@@ -25,6 +25,11 @@ public class PostEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> metadata;
 
+    @jakarta.persistence.ElementCollection
+    @jakarta.persistence.CollectionTable(name = "post_mentions", joinColumns = @jakarta.persistence.JoinColumn(name = "post_id"))
+    @jakarta.persistence.Column(name = "user_id")
+    private java.util.List<UUID> mentionedUserIds = new java.util.ArrayList<>();
+
     // Getters and Setters
     public UUID getId() {
         return id;
@@ -80,5 +85,13 @@ public class PostEntity {
 
     public void setMetadata(Map<String, Object> metadata) {
         this.metadata = metadata;
+    }
+
+    public java.util.List<UUID> getMentionedUserIds() {
+        return mentionedUserIds;
+    }
+
+    public void setMentionedUserIds(java.util.List<UUID> mentionedUserIds) {
+        this.mentionedUserIds = mentionedUserIds;
     }
 }

@@ -72,7 +72,7 @@ class PostControllerTest {
     void createPost_shouldReturnCreated_whenAuthenticated() throws Exception {
         // Given
         UUID threadId = UUID.randomUUID();
-        CreatePostRequest request = new CreatePostRequest("Test Content", null, null);
+        CreatePostRequest request = new CreatePostRequest("Test Content", null, null, null);
         UUID postId = UUID.randomUUID();
         Post post = Post.builder()
                 .id(postId)
@@ -82,7 +82,7 @@ class PostControllerTest {
                 .isNew(true)
                 .build();
 
-        when(postService.createPost(eq(threadId), eq(testMember.getId()), anyString(), any(), any()))
+        when(postService.createPost(eq(threadId), eq(testMember.getId()), anyString(), any(), any(), any()))
                 .thenReturn(post);
 
         // When & Then
