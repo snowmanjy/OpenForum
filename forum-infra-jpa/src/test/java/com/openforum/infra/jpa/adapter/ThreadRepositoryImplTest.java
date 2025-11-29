@@ -75,12 +75,12 @@ class ThreadRepositoryImplTest {
                 // Given
                 Thread thread1 = ThreadFactory.createImported(
                                 UUID.randomUUID(), "tenant-import", UUID.randomUUID(), null, "Import 1",
-                                com.openforum.domain.aggregate.ThreadStatus.OPEN, java.time.LocalDateTime.now(),
+                                com.openforum.domain.aggregate.ThreadStatus.OPEN, java.time.Instant.now(),
                                 Map.of(), List.of());
 
                 Thread thread2 = ThreadFactory.createImported(
                                 UUID.randomUUID(), "tenant-import", UUID.randomUUID(), null, "Import 2",
-                                com.openforum.domain.aggregate.ThreadStatus.CLOSED, java.time.LocalDateTime.now(),
+                                com.openforum.domain.aggregate.ThreadStatus.CLOSED, java.time.Instant.now(),
                                 Map.of(), List.of());
 
                 int initialEventCount = outboxEventJpaRepository.findAll().size();
@@ -109,11 +109,11 @@ class ThreadRepositoryImplTest {
 
                 ThreadFactory.ImportedPostData postData = new ThreadFactory.ImportedPostData(
                                 UUID.randomUUID(), authorId, "Post Content", null, Map.of(), false,
-                                java.time.LocalDateTime.now());
+                                java.time.Instant.now());
 
                 Thread thread = ThreadFactory.createImported(
                                 threadId, "tenant-import", authorId, null, "Thread with Post",
-                                com.openforum.domain.aggregate.ThreadStatus.OPEN, java.time.LocalDateTime.now(),
+                                com.openforum.domain.aggregate.ThreadStatus.OPEN, java.time.Instant.now(),
                                 Map.of(), List.of(postData));
 
                 // When

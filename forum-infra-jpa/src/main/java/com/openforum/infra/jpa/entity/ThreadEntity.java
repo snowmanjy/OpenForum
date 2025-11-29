@@ -10,6 +10,7 @@ import jakarta.persistence.Version;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
@@ -30,6 +31,8 @@ public class ThreadEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> metadata;
+
+    private Instant createdAt;
 
     @Version
     private Long version;
@@ -97,5 +100,13 @@ public class ThreadEntity {
 
     public void setVersion(Long version) {
         this.version = version;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 }

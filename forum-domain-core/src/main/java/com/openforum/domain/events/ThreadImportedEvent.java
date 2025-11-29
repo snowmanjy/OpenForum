@@ -1,12 +1,12 @@
 package com.openforum.domain.events;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 public record ThreadImportedEvent(
-        UUID threadId,
-        String tenantId,
-        UUID authorId,
-        String title,
-        LocalDateTime occurredOn) {
+                UUID threadId,
+                String tenantId,
+                UUID authorId,
+                String title,
+                Instant createdAt) implements DomainEvent {
 }

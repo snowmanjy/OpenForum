@@ -14,7 +14,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -74,7 +73,7 @@ public class PostRepositoryImpl implements PostRepository {
             entity.setId(UUID.randomUUID());
             entity.setType(event.getClass().getSimpleName());
             entity.setPayload(objectMapper.writeValueAsString(event));
-            entity.setCreatedAt(LocalDateTime.now());
+            entity.setCreatedAt(java.time.Instant.now());
             return entity;
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to serialize event", e);

@@ -14,7 +14,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -41,7 +41,7 @@ class BulkImportServiceTest {
         UUID threadId = UUID.randomUUID();
         UUID authorId = UUID.randomUUID();
         UUID postId = UUID.randomUUID();
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         ImportPostDto postDto = new ImportPostDto(
                 postId,
@@ -50,8 +50,7 @@ class BulkImportServiceTest {
                 null,
                 Map.of(),
                 false,
-                now
-        );
+                now);
 
         ImportThreadDto threadDto = new ImportThreadDto(
                 threadId,
@@ -61,8 +60,7 @@ class BulkImportServiceTest {
                 ThreadStatus.OPEN,
                 now,
                 Map.of(),
-                List.of(postDto)
-        );
+                List.of(postDto));
 
         BulkImportRequest request = new BulkImportRequest(List.of(threadDto));
 
@@ -79,12 +77,12 @@ class BulkImportServiceTest {
 
         List<Thread> savedThreads = captor.getValue();
         assertThat(savedThreads).hasSize(1);
-        
+
         Thread savedThread = savedThreads.get(0);
         assertThat(savedThread.getId()).isEqualTo(threadId);
         assertThat(savedThread.getPosts()).hasSize(1);
         assertThat(savedThread.getPosts().get(0).getId()).isEqualTo(postId);
-        
+
         // Critical: Verify no events generated
         assertThat(savedThread.pollEvents()).isEmpty();
     }

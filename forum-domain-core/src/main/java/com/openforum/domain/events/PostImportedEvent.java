@@ -1,13 +1,13 @@
 package com.openforum.domain.events;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 public record PostImportedEvent(
-        UUID postId,
-        UUID threadId,
-        UUID authorId,
-        String content,
-        boolean isBot,
-        LocalDateTime createdAt) {
+                UUID postId,
+                UUID threadId,
+                UUID authorId,
+                String content,
+                boolean isBot,
+                Instant createdAt) implements DomainEvent {
 }

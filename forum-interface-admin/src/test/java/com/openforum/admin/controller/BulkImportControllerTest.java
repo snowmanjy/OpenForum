@@ -16,7 +16,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -31,66 +31,64 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(TestConfig.class)
 class BulkImportControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockBean
-    private BulkImportService bulkImportService;
+        @MockBean
+        private BulkImportService bulkImportService;
 
-    @Test
-    void shouldImportThreadsSuccessfully() throws Exception {
-        // Given
-        UUID threadId = UUID.randomUUID();
-        UUID authorId = UUID.randomUUID();
-        LocalDateTime now = LocalDateTime.now();
+        @Test
+        void shouldImportThreadsSuccessfully() throws Exception {
+                // Given
+                UUID threadId = UUID.randomUUID();
+                UUID authorId = UUID.randomUUID();
+                Instant now = Instant.now();
 
-        ImportPostDto postDto = new ImportPostDto(
-                UUID.randomUUID(),
-                authorId,
-                "Test Content",
-                null,
-                Map.of(),
-                false,
-                now
-        );
+                ImportPostDto postDto = new ImportPostDto(
+                                UUID.randomUUID(),
+                                authorId,
+                                "Test Content",
+                                null,
+                                Map.of(),
+                                false,
+                                now);
 
-        ImportThreadDto threadDto = new ImportThreadDto(
-                threadId,
-                "tenant-1",
-                authorId,
-                "Test Thread",
-                ThreadStatus.OPEN,
-                now,
-                Map.of(),
-                List.of(postDto)
-        );
+                ImportThreadDto threadDto = new ImportThreadDto(
+                                threadId,
+                                "tenant-1",
+                                authorId,
+                                "Test Thread",
+                                ThreadStatus.OPEN,
+                                now,
+                                Map.of(),
+                                List.of(postDto));
 
-        BulkImportRequest request = new BulkImportRequest(List.of(threadDto));
-        BulkImportResponse response = BulkImportResponse.success(1, 1);
+                BulkImportRequest request = new BulkImportRequest(List.of(threadDto));
+                BulkImportResponse response = BulkImportResponse.success(1, 1);
 
-        when(bulkImportService.importThreads(any(BulkImportRequest.class))).thenReturn(response);
+                when(bulkImportService.importThreads(any(BulkImportRequest.class))).thenReturn(response);
 
-        // When/Then
-        mockMvc.perform(post("/admin/v1/bulk/import")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.threadsImported").value(1))
-                .andExpect(jsonPath("$.postsImported").value(1));
-    }
+                // When/Then
+                mockMvc.perform(post("/admin/v1/bulk/import")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.threadsImported").value(1))
+                                .andExpect(jsonPath("$.postsImported").value(1));
+        }
 
-    @Test
-    void shouldReturnBadRequestForInvalidInput() throws Exception {
-        // Given - Empty request
-        BulkImportRequest request = new BulkImportRequest(List.of());
+        @Test
+        void shouldReturnBadRequestForInvalidInput() throws Exception {
+                // Given - Empty request
+                BulkImportRequest request = new BulkImportRequest(List.of());
 
-        // When/Then
-        mockMvc.perform(post("/admin/v1/bulk/import")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
-    }
+                // When/Then
+                mockMvc.perform(post("/admin/v1/bulk/import")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isBadRequest());
+        }
 }

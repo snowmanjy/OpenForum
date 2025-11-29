@@ -6,6 +6,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
@@ -29,6 +30,8 @@ public class PostEntity {
     @jakarta.persistence.CollectionTable(name = "post_mentions", joinColumns = @jakarta.persistence.JoinColumn(name = "post_id"))
     @jakarta.persistence.Column(name = "user_id")
     private java.util.List<UUID> mentionedUserIds = new java.util.ArrayList<>();
+
+    private Instant createdAt;
 
     // Getters and Setters
     public UUID getId() {
@@ -93,5 +96,13 @@ public class PostEntity {
 
     public void setMentionedUserIds(java.util.List<UUID> mentionedUserIds) {
         this.mentionedUserIds = mentionedUserIds;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 }

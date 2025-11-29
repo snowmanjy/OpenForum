@@ -2,7 +2,7 @@ package com.openforum.domain.aggregate;
 
 import com.openforum.domain.events.PostCreatedEvent;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +17,7 @@ public class Post {
     private final Long version;
     private final UUID replyToPostId;
     private final Map<String, Object> metadata;
-    private final LocalDateTime createdAt;
+    private final Instant createdAt;
     private final List<UUID> mentionedUserIds;
 
     private final List<Object> domainEvents = new ArrayList<>();
@@ -30,7 +30,7 @@ public class Post {
         this.version = builder.version;
         this.replyToPostId = builder.replyToPostId;
         this.metadata = builder.metadata != null ? Map.copyOf(builder.metadata) : Map.of();
-        this.createdAt = builder.createdAt != null ? builder.createdAt : LocalDateTime.now();
+        this.createdAt = builder.createdAt != null ? builder.createdAt : Instant.now();
         this.mentionedUserIds = builder.mentionedUserIds != null ? List.copyOf(builder.mentionedUserIds) : List.of();
 
         if (builder.isNew) {
@@ -52,7 +52,7 @@ public class Post {
         private Long version;
         private UUID replyToPostId;
         private Map<String, Object> metadata;
-        private LocalDateTime createdAt;
+        private Instant createdAt;
         private List<UUID> mentionedUserIds;
         private boolean isNew = false;
         private boolean isBot = false;
@@ -92,7 +92,7 @@ public class Post {
             return this;
         }
 
-        public Builder createdAt(LocalDateTime createdAt) {
+        public Builder createdAt(Instant createdAt) {
             this.createdAt = createdAt;
             return this;
         }
@@ -145,7 +145,7 @@ public class Post {
         return metadata;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 

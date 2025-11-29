@@ -2,7 +2,8 @@ package com.openforum.domain.aggregate;
 
 import com.openforum.domain.valueobject.TargetType;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
 public class Subscription {
@@ -12,10 +13,10 @@ public class Subscription {
     private final UUID userId;
     private final UUID targetId;
     private final TargetType targetType;
-    private final LocalDateTime createdAt;
+    private final Instant createdAt;
 
     private Subscription(UUID id, String tenantId, UUID userId, UUID targetId, TargetType targetType,
-            LocalDateTime createdAt) {
+            Instant createdAt) {
         this.id = id;
         this.tenantId = tenantId;
         this.userId = userId;
@@ -44,12 +45,12 @@ public class Subscription {
                 userId,
                 targetId,
                 targetType,
-                LocalDateTime.now());
+                Instant.now());
     }
 
     // Reconstitute from persistence
     public static Subscription reconstitute(UUID id, String tenantId, UUID userId, UUID targetId, TargetType targetType,
-            LocalDateTime createdAt) {
+            Instant createdAt) {
         return new Subscription(id, tenantId, userId, targetId, targetType, createdAt);
     }
 
@@ -73,7 +74,7 @@ public class Subscription {
         return targetType;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 }

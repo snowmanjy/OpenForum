@@ -3,7 +3,7 @@ package com.openforum.infra.jpa.entity;
 import com.openforum.domain.valueobject.TargetType;
 import jakarta.persistence.*;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -32,7 +32,7 @@ public class SubscriptionEntity {
     private TargetType targetType;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     // Getters and Setters
 
@@ -76,11 +76,11 @@ public class SubscriptionEntity {
         this.targetType = targetType;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 }

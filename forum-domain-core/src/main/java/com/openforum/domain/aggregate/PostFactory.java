@@ -2,7 +2,7 @@ package com.openforum.domain.aggregate;
 
 import com.openforum.domain.events.PostCreatedEvent;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -64,7 +64,7 @@ public class PostFactory {
                         UUID replyToPostId,
                         Map<String, Object> metadata,
                         boolean isBot,
-                        LocalDateTime createdAt) {
+                        Instant createdAt) {
                 return Post.builder()
                                 .id(id)
                                 .threadId(threadId)

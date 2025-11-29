@@ -1,12 +1,12 @@
 package com.openforum.domain.aggregate;
 
 import com.openforum.domain.events.ThreadCreatedEvent;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+
 import java.util.UUID;
 
 public class Thread {
@@ -35,7 +35,7 @@ public class Thread {
         this.metadata = builder.metadata != null ? Map.copyOf(builder.metadata) : Map.of();
         this.version = builder.version;
         if (builder.isNew) {
-            this.domainEvents.add(new ThreadCreatedEvent(id, tenantId, authorId, title, LocalDateTime.now()));
+            this.domainEvents.add(new ThreadCreatedEvent(id, tenantId, authorId, title, Instant.now()));
         }
     }
 
