@@ -1,6 +1,7 @@
 package com.openforum.domain.aggregate;
 
 import com.openforum.domain.events.ThreadCreatedEvent;
+import com.openforum.domain.factory.ThreadFactory;
 
 import org.junit.jupiter.api.Test;
 import java.util.List;

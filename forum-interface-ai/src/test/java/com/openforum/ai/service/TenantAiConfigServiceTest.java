@@ -2,7 +2,7 @@ package com.openforum.ai.service;
 
 import com.openforum.ai.config.TenantAiConfig;
 import com.openforum.domain.aggregate.Tenant;
-import com.openforum.domain.aggregate.TenantFactory;
+import com.openforum.domain.factory.TenantFactory;
 import com.openforum.domain.repository.TenantRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

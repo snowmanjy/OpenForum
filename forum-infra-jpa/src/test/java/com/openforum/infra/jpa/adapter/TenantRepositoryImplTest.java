@@ -42,7 +42,7 @@ class TenantRepositoryImplTest {
     void should_save_and_retrieve_tenant() {
         // Given
         String tenantId = "tenant-1";
-        Tenant tenant = com.openforum.domain.aggregate.TenantFactory.create(tenantId, Map.of("key", "value"));
+        Tenant tenant = com.openforum.domain.factory.TenantFactory.create(tenantId, Map.of("key", "value"));
 
         // When
         tenantRepository.save(tenant);

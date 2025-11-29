@@ -27,7 +27,7 @@ public class TenantService {
                 .orElseThrow(() -> new IllegalArgumentException("Tenant not found: " + tenantId));
 
         // Create new tenant with updated config using factory
-        Tenant updatedTenant = com.openforum.domain.aggregate.TenantFactory.create(tenant.getId(), config);
+        Tenant updatedTenant = com.openforum.domain.factory.TenantFactory.create(tenant.getId(), config);
         return tenantRepository.save(updatedTenant);
     }
 }

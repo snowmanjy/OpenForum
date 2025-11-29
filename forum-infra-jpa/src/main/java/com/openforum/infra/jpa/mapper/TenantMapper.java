@@ -1,7 +1,7 @@
 package com.openforum.infra.jpa.mapper;
 
 import com.openforum.domain.aggregate.Tenant;
-import com.openforum.domain.aggregate.TenantFactory;
+import com.openforum.domain.factory.TenantFactory;
 import com.openforum.infra.jpa.entity.TenantEntity;
 import org.springframework.stereotype.Component;
 

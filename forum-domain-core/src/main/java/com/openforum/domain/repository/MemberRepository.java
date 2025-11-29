@@ -14,4 +14,6 @@ public interface MemberRepository {
     List<Member> searchByHandleOrName(String tenantId, String query, int limit);
 
     Optional<Member> findById(UUID id);
+
+    boolean existsAllById(List<UUID> ids);
 }

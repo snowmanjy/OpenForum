@@ -74,7 +74,7 @@ class TenantControllerTest {
     void getTenant_shouldReturnTenant_whenExists() throws Exception {
         // Given
         String tenantId = "tenant-1";
-        Tenant tenant = com.openforum.domain.aggregate.TenantFactory.create(tenantId, Map.of("key", "value"));
+        Tenant tenant = com.openforum.domain.factory.TenantFactory.create(tenantId, Map.of("key", "value"));
         when(tenantService.getTenant(tenantId)).thenReturn(Optional.of(tenant));
 
         // When & Then
@@ -104,7 +104,7 @@ class TenantControllerTest {
         Map<String, Object> newConfig = Map.of("key", "new");
         UpdateTenantConfigRequest request = new UpdateTenantConfigRequest(newConfig);
 
-        Tenant updatedTenant = com.openforum.domain.aggregate.TenantFactory.create(tenantId, newConfig);
+        Tenant updatedTenant = com.openforum.domain.factory.TenantFactory.create(tenantId, newConfig);
         when(tenantService.updateTenantConfig(eq(tenantId), any())).thenReturn(updatedTenant);
 
         // When & Then

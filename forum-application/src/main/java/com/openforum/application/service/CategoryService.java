@@ -1,7 +1,7 @@
 package com.openforum.application.service;
 
 import com.openforum.domain.aggregate.Category;
-import com.openforum.domain.aggregate.CategoryFactory;
+import com.openforum.domain.factory.CategoryFactory;
 import com.openforum.domain.repository.CategoryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
