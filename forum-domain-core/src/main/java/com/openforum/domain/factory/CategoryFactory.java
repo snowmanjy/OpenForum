@@ -1,4 +1,6 @@
-package com.openforum.domain.aggregate;
+package com.openforum.domain.factory;
+
+import com.openforum.domain.aggregate.*;
 
 public class CategoryFactory {
     public static Category create(String tenantId, String name, String slug, String description, boolean isReadOnly) {

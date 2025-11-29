@@ -3,7 +3,7 @@ package com.openforum.infra.jpa.adapter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openforum.domain.aggregate.Thread;
-import com.openforum.domain.aggregate.ThreadFactory;
+import com.openforum.domain.factory.ThreadFactory;
 import com.openforum.infra.jpa.entity.OutboxEventEntity;
 import com.openforum.infra.jpa.entity.ThreadEntity;
 import com.openforum.infra.jpa.mapper.ThreadMapper;

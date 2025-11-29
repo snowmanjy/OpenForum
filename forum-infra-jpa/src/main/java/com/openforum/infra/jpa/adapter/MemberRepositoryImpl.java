@@ -51,6 +51,14 @@ public class MemberRepositoryImpl implements MemberRepository {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public boolean existsAllById(List<UUID> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return true;
+        }
+        return memberJpaRepository.countByIdIn(ids) == ids.size();
+    }
+
     private MemberEntity toEntity(Member domain) {
         return new MemberEntity(
                 domain.getId(),

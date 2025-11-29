@@ -1,6 +1,7 @@
 package com.openforum.domain.aggregate;
 
 import com.openforum.domain.events.ThreadCreatedEvent;
+import com.openforum.domain.factory.PostFactory;
 import java.time.Instant;
 import java.util.ArrayList;
 
@@ -141,7 +142,7 @@ public class Thread {
      * 
      * @param post Pre-existing post to add
      */
-    void addImportedPost(Post post) {
+    public void addImportedPost(Post post) {
         this.posts.add(post);
     }
 

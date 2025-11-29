@@ -1,7 +1,7 @@
 package com.openforum.infra.jpa.adapter;
 
 import com.openforum.domain.aggregate.Thread;
-import com.openforum.domain.aggregate.ThreadFactory;
+import com.openforum.domain.factory.ThreadFactory;
 import com.openforum.domain.repository.ThreadRepository;
 import com.openforum.infra.jpa.config.JpaTestConfig;
 import org.junit.jupiter.api.Test;

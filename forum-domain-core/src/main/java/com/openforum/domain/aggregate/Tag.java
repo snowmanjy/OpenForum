@@ -8,7 +8,7 @@ public class Tag {
     private final String name;
     private long usageCount;
 
-    Tag(UUID id, String tenantId, String name, long usageCount) {
+    public Tag(UUID id, String tenantId, String name, long usageCount) {
         this.id = id;
         this.tenantId = tenantId;
         this.name = name;

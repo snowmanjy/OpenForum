@@ -1,4 +1,6 @@
-package com.openforum.domain.aggregate;
+package com.openforum.domain.factory;
+
+import com.openforum.domain.aggregate.*;
 
 import java.util.Map;
 

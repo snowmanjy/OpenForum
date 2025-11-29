@@ -1,7 +1,7 @@
 package com.openforum.infra.jpa.adapter;
 
 import com.openforum.domain.aggregate.Post;
-import com.openforum.domain.aggregate.PostFactory;
+import com.openforum.domain.factory.PostFactory;
 import com.openforum.domain.repository.PostRepository;
 import com.openforum.infra.jpa.config.JpaTestConfig;
 import com.openforum.infra.jpa.entity.OutboxEventEntity;

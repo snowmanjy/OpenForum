@@ -16,4 +16,6 @@ public interface MemberJpaRepository extends JpaRepository<MemberEntity, UUID> {
     @Query("SELECT m FROM MemberEntity m WHERE m.tenantId = :tenantId AND (LOWER(m.name) LIKE LOWER(:query) OR LOWER(m.email) LIKE LOWER(:query))")
     List<MemberEntity> searchByHandleOrName(@Param("tenantId") String tenantId, @Param("query") String query,
             Pageable pageable);
+
+    long countByIdIn(List<UUID> ids);
 }

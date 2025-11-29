@@ -24,6 +24,17 @@ public class OutboxEventEntity {
 
     private Instant createdAt;
 
+    public OutboxEventEntity() {
+    }
+
+    public OutboxEventEntity(UUID id, UUID aggregateId, String type, String payload, Instant createdAt) {
+        this.id = id;
+        this.aggregateId = aggregateId;
+        this.type = type;
+        this.payload = payload;
+        this.createdAt = createdAt;
+    }
+
     // Getters and Setters
     public UUID getId() {
         return id;

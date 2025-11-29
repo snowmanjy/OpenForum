@@ -51,7 +51,7 @@ public class Category {
     }
 
     // Factory access
-    static Category create(String tenantId, String name, String slug, String description, boolean isReadOnly) {
+    public static Category create(String tenantId, String name, String slug, String description, boolean isReadOnly) {
         return new Category(UUID.randomUUID(), tenantId, name, slug, description, isReadOnly);
     }
 }

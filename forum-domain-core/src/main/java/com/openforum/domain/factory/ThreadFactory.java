@@ -1,4 +1,8 @@
-package com.openforum.domain.aggregate;
+package com.openforum.domain.factory;
+
+import com.openforum.domain.aggregate.Post;
+import com.openforum.domain.aggregate.Thread;
+import com.openforum.domain.aggregate.ThreadStatus;
 
 import java.time.Instant;
 import java.util.List;
