@@ -170,13 +170,27 @@ public class PostCreatedEventListener {
      * @param replyCtx context containing the generated AI reply
      */
     private void postAiReply(AiReplyContext replyCtx) {
-        Member aiMember = aiMemberService.getOrCreateAiMember();
+        // We need tenantId here. It's not directly in AiReplyContext, but we can get it
+        // from the thread or config if we had it.
+        // Wait, AiReplyContext has AiContext which has TenantAiConfig, but
+        // TenantAiConfig doesn't have tenantId.
+        // However, we can fetch the thread again or pass tenantId through the context.
+        // Better: Add tenantId to AiContext.
+        // For now, let's fetch it from the thread repository again as a fallback, or
+        // assume we can get it.
+        // Actually, we can just look it up from the threadId.
+        String tenantId = threadRepository.findById(replyCtx.event().threadId())
+                .map(Thread::getTenantId)
+                .orElseThrow(() -> new IllegalStateException("Thread not found for AI reply"));
+
+        Member aiMember = aiMemberService.getOrCreateAiMember(tenantId);
         postService.createPost(
                 replyCtx.event().threadId(),
                 aiMember.getId(),
                 replyCtx.aiReply(),
                 replyCtx.event().postId(),
-                Map.of());
+                Map.of(),
+                List.of());
         log.info("AI replied to post {} in thread {}", replyCtx.event().postId(), replyCtx.event().threadId());
     }
 

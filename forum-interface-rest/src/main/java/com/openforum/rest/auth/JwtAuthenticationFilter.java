@@ -72,7 +72,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
 
                 if (externalId != null) {
-                    Member member = memberRepository.findByExternalId(externalId)
+                    // 3. Check if Member exists in DB (JIT Provisioning)
+                    Member member = memberRepository.findByExternalId(tenantId, externalId)
                             .orElseGet(() -> {
                                 Member newMember = Member.create(externalId, email, name, false);
                                 memberRepository.save(newMember);

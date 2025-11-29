@@ -42,7 +42,7 @@ class PostRepositoryImplTest {
         // Given
         UUID threadId = UUID.randomUUID();
         UUID authorId = UUID.randomUUID();
-        Post post = PostFactory.create(threadId, authorId, "Test Content", null, Map.of("key", "value"));
+        Post post = PostFactory.create(threadId, authorId, "Test Content", null, Map.of("key", "value"), false);
         UUID postId = post.getId();
 
         // When
@@ -63,9 +63,9 @@ class PostRepositoryImplTest {
     void shouldFindPostsByThreadId() {
         // Given
         UUID threadId = UUID.randomUUID();
-        Post post1 = PostFactory.create(threadId, UUID.randomUUID(), "Post 1", null, Map.of());
-        Post post2 = PostFactory.create(threadId, UUID.randomUUID(), "Post 2", null, Map.of());
-        Post post3 = PostFactory.create(UUID.randomUUID(), UUID.randomUUID(), "Other Thread", null, Map.of());
+        Post post1 = PostFactory.create(threadId, UUID.randomUUID(), "Post 1", null, Map.of(), false);
+        Post post2 = PostFactory.create(threadId, UUID.randomUUID(), "Post 2", null, Map.of(), false);
+        Post post3 = PostFactory.create(UUID.randomUUID(), UUID.randomUUID(), "Other Thread", null, Map.of(), false);
 
         postRepository.save(post1);
         postRepository.save(post2);

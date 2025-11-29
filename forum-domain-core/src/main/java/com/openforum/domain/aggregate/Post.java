@@ -17,6 +17,8 @@ public class Post {
     private final Long version;
     private final UUID replyToPostId;
     private final Map<String, Object> metadata;
+    private final LocalDateTime createdAt;
+    private final List<UUID> mentionedUserIds;
 
     private final List<Object> domainEvents = new ArrayList<>();
 
@@ -28,10 +30,13 @@ public class Post {
         this.version = builder.version;
         this.replyToPostId = builder.replyToPostId;
         this.metadata = builder.metadata != null ? Map.copyOf(builder.metadata) : Map.of();
+        this.createdAt = builder.createdAt != null ? builder.createdAt : LocalDateTime.now();
+        this.mentionedUserIds = builder.mentionedUserIds != null ? List.copyOf(builder.mentionedUserIds) : List.of();
 
         if (builder.isNew) {
             this.domainEvents
-                    .add(new PostCreatedEvent(id, threadId, authorId, content, builder.isBot, LocalDateTime.now()));
+                    .add(new PostCreatedEvent(id, threadId, authorId, content, createdAt, builder.isBot,
+                            mentionedUserIds));
         }
     }
 
@@ -47,6 +52,8 @@ public class Post {
         private Long version;
         private UUID replyToPostId;
         private Map<String, Object> metadata;
+        private LocalDateTime createdAt;
+        private List<UUID> mentionedUserIds;
         private boolean isNew = false;
         private boolean isBot = false;
 
@@ -84,12 +91,22 @@ public class Post {
             this.metadata = metadata;
             return this;
         }
-        
+
+        public Builder createdAt(LocalDateTime createdAt) {
+            this.createdAt = createdAt;
+            return this;
+        }
+
+        public Builder mentionedUserIds(List<UUID> mentionedUserIds) {
+            this.mentionedUserIds = mentionedUserIds;
+            return this;
+        }
+
         public Builder isNew(boolean isNew) {
             this.isNew = isNew;
             return this;
         }
-        
+
         public Builder isBot(boolean isBot) {
             this.isBot = isBot;
             return this;
@@ -128,7 +145,17 @@ public class Post {
         return metadata;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public List<UUID> getMentionedUserIds() {
+        return mentionedUserIds;
+    }
+
     public List<Object> pollEvents() {
         List<Object> events = new ArrayList<>(domainEvents);
-        domainEvents.clear();return events;
-}}
+        domainEvents.clear();
+        return events;
+    }
+}

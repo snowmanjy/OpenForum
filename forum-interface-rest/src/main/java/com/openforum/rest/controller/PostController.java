@@ -33,7 +33,8 @@ public class PostController {
                 member.getId(),
                 request.content(),
                 request.replyToPostId(),
-                request.metadata());
+                request.metadata(),
+                request.mentionedUserIds());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(PostResponse.from(post));
     }

@@ -3,49 +3,52 @@ package com.openforum.infra.jpa.adapter;
 import com.openforum.domain.aggregate.Member;
 import com.openforum.domain.repository.MemberRepository;
 import com.openforum.infra.jpa.entity.MemberEntity;
+import com.openforum.infra.jpa.mapper.MemberMapper;
 import com.openforum.infra.jpa.repository.MemberJpaRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Repository
 public class MemberRepositoryImpl implements MemberRepository {
 
     private final MemberJpaRepository memberJpaRepository;
+    private final MemberMapper memberMapper;
 
-    public MemberRepositoryImpl(MemberJpaRepository memberJpaRepository) {
+    public MemberRepositoryImpl(MemberJpaRepository memberJpaRepository, MemberMapper memberMapper) {
         this.memberJpaRepository = memberJpaRepository;
+        this.memberMapper = memberMapper;
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Optional<Member> findByExternalId(String externalId) {
-        return memberJpaRepository.findByExternalId(externalId)
-                .map(this::toDomain);
-    }
-
-    @Override
-    @Transactional
     public Member save(Member member) {
-        memberJpaRepository.save(toEntity(member));
-        return member;
+        MemberEntity entity = toEntity(member);
+        MemberEntity savedEntity = memberJpaRepository.save(entity);
+        return memberMapper.toDomain(savedEntity);
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Optional<Member> findById(UUID id) {
-        return memberJpaRepository.findById(id).map(this::toDomain);
+    public Optional<Member> findByExternalId(String tenantId, String externalId) {
+        return memberJpaRepository.findByTenantIdAndExternalId(tenantId, externalId)
+                .map(memberMapper::toDomain);
     }
 
-    private Member toDomain(MemberEntity entity) {
-        return Member.reconstitute(
-                entity.getId(),
-                entity.getExternalId(),
-                entity.getEmail(),
-                entity.getName(),
-                entity.isBot());
+    @Override
+    public Optional<Member> findById(UUID id) {
+        return memberJpaRepository.findById(id)
+                .map(memberMapper::toDomain);
+    }
+
+    @Override
+    public List<Member> searchByHandleOrName(String tenantId, String query, int limit) {
+        return memberJpaRepository.searchByHandleOrName(tenantId, query + "%", PageRequest.of(0, limit))
+                .stream()
+                .map(memberMapper::toDomain)
+                .collect(Collectors.toList());
     }
 
     private MemberEntity toEntity(Member domain) {
@@ -54,6 +57,7 @@ public class MemberRepositoryImpl implements MemberRepository {
                 domain.getExternalId(),
                 domain.getEmail(),
                 domain.getName(),
-                domain.isBot());
+                domain.isBot(),
+                null);
     }
 }

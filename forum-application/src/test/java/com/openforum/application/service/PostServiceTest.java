@@ -55,7 +55,7 @@ class PostServiceTest {
         when(postRepository.save(any(Post.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
-        Post post = postService.createPost(threadId, authorId, content, null, null);
+        Post post = postService.createPost(threadId, authorId, content, null, null, List.of());
 
         // Then
         assertThat(post).isNotNull();
@@ -73,7 +73,7 @@ class PostServiceTest {
         when(threadRepository.findById(threadId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThatThrownBy(() -> postService.createPost(threadId, authorId, content, null, null))
+        assertThatThrownBy(() -> postService.createPost(threadId, authorId, content, null, null, List.of()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Thread not found");
     }

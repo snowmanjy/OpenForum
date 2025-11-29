@@ -14,17 +14,19 @@ public class MemberEntity {
     private String externalId;
     private String email;
     private String name;
+    private String tenantId;
     private boolean isBot;
 
     public MemberEntity() {
     }
 
-    public MemberEntity(UUID id, String externalId, String email, String name, boolean isBot) {
+    public MemberEntity(UUID id, String externalId, String email, String name, boolean isBot, String tenantId) {
         this.id = id;
         this.externalId = externalId;
         this.email = email;
         this.name = name;
         this.isBot = isBot;
+        this.tenantId = tenantId;
     }
 
     public UUID getId() {
@@ -45,5 +47,13 @@ public class MemberEntity {
 
     public boolean isBot() {
         return isBot;
+    }
+
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
     }
 }

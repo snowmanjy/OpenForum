@@ -11,27 +11,20 @@ public class AiMemberService {
 
     private final MemberRepository memberRepository;
     private static final String AI_MEMBER_EXTERNAL_ID = "ai-assistant";
-    private static final String AI_MEMBER_NAME = "AI Assistant";
+
+
 
     public AiMemberService(MemberRepository memberRepository) {
         this.memberRepository = memberRepository;
     }
 
-    public Member getOrCreateAiMember() {
-        Optional<Member> existingMember = memberRepository.findByExternalId(AI_MEMBER_EXTERNAL_ID);
-
-        if (existingMember.isPresent()) {
-            return existingMember.get();
-        }
-
-        // Create new AI member with isBot=true
-        Member aiMember = Member.create(
-                AI_MEMBER_EXTERNAL_ID,
-                "ai@forum.local",
-                AI_MEMBER_NAME,
-                true // isBot
-        );
-
-        return memberRepository.save(aiMember);
+    public Member getOrCreateAiMember(String tenantId) {
+        String aiExternalId = "ai-bot-" + tenantId;
+        return memberRepository.findByExternalId(tenantId, aiExternalId)
+                .orElseGet(() -> {
+                    Member aiMember = Member.create(aiExternalId, "ai@openforum.com", "AI Assistant", true);
+                    memberRepository.save(aiMember);
+                    return aiMember;
+                });
     }
 }

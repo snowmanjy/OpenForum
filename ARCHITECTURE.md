@@ -361,6 +361,39 @@ Behavior: Persists data but suppresses ThreadCreated notification events (or mar
   - `DELETE /api/v1/categories/{categoryId}/subscriptions`
   - `GET /api/v1/subscriptions` returns mixed list of threads and categories.
 
+**Phase 2.3: Social Features (Tags & Mentions)**
+
+**Goal:** Enable social interactions via hashtags and user mentions, supporting autocomplete and notifications.
+
+**1. Tags (Hashtags)**
+
+- **Aggregate:** `Tag`
+  - `id`: UUID
+  - `tenantId`: String
+  - `name`: String (Unique per tenant)
+  - `usageCount`: Long
+- **Logic:** `incrementUsage()`
+- **Infrastructure:**
+  - `TagRepository.findByNameStartingWith(prefix)` for autocomplete.
+- **API:**
+  - `GET /api/v1/tags/search?q=...`
+
+**2. User Search (Mentions)**
+
+- **Infrastructure:**
+  - Update `MemberRepository` with `searchByHandleOrName(tenantId, query, page)`.
+  - Use JPA `LIKE %query%` on name/email.
+- **API:**
+  - `GET /api/v1/users/search?q=...`
+
+**3. Post Mentions**
+
+- **Domain:**
+  - Update `PostFactory.create()` to accept `List<UUID> mentionedUserIds`.
+  - Update `PostCreatedEvent` to include `mentionedUserIds`.
+- **Service:**
+  - Update `PostService.createPost` to pass mentions from request.
+
 ## 8\. Agent Implementation Rules (For Antigravity)
 
 **Rule 1: No Dual Writes**
