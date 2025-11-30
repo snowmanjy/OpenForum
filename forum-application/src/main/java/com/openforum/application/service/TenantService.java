@@ -30,4 +30,13 @@ public class TenantService {
         Tenant updatedTenant = com.openforum.domain.factory.TenantFactory.create(tenant.getId(), config);
         return tenantRepository.save(updatedTenant);
     }
+
+    @Transactional
+    public Tenant createTenant(String tenantId, Map<String, Object> config) {
+        if (tenantRepository.findById(tenantId).isPresent()) {
+            throw new IllegalArgumentException("Tenant already exists: " + tenantId);
+        }
+        Tenant newTenant = com.openforum.domain.factory.TenantFactory.create(tenantId, config);
+        return tenantRepository.save(newTenant);
+    }
 }

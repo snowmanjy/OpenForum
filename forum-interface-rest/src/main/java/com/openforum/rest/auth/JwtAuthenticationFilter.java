@@ -75,7 +75,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     // 3. Check if Member exists in DB (JIT Provisioning)
                     Member member = memberRepository.findByExternalId(tenantId, externalId)
                             .orElseGet(() -> {
-                                Member newMember = Member.create(externalId, email, name, false);
+                                String safeEmail = email != null ? email : externalId + "@placeholder.com";
+                                String safeName = name != null ? name : "Unknown User";
+                                Member newMember = Member.create(externalId, safeEmail, safeName, false);
                                 memberRepository.save(newMember);
                                 return newMember;
                             });
@@ -85,10 +87,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             } else {
-                logger.warn("JWT signature verification failed");
+                logger.warn("JWT signature verification failed. Header: " + signedJWT.getHeader() + ", Claims: "
+                        + signedJWT.getJWTClaimsSet());
             }
         } catch (Exception e) {
-            logger.error("Failed to process JWT", e);
+            logger.error("Failed to process JWT: " + e.getMessage(), e);
         }
     }
 }
