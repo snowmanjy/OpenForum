@@ -32,6 +32,9 @@ public class PrivateThreadMapper {
     }
 
     public PrivateThread toDomain(PrivateThreadEntity entity, List<PrivatePostEntity> posts) {
+        if (entity == null) {
+            return null;
+        }
         return PrivateThread.reconstitute(
                 entity.getId(),
                 entity.getTenantId(),

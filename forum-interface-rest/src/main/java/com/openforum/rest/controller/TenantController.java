@@ -7,9 +7,15 @@ import com.openforum.rest.controller.dto.UpdateTenantConfigRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @RestController
 @RequestMapping("/api/v1/tenants")
 public class TenantController {
+
+    private static final Logger logger = LoggerFactory.getLogger(TenantController.class);
 
     private final TenantService tenantService;
 
@@ -30,6 +36,14 @@ public class TenantController {
             @PathVariable String tenantId,
             @RequestBody UpdateTenantConfigRequest request) {
         Tenant tenant = tenantService.updateTenantConfig(tenantId, request.config());
+        return ResponseEntity.ok(TenantResponse.from(tenant));
+    }
+
+    @PostMapping
+    public ResponseEntity<TenantResponse> createTenant(
+            @RequestBody @Valid com.openforum.rest.controller.dto.CreateTenantRequest request) {
+        logger.info("Received create tenant request: {}", request);
+        Tenant tenant = tenantService.createTenant(request.id(), request.config());
         return ResponseEntity.ok(TenantResponse.from(tenant));
     }
 }

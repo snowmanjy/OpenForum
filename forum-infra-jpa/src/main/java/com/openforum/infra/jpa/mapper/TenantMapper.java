@@ -9,6 +9,9 @@ import org.springframework.stereotype.Component;
 public class TenantMapper {
 
     public TenantEntity toEntity(Tenant domain) {
+        if (domain == null) {
+            return null;
+        }
         TenantEntity entity = new TenantEntity();
         entity.setId(domain.getId());
         entity.setConfig(domain.getConfig());
@@ -16,6 +19,9 @@ public class TenantMapper {
     }
 
     public Tenant toDomain(TenantEntity entity) {
+        if (entity == null) {
+            return null;
+        }
         return TenantFactory.create(entity.getId(), entity.getConfig());
     }
 }

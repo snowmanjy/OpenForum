@@ -21,6 +21,9 @@ public class ThreadMapper {
     }
 
     public Thread toDomain(ThreadEntity entity) {
+        if (entity == null) {
+            return null;
+        }
         return Thread.builder()
                 .id(entity.getId())
                 .tenantId(entity.getTenantId())

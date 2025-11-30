@@ -13,7 +13,7 @@ import java.util.UUID;
 public interface MemberJpaRepository extends JpaRepository<MemberEntity, UUID> {
     Optional<MemberEntity> findByTenantIdAndExternalId(String tenantId, String externalId);
 
-    @Query("SELECT m FROM MemberEntity m WHERE m.tenantId = :tenantId AND (LOWER(m.name) LIKE LOWER(:query) OR LOWER(m.email) LIKE LOWER(:query))")
+    @Query("SELECT m FROM MemberEntity m WHERE (m.tenantId = :tenantId OR (:tenantId IS NULL AND m.tenantId IS NULL)) AND (LOWER(m.name) LIKE LOWER(:query) OR LOWER(m.email) LIKE LOWER(:query))")
     List<MemberEntity> searchByHandleOrName(@Param("tenantId") String tenantId, @Param("query") String query,
             Pageable pageable);
 

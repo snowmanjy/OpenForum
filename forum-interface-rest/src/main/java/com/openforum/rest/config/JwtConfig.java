@@ -15,6 +15,8 @@ import java.util.Base64;
 @Configuration
 public class JwtConfig {
 
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(JwtConfig.class);
+
     @Value("${jwt.public-key}")
     private Resource publicKeyResource;
 
@@ -24,6 +26,8 @@ public class JwtConfig {
                 .replace("-----BEGIN PUBLIC KEY-----", "")
                 .replace("-----END PUBLIC KEY-----", "")
                 .replaceAll("\\s", "");
+
+        logger.info("Loaded Public Key (first 20 chars): {}", key.substring(0, Math.min(key.length(), 20)));
 
         byte[] keyBytes = Base64.getDecoder().decode(key);
         X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);

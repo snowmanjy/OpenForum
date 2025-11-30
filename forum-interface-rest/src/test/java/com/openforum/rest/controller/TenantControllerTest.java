@@ -116,6 +116,27 @@ class TenantControllerTest {
                 .andExpect(jsonPath("$.config.key").value("new"));
     }
 
+    @Test
+    void createTenant_shouldReturnCreatedTenant() throws Exception {
+        // Given
+        String tenantId = "new-tenant";
+        Map<String, Object> config = Map.of("key", "value");
+        com.openforum.rest.controller.dto.CreateTenantRequest request = new com.openforum.rest.controller.dto.CreateTenantRequest(
+                tenantId, config);
+
+        Tenant createdTenant = com.openforum.domain.factory.TenantFactory.create(tenantId, config);
+        when(tenantService.createTenant(eq(tenantId), any())).thenReturn(createdTenant);
+
+        // When & Then
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/v1/tenants")
+                .with(authWithTenant("user-1", "default-tenant"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(tenantId))
+                .andExpect(jsonPath("$.config.key").value("value"));
+    }
+
     private RequestPostProcessor authWithTenant(String userId, String tenantId) {
         return request -> {
             Member member = Member.reconstitute(

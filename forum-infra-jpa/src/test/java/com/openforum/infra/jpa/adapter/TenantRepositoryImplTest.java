@@ -25,8 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ContextConfiguration(classes = com.openforum.TestApplication.class)
 @TestPropertySource(properties = {
-        "spring.jpa.hibernate.ddl-auto=create-drop",
-        "spring.flyway.enabled=false"
+        "spring.jpa.hibernate.ddl-auto=validate",
+        "spring.flyway.enabled=true"
 })
 @Import({ TenantRepositoryImpl.class, com.openforum.infra.jpa.mapper.TenantMapper.class, JpaTestConfig.class })
 class TenantRepositoryImplTest {

@@ -34,6 +34,9 @@ public class PollMapper {
     }
 
     public Poll toDomain(PollEntity entity, List<PollVoteEntity> votes) {
+        if (entity == null) {
+            return null;
+        }
         return Poll.reconstitute(
                 entity.getId(),
                 entity.getTenantId(),
