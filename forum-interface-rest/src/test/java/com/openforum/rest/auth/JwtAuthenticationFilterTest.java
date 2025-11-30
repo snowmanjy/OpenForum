@@ -74,9 +74,9 @@ class JwtAuthenticationFilterTest {
         // Given
         String tenantId = "tenant-1";
         String userId = "user-123";
-        Member member = Member.create("ext-123", "test@example.com", "Test User", tenantId);
+        Member member = Member.create("ext-123", "test@example.com", "Test User", false);
 
-        when(memberRepository.findByExternalIdAndTenantId(tenantId, userId))
+        when(memberRepository.findByExternalId(tenantId, userId))
                 .thenReturn(Optional.of(member));
 
         String token = createValidToken(tenantId, userId);

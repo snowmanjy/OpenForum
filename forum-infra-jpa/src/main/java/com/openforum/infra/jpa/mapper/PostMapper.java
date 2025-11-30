@@ -21,6 +21,9 @@ public class PostMapper {
     }
 
     public Post toDomain(PostEntity entity) {
+        if (entity == null) {
+            return null;
+        }
         return Post.builder()
                 .id(entity.getId())
                 .threadId(entity.getThreadId())

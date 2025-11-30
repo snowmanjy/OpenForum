@@ -47,7 +47,7 @@ class MemberRepositoryImplTest {
 
         // When
         memberRepository.save(member);
-        Optional<Member> retrieved = memberRepository.findByExternalId("tenant-1", externalId);
+        Optional<Member> retrieved = memberRepository.findByExternalId(null, externalId);
 
         // Then
         assertThat(retrieved).isPresent();
@@ -80,7 +80,7 @@ class MemberRepositoryImplTest {
         memberRepository.save(Member.create("ext-3", "charlie@example.com", "Charlie Brown", false));
 
         // When
-        List<Member> results = memberRepository.searchByHandleOrName(tenantId, "ali", 10);
+        List<Member> results = memberRepository.searchByHandleOrName(null, "ali", 10);
 
         // Then
         assertThat(results).hasSize(1);

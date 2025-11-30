@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.jpa.hibernate.ddl-auto=validate",
         "spring.flyway.enabled=true"
 })
-@Import({ TagRepositoryImpl.class, com.openforum.infra.jpa.mapper.TagMapper.class, JpaTestConfig.class })
+@Import({ TagRepositoryImpl.class, JpaTestConfig.class })
 class TagRepositoryImplTest {
 
     @Container

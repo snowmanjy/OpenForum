@@ -21,8 +21,13 @@ class PostMapperTest {
         UUID threadId = UUID.randomUUID();
         UUID authorId = UUID.randomUUID();
         Instant now = Instant.now();
-        PostEntity entity = new PostEntity(id, threadId, "tenant-1", authorId, "Test content",
-                null, null, null, now, now, 0, null);
+        PostEntity entity = new PostEntity();
+        entity.setId(id);
+        entity.setThreadId(threadId);
+        entity.setAuthorId(authorId);
+        entity.setContent("Test content");
+        entity.setCreatedAt(now);
+        entity.setVersion(0L);
 
         // When
         Post post = mapper.toDomain(entity);

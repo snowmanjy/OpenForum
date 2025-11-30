@@ -21,11 +21,11 @@ class PollMapperTest {
         UUID postId = UUID.randomUUID();
         Instant now = Instant.now();
         Instant expiresAt = now.plusSeconds(86400);
-        PollEntity entity = new PollEntity(id, postId, "tenant-1", "What color?",
+        PollEntity entity = new PollEntity(id, "tenant-1", postId, "What color?",
                 List.of("Red", "Blue"), expiresAt, true, now);
 
         // When
-        Poll poll = mapper.toDomain(entity);
+        Poll poll = mapper.toDomain(entity, List.of());
 
         // Then
         assertThat(poll).isNotNull();
@@ -40,7 +40,7 @@ class PollMapperTest {
     @Test
     void toDomain_shouldReturnNull_whenEntityIsNull() {
         // When
-        Poll poll = mapper.toDomain(null);
+        Poll poll = mapper.toDomain(null, List.of());
 
         // Then
         assertThat(poll).isNull();
