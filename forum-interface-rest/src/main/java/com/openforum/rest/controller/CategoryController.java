@@ -3,6 +3,8 @@ package com.openforum.rest.controller;
 import com.openforum.application.service.CategoryService;
 import com.openforum.domain.aggregate.Category;
 import com.openforum.rest.context.TenantContext;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,6 +13,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/categories")
+@Tag(name = "Categories", description = "Category management APIs")
 public class CategoryController {
 
     private final CategoryService categoryService;
@@ -19,6 +22,7 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
 
+    @Operation(summary = "List Categories", description = "Retrieves all categories for the current tenant")
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> getCategories() {
         String tenantId = TenantContext.getTenantId();
@@ -29,6 +33,7 @@ public class CategoryController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Create Category", description = "Creates a new category")
     @PostMapping
     public ResponseEntity<CategoryResponse> createCategory(@RequestBody CreateCategoryRequest request) {
         String tenantId = TenantContext.getTenantId();

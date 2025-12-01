@@ -332,7 +332,7 @@ class PostCreatedEventListenerTest {
                 when(chatClient.prompt()).thenReturn(requestSpec);
                 when(requestSpec.system(anyString())).thenReturn(systemSpec);
                 when(systemSpec.user(anyString())).thenReturn(requestSpec);
-                when(requestSpec.call()).thenThrow(new RuntimeException("LLM API timeout"));
+                doThrow(new RuntimeException("LLM API timeout")).when(requestSpec).call();
 
                 // When
                 listener.onPostCreated(event);

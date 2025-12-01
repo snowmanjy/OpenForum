@@ -28,11 +28,14 @@ class BulkImportServiceTest {
     @Mock
     private ThreadRepository threadRepository;
 
+    @Mock
+    private com.openforum.domain.repository.MemberRepository memberRepository;
+
     private BulkImportService bulkImportService;
 
     @BeforeEach
     void setUp() {
-        bulkImportService = new BulkImportService(threadRepository);
+        bulkImportService = new BulkImportService(threadRepository, memberRepository);
     }
 
     @Test
@@ -56,6 +59,7 @@ class BulkImportServiceTest {
                 threadId,
                 "tenant-1",
                 authorId,
+                null, // categoryId
                 "Test Thread",
                 ThreadStatus.OPEN,
                 now,
@@ -63,6 +67,9 @@ class BulkImportServiceTest {
                 List.of(postDto));
 
         BulkImportRequest request = new BulkImportRequest(List.of(threadDto));
+
+        org.mockito.Mockito.when(memberRepository.existsAllById(org.mockito.ArgumentMatchers.anyList()))
+                .thenReturn(true);
 
         // When
         BulkImportResponse response = bulkImportService.importThreads(request);
@@ -85,5 +92,35 @@ class BulkImportServiceTest {
 
         // Critical: Verify no events generated
         assertThat(savedThread.pollEvents()).isEmpty();
+    }
+
+    @Test
+    void shouldThrowBadRequestWhenAuthorDoesNotExist() {
+        // Given
+        UUID threadId = UUID.randomUUID();
+        UUID authorId = UUID.randomUUID();
+        Instant now = Instant.now();
+
+        ImportThreadDto threadDto = new ImportThreadDto(
+                threadId,
+                "tenant-1",
+                authorId,
+                null,
+                "Test Thread",
+                ThreadStatus.OPEN,
+                now,
+                Map.of(),
+                List.of());
+
+        BulkImportRequest request = new BulkImportRequest(List.of(threadDto));
+
+        org.mockito.Mockito.when(memberRepository.existsAllById(org.mockito.ArgumentMatchers.anyList()))
+                .thenReturn(false);
+
+        // When & Then
+        org.junit.jupiter.api.Assertions.assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> {
+                    bulkImportService.importThreads(request);
+                });
     }
 }

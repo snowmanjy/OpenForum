@@ -3,6 +3,8 @@ package com.openforum.rest.controller;
 import com.openforum.application.service.SubscriptionService;
 import com.openforum.domain.aggregate.Member;
 import com.openforum.rest.context.TenantContext;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +14,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1")
+@Tag(name = "Subscriptions", description = "Subscription management APIs")
 public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
@@ -20,16 +23,19 @@ public class SubscriptionController {
         this.subscriptionService = subscriptionService;
     }
 
+    @Operation(summary = "Subscribe to Thread", description = "Subscribes the current user to a thread")
     @PostMapping("/threads/{threadId}/subscriptions")
     public ResponseEntity<Void> subscribe(
             @PathVariable UUID threadId,
             @AuthenticationPrincipal Member member) {
 
         String tenantId = TenantContext.getTenantId();
-        subscriptionService.subscribe(tenantId, member.getId(), threadId, com.openforum.domain.valueobject.TargetType.THREAD);
+        subscriptionService.subscribe(tenantId, member.getId(), threadId,
+                com.openforum.domain.valueobject.TargetType.THREAD);
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Unsubscribe from Thread", description = "Unsubscribes the current user from a thread")
     @DeleteMapping("/threads/{threadId}/subscriptions")
     public ResponseEntity<Void> unsubscribe(
             @PathVariable UUID threadId,
@@ -40,16 +46,19 @@ public class SubscriptionController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Subscribe to Category", description = "Subscribes the current user to a category")
     @PostMapping("/categories/{categoryId}/subscriptions")
     public ResponseEntity<Void> subscribeCategory(
             @PathVariable UUID categoryId,
             @AuthenticationPrincipal Member member) {
 
         String tenantId = TenantContext.getTenantId();
-        subscriptionService.subscribe(tenantId, member.getId(), categoryId, com.openforum.domain.valueobject.TargetType.CATEGORY);
+        subscriptionService.subscribe(tenantId, member.getId(), categoryId,
+                com.openforum.domain.valueobject.TargetType.CATEGORY);
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Unsubscribe from Category", description = "Unsubscribes the current user from a category")
     @DeleteMapping("/categories/{categoryId}/subscriptions")
     public ResponseEntity<Void> unsubscribeCategory(
             @PathVariable UUID categoryId,
@@ -60,6 +69,7 @@ public class SubscriptionController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "List Thread Subscribers", description = "Retrieves list of subscribers for a thread")
     @GetMapping("/threads/{threadId}/subscribers")
     public ResponseEntity<List<UUID>> getSubscribers(@PathVariable UUID threadId) {
         // Internal API - in real world might need special auth, but for now assuming
@@ -69,6 +79,7 @@ public class SubscriptionController {
         return ResponseEntity.ok(subscribers);
     }
 
+    @Operation(summary = "List My Subscriptions", description = "Retrieves subscriptions for the current user")
     @GetMapping("/subscriptions")
     public ResponseEntity<java.util.Map<String, Object>> getMySubscriptions(
             @AuthenticationPrincipal Member member,

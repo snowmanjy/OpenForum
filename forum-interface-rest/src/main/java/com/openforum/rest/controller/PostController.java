@@ -5,6 +5,8 @@ import com.openforum.domain.aggregate.Member;
 import com.openforum.domain.aggregate.Post;
 import com.openforum.rest.controller.dto.CreatePostRequest;
 import com.openforum.rest.controller.dto.PostResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -14,6 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1")
+@Tag(name = "Posts", description = "Post management APIs")
 public class PostController {
 
     private final PostService postService;
@@ -22,6 +25,7 @@ public class PostController {
         this.postService = postService;
     }
 
+    @Operation(summary = "Create Post", description = "Creates a new post in a thread")
     @PostMapping("/threads/{threadId}/posts")
     public ResponseEntity<PostResponse> createPost(
             @PathVariable UUID threadId,

@@ -22,9 +22,12 @@ import java.util.List;
 public class BulkImportService {
 
     private final ThreadRepository threadRepository;
+    private final com.openforum.domain.repository.MemberRepository memberRepository;
 
-    public BulkImportService(ThreadRepository threadRepository) {
+    public BulkImportService(ThreadRepository threadRepository,
+            com.openforum.domain.repository.MemberRepository memberRepository) {
         this.threadRepository = threadRepository;
+        this.memberRepository = memberRepository;
     }
 
     /**
@@ -36,6 +39,18 @@ public class BulkImportService {
      */
     @Transactional
     public BulkImportResponse importThreads(BulkImportRequest request) {
+        // Validate that all authors exist to prevent FK violations
+        List<java.util.UUID> authorIds = request.threads().stream()
+                .map(ImportThreadDto::authorId)
+                .distinct()
+                .toList();
+
+        if (!authorIds.isEmpty() && !memberRepository.existsAllById(authorIds)) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "One or more authors do not exist in the system. Please ensure all users are migrated before importing threads.");
+        }
+
         // Convert DTOs to domain aggregates using the event-less factory
         List<Thread> threads = request.threads().stream()
                 .map(this::toDomainThread)
@@ -63,7 +78,7 @@ public class BulkImportService {
                 dto.id(),
                 dto.tenantId(),
                 dto.authorId(),
-                null, // categoryId
+                dto.categoryId(), // Nullable - categories are optional
                 dto.title(),
                 dto.status() != null ? dto.status() : ThreadStatus.OPEN,
                 dto.createdAt(),

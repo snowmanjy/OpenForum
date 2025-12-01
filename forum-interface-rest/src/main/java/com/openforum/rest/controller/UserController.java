@@ -3,6 +3,8 @@ package com.openforum.rest.controller;
 import com.openforum.domain.aggregate.Member;
 import com.openforum.domain.repository.MemberRepository;
 import com.openforum.rest.context.TenantContext;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/users")
+@Tag(name = "Users", description = "User management APIs")
 public class UserController {
 
     private final MemberRepository memberRepository;
@@ -22,6 +25,7 @@ public class UserController {
         this.memberRepository = memberRepository;
     }
 
+    @Operation(summary = "Search Users", description = "Searches for users by handle or name")
     @GetMapping("/search")
     public ResponseEntity<List<UserDto>> searchUsers(@RequestParam String q) {
         String tenantId = TenantContext.getTenantId();

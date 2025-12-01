@@ -5,6 +5,8 @@ import com.openforum.application.dto.CreatePrivateThreadRequest;
 import com.openforum.application.dto.PrivateThreadDto;
 import com.openforum.application.service.PrivateThreadService;
 import com.openforum.rest.security.SecurityContext;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -15,6 +17,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/private-threads")
+@Tag(name = "Private Threads", description = "Private thread management APIs")
 public class PrivateThreadController {
 
     private final PrivateThreadService privateThreadService;
@@ -23,6 +26,7 @@ public class PrivateThreadController {
         this.privateThreadService = privateThreadService;
     }
 
+    @Operation(summary = "Create Private Thread", description = "Creates a new private thread")
     @PostMapping
     public ResponseEntity<Void> createThread(
             @RequestHeader("X-Tenant-ID") String tenantId,
@@ -38,6 +42,7 @@ public class PrivateThreadController {
         return ResponseEntity.created(location).build();
     }
 
+    @Operation(summary = "Add Message", description = "Adds a message to a private thread")
     @PostMapping("/{id}/posts")
     public ResponseEntity<Void> createPost(
             @RequestHeader("X-Tenant-ID") String tenantId,
@@ -48,6 +53,7 @@ public class PrivateThreadController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "List My Private Threads", description = "Retrieves private threads for the current user")
     @GetMapping
     public ResponseEntity<List<PrivateThreadDto>> getMyThreads(
             @RequestHeader("X-Tenant-ID") String tenantId,

@@ -9,7 +9,7 @@ import com.openforum.admin.service.BulkImportService;
 import com.openforum.domain.aggregate.ThreadStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import com.openforum.admin.TestConfig;
+
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
@@ -28,7 +28,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(BulkImportController.class)
-@Import(TestConfig.class)
 class BulkImportControllerTest {
 
         @Autowired
@@ -60,6 +59,7 @@ class BulkImportControllerTest {
                                 threadId,
                                 "tenant-1",
                                 authorId,
+                                null, // categoryId
                                 "Test Thread",
                                 ThreadStatus.OPEN,
                                 now,
