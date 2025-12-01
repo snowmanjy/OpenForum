@@ -3,6 +3,7 @@ package com.openforum.rest.controller;
 import com.openforum.domain.aggregate.Tag;
 import com.openforum.domain.repository.TagRepository;
 import com.openforum.rest.context.TenantContext;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/tags")
+@io.swagger.v3.oas.annotations.tags.Tag(name = "Tags", description = "Tag management APIs")
 public class TagController {
 
     private final TagRepository tagRepository;
@@ -22,6 +24,7 @@ public class TagController {
         this.tagRepository = tagRepository;
     }
 
+    @Operation(summary = "Search Tags", description = "Searches for tags by name prefix")
     @GetMapping("/search")
     public ResponseEntity<List<TagDto>> searchTags(@RequestParam String q) {
         String tenantId = TenantContext.getTenantId();

@@ -6,6 +6,8 @@ import com.openforum.application.dto.VotePollRequest;
 import com.openforum.application.service.PollService;
 import com.openforum.rest.context.TenantContext;
 import com.openforum.rest.security.SecurityContext;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1")
+@Tag(name = "Polls", description = "Poll management APIs")
 public class PollController {
 
     private final PollService pollService;
@@ -22,6 +25,7 @@ public class PollController {
         this.pollService = pollService;
     }
 
+    @Operation(summary = "Create Poll", description = "Creates a new poll attached to a post")
     @PostMapping("/posts/{postId}/polls")
     public ResponseEntity<Void> createPoll(@PathVariable UUID postId, @RequestBody CreatePollRequest request) {
         String tenantId = TenantContext.getTenantId();
@@ -32,6 +36,7 @@ public class PollController {
         return ResponseEntity.created(URI.create("/api/v1/polls/" + pollId)).build();
     }
 
+    @Operation(summary = "Vote on Poll", description = "Casts a vote on a poll")
     @PostMapping("/polls/{pollId}/votes")
     public ResponseEntity<Void> castVote(@PathVariable UUID pollId, @RequestBody VotePollRequest request) {
         String tenantId = TenantContext.getTenantId();
@@ -40,6 +45,7 @@ public class PollController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Get Poll", description = "Retrieves poll details")
     @GetMapping("/polls/{pollId}")
     public ResponseEntity<PollDto> getPoll(@PathVariable UUID pollId) {
         String tenantId = TenantContext.getTenantId();

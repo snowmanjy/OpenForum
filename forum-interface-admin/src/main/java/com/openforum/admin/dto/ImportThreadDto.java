@@ -14,12 +14,13 @@ import java.util.UUID;
  * All fields represent the state from the legacy system.
  */
 public record ImportThreadDto(
-                @NotNull UUID id,
-                @NotBlank String tenantId,
-                @NotNull UUID authorId,
-                @NotBlank String title,
-                ThreadStatus status,
-                @NotNull Instant createdAt,
-                Map<String, Object> metadata,
-                @Valid @NotNull List<ImportPostDto> posts) {
+        @NotNull UUID id,
+        @NotBlank String tenantId,
+        @NotNull UUID authorId,
+        UUID categoryId,
+        @NotBlank String title,
+        ThreadStatus status,
+        @NotNull Instant createdAt,
+        Map<String, Object> metadata,
+        @Valid @NotNull List<ImportPostDto> posts) {
 }
