@@ -48,6 +48,7 @@ Controllers → Use Cases (Services) → Domain Entities → Repositories
   - **Bad:** `for (Event e : events) { save(e); }`
   - **Good:** `events.stream().map(this::toEntity).forEach(repo::save);`
 - **Immutability:** Use `final` keywords, Java Records, and `List.of()`/`Map.of()` factories wherever possible.
+- **Time Handling:** Use `java.time.Instant` for all timestamps. Avoid `LocalDateTime` to ensure UTC consistency.
 - **Layering:** Controllers MUST call Services. Services MUST call Repositories. Never skip a layer.
 
 ### 1.4 Factory & Creation Patterns
@@ -291,7 +292,7 @@ Behavior: Persists data but suppresses ThreadCreated notification events (or mar
   - `userId`: UUID
   - `targetId`: UUID (The Thread ID)
   - `targetType`: Enum (THREAD)
-  - `createdAt`: LocalDateTime
+  - `createdAt`: Instant
 - **Business Rule:** A user can only subscribe to a thread once.
 
 ### 5.2. Infrastructure

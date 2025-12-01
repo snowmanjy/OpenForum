@@ -18,4 +18,6 @@ public interface MemberJpaRepository extends JpaRepository<MemberEntity, UUID> {
             Pageable pageable);
 
     long countByIdIn(List<UUID> ids);
+
+    List<MemberEntity> findAllByExternalIdIn(List<String> externalIds);
 }

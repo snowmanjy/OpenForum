@@ -24,6 +24,10 @@ public class OutboxEventEntity {
 
     private Instant createdAt;
 
+    private Integer retryCount = 0;
+    private String status = "PENDING";
+    private String errorMessage;
+
     public OutboxEventEntity() {
     }
 
@@ -74,5 +78,29 @@ public class OutboxEventEntity {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Integer getRetryCount() {
+        return retryCount;
+    }
+
+    public void setRetryCount(Integer retryCount) {
+        this.retryCount = retryCount;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
     }
 }

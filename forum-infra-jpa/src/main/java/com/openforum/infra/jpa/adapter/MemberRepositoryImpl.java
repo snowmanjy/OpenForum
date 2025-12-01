@@ -59,6 +59,22 @@ public class MemberRepositoryImpl implements MemberRepository {
         return memberJpaRepository.countByIdIn(ids) == ids.size();
     }
 
+    @Override
+    public void saveAll(List<Member> members) {
+        List<MemberEntity> entities = members.stream()
+                .map(this::toEntity)
+                .collect(Collectors.toList());
+        memberJpaRepository.saveAll(entities);
+    }
+
+    @Override
+    public List<Member> findAllByExternalIdIn(List<String> externalIds) {
+        return memberJpaRepository.findAllByExternalIdIn(externalIds)
+                .stream()
+                .map(memberMapper::toDomain)
+                .collect(Collectors.toList());
+    }
+
     private MemberEntity toEntity(Member domain) {
         return new MemberEntity(
                 domain.getId(),
@@ -66,6 +82,7 @@ public class MemberRepositoryImpl implements MemberRepository {
                 domain.getEmail(),
                 domain.getName(),
                 domain.isBot(),
-                null);
+                null,
+                domain.getJoinedAt());
     }
 }

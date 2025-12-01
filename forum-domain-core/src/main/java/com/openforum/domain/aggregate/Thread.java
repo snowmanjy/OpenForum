@@ -19,6 +19,7 @@ public class Thread {
     private ThreadStatus status;
     private final Map<String, Object> metadata;
     private Long version;
+    private final Instant createdAt;
 
     private final List<Object> domainEvents = new ArrayList<>();
 
@@ -35,8 +36,9 @@ public class Thread {
         this.status = builder.status;
         this.metadata = builder.metadata != null ? Map.copyOf(builder.metadata) : Map.of();
         this.version = builder.version;
+        this.createdAt = builder.createdAt != null ? builder.createdAt : Instant.now();
         if (builder.isNew) {
-            this.domainEvents.add(new ThreadCreatedEvent(id, tenantId, authorId, title, Instant.now()));
+            this.domainEvents.add(new ThreadCreatedEvent(id, tenantId, authorId, title, this.createdAt));
         }
     }
 
@@ -54,6 +56,7 @@ public class Thread {
         private Map<String, Object> metadata;
         private Long version;
         private boolean isNew = false;
+        private Instant createdAt;
 
         public Builder id(UUID id) {
             this.id = id;
@@ -95,6 +98,11 @@ public class Thread {
             return this;
         }
 
+        public Builder createdAt(Instant createdAt) {
+            this.createdAt = createdAt;
+            return this;
+        }
+
         public Builder isNew(boolean isNew) {
             this.isNew = isNew;
             return this;
@@ -122,7 +130,7 @@ public class Thread {
 
         // 3. Update Thread State (The Cohesion Win)
         // We don't need to load the List<Post> to update a counter or timestamp!
-        // this.lastActivityAt = LocalDateTime.now();
+        // this.lastActivityAt = Instant.now();
         // this.postCount++;
 
         // 4. OPTIONAL: Do NOT add to 'this.posts' list if optimizing for scale.
@@ -182,5 +190,9 @@ public class Thread {
 
     public Long getVersion() {
         return version;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
     }
 }

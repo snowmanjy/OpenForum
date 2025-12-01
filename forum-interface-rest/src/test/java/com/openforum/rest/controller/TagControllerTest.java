@@ -49,10 +49,13 @@ class TagControllerTest {
     private java.security.interfaces.RSAPublicKey publicKey;
 
     private Member testMember;
+    private UUID userId;
 
     @BeforeEach
     void setUp() {
-        testMember = Member.reconstitute(UUID.randomUUID(), "ext-123", "test@example.com", "Test User", false);
+        userId = UUID.randomUUID();
+        testMember = Member.reconstitute(userId, "ext-123", "test@example.com", "Test User", false,
+                java.time.Instant.now());
     }
 
     @AfterEach

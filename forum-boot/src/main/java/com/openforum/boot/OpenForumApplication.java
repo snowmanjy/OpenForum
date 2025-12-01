@@ -8,10 +8,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @SpringBootApplication(scanBasePackages = "com.openforum")
 @EnableJpaRepositories(basePackages = "com.openforum.infra.jpa.repository")
 @EntityScan(basePackages = "com.openforum.infra.jpa.entity")
+@org.springframework.scheduling.annotation.EnableScheduling
 public class OpenForumApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(OpenForumApplication.class, args);
     }
-
 }
