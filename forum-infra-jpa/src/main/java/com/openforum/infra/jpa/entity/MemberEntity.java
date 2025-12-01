@@ -16,17 +16,20 @@ public class MemberEntity {
     private String name;
     private String tenantId;
     private boolean isBot;
+    private java.time.Instant joinedAt;
 
     public MemberEntity() {
     }
 
-    public MemberEntity(UUID id, String externalId, String email, String name, boolean isBot, String tenantId) {
+    public MemberEntity(UUID id, String externalId, String email, String name, boolean isBot, String tenantId,
+            java.time.Instant joinedAt) {
         this.id = id;
         this.externalId = externalId;
         this.email = email;
         this.name = name;
         this.isBot = isBot;
         this.tenantId = tenantId;
+        this.joinedAt = joinedAt;
     }
 
     public UUID getId() {
@@ -55,5 +58,13 @@ public class MemberEntity {
 
     public void setTenantId(String tenantId) {
         this.tenantId = tenantId;
+    }
+
+    public java.time.Instant getJoinedAt() {
+        return joinedAt;
+    }
+
+    public void setJoinedAt(java.time.Instant joinedAt) {
+        this.joinedAt = joinedAt;
     }
 }

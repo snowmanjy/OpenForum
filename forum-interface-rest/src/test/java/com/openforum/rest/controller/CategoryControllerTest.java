@@ -59,7 +59,8 @@ class CategoryControllerTest {
 
     @BeforeEach
     void setUp() {
-        testMember = Member.reconstitute(UUID.randomUUID(), "ext-123", "test@example.com", "Test User", false);
+        testMember = Member.reconstitute(UUID.randomUUID(), "ext-123", "test@example.com", "Test User", false,
+                java.time.Instant.now());
     }
 
     @AfterEach

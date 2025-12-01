@@ -49,8 +49,9 @@ class PostServiceTest {
         Thread thread = org.mockito.Mockito.mock(Thread.class);
         when(threadRepository.findById(threadId)).thenReturn(Optional.of(thread));
 
-        Member member = Member.reconstitute(authorId, "ext-1", "test@example.com", "User", false);
-        when(memberRepository.findById(authorId)).thenReturn(Optional.of(member));
+        Member author = Member.reconstitute(authorId, "ext-1", "test@example.com", "Test User", false,
+                java.time.Instant.now());
+        when(memberRepository.findById(authorId)).thenReturn(Optional.of(author));
 
         when(postRepository.save(any(Post.class))).thenAnswer(invocation -> invocation.getArgument(0));
 

@@ -58,7 +58,9 @@ class ThreadControllerTest {
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        testMember = Member.reconstitute(UUID.randomUUID(), "ext-123", "test@example.com", "Test User", false);
+        UUID userId = UUID.randomUUID();
+        testMember = Member.reconstitute(userId, "ext-123", "test@example.com", "Test User", false,
+                java.time.Instant.now());
     }
 
     @org.junit.jupiter.api.AfterEach

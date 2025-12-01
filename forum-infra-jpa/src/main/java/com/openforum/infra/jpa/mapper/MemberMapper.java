@@ -16,7 +16,8 @@ public class MemberMapper {
                 entity.getExternalId(),
                 entity.getEmail(),
                 entity.getName(),
-                entity.isBot());
+                entity.isBot(),
+                entity.getJoinedAt());
     }
 
     public MemberEntity toEntity(Member member) {
@@ -29,6 +30,7 @@ public class MemberMapper {
                 member.getEmail(),
                 member.getName(),
                 member.isBot(),
-                null);
+                null,
+                member.getJoinedAt());
     }
 }

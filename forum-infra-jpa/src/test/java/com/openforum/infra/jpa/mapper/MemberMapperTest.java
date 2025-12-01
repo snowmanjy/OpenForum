@@ -16,7 +16,8 @@ class MemberMapperTest {
     void toDomain_shouldMapAllFields() {
         // Given
         UUID id = UUID.randomUUID();
-        MemberEntity entity = new MemberEntity(id, "ext-123", "test@example.com", "Test User", false, "tenant-1");
+        MemberEntity entity = new MemberEntity(id, "ext-123", "test@example.com", "Test User", false, "tenant-1",
+                java.time.Instant.now());
 
         // When
         Member member = mapper.toDomain(entity);

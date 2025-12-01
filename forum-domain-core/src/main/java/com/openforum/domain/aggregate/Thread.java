@@ -122,7 +122,7 @@ public class Thread {
 
         // 3. Update Thread State (The Cohesion Win)
         // We don't need to load the List<Post> to update a counter or timestamp!
-        // this.lastActivityAt = LocalDateTime.now();
+        // this.lastActivityAt = Instant.now();
         // this.postCount++;
 
         // 4. OPTIONAL: Do NOT add to 'this.posts' list if optimizing for scale.

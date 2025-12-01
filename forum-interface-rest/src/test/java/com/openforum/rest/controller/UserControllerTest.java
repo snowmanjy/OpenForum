@@ -18,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -47,7 +48,8 @@ class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        testMember = Member.reconstitute(UUID.randomUUID(), "ext-123", "test@example.com", "Test User", false);
+        testMember = Member.reconstitute(UUID.randomUUID(), "ext-123", "test@example.com", "Test User", false,
+                Instant.now());
     }
 
     @AfterEach
@@ -60,7 +62,8 @@ class UserControllerTest {
     void searchUsers_shouldReturnMatchingUsers_whenAuthenticated() throws Exception {
         // Given
         UUID userId = UUID.randomUUID();
-        Member searchResult = Member.reconstitute(userId, "ext-456", "john@example.com", "John Doe", false);
+        Member searchResult = Member.reconstitute(userId, "ext-456", "john@example.com", "John Doe", false,
+                Instant.now());
         when(memberRepository.searchByHandleOrName(anyString(), anyString(), anyInt()))
                 .thenReturn(List.of(searchResult));
 

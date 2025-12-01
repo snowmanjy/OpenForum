@@ -140,7 +140,8 @@ class TenantControllerTest {
     private RequestPostProcessor authWithTenant(String userId, String tenantId) {
         return request -> {
             Member member = Member.reconstitute(
-                    UUID.randomUUID(), "ext-" + userId, "test@example.com", "Test User", false);
+                    UUID.randomUUID(), "ext-" + userId, "test@example.com", "Test User", false,
+                    java.time.Instant.now());
 
             Authentication auth = new UsernamePasswordAuthenticationToken(
                     member, null, Collections.emptyList());
