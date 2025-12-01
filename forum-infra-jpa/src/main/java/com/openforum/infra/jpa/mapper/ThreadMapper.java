@@ -17,6 +17,7 @@ public class ThreadMapper {
         entity.setStatus(domain.getStatus());
         entity.setMetadata(domain.getMetadata());
         entity.setVersion(domain.getVersion());
+        entity.setCreatedAt(domain.getCreatedAt());
         return entity;
     }
 
@@ -33,6 +34,7 @@ public class ThreadMapper {
                 .status(entity.getStatus())
                 .metadata(entity.getMetadata())
                 .version(entity.getVersion())
+                .createdAt(entity.getCreatedAt())
                 .build();
     }
 }

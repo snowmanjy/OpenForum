@@ -128,8 +128,8 @@ public class ThreadRepositoryImpl implements ThreadRepository {
 
         // 1. Batch Insert Threads
         String threadSql = """
-                INSERT INTO threads (id, tenant_id, author_id, title, status, metadata, version)
-                VALUES (?, ?, ?, ?, ?, ?::jsonb, ?)
+                INSERT INTO threads (id, tenant_id, author_id, title, status, metadata, version, created_at)
+                VALUES (?, ?, ?, ?, ?, ?::jsonb, ?, ?)
                 """;
 
         jdbcTemplate.batchUpdate(threadSql, threads, threads.size(), (ps, thread) -> {
@@ -144,6 +144,7 @@ public class ThreadRepositoryImpl implements ThreadRepository {
                 throw new RuntimeException("Failed to serialize thread metadata", e);
             }
             ps.setObject(7, thread.getVersion() != null ? thread.getVersion() : 0L);
+            ps.setTimestamp(8, Timestamp.from(thread.getCreatedAt()));
         });
 
         // 2. Batch Insert Posts
