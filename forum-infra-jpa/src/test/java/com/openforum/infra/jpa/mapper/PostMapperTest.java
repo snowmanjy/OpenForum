@@ -20,10 +20,12 @@ class PostMapperTest {
         UUID id = UUID.randomUUID();
         UUID threadId = UUID.randomUUID();
         UUID authorId = UUID.randomUUID();
+        String tenantId = "tenant-1";
         Instant now = Instant.now();
         PostEntity entity = new PostEntity();
         entity.setId(id);
         entity.setThreadId(threadId);
+        entity.setTenantId(tenantId);
         entity.setAuthorId(authorId);
         entity.setContent("Test content");
         entity.setCreatedAt(now);

@@ -189,9 +189,18 @@ class PostCreatedEventListenerTest {
                                 "Product docs",
                                 "encrypted_key");
 
+                Post originalPost = Post.builder()
+                                .id(UUID.randomUUID())
+                                .threadId(UUID.randomUUID())
+                                .tenantId("tenant-1")
+                                .authorId(UUID.randomUUID())
+                                .content("What is DDD?")
+                                .isNew(true)
+                                .build();
                 Post recentPost = Post.builder()
                                 .id(UUID.randomUUID())
                                 .threadId(threadId)
+                                .tenantId("tenant123") // Added tenantId here
                                 .authorId(authorId)
                                 .content("Previous message")
                                 .version(1L)

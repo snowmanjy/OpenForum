@@ -11,6 +11,7 @@ public class PostMapper {
         PostEntity entity = new PostEntity();
         entity.setId(domain.getId());
         entity.setThreadId(domain.getThreadId());
+        entity.setTenantId(domain.getTenantId());
         entity.setAuthorId(domain.getAuthorId());
         entity.setContent(domain.getContent());
         entity.setVersion(domain.getVersion());
@@ -27,6 +28,7 @@ public class PostMapper {
         return Post.builder()
                 .id(entity.getId())
                 .threadId(entity.getThreadId())
+                .tenantId(entity.getTenantId())
                 .authorId(entity.getAuthorId())
                 .content(entity.getContent())
                 .version(entity.getVersion())

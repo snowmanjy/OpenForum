@@ -18,6 +18,7 @@ public class PostEntity {
     private UUID id;
 
     private UUID threadId;
+    private String tenantId;
     private UUID authorId;
     private String content;
     private Long version;
@@ -48,6 +49,14 @@ public class PostEntity {
 
     public void setThreadId(UUID threadId) {
         this.threadId = threadId;
+    }
+
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(String tenantId) {
+        this.tenantId = tenantId;
     }
 
     public UUID getAuthorId() {

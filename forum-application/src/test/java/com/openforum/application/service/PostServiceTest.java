@@ -3,6 +3,7 @@ package com.openforum.application.service;
 import com.openforum.domain.aggregate.Member;
 import com.openforum.domain.aggregate.Post;
 import com.openforum.domain.aggregate.Thread;
+import com.openforum.domain.aggregate.ThreadStatus;
 import com.openforum.domain.repository.MemberRepository;
 import com.openforum.domain.repository.PostRepository;
 import com.openforum.domain.repository.ThreadRepository;
@@ -47,6 +48,8 @@ class PostServiceTest {
         String content = "Test Content";
 
         Thread thread = org.mockito.Mockito.mock(Thread.class);
+        when(thread.getTenantId()).thenReturn("test-tenant");
+        when(thread.getStatus()).thenReturn(ThreadStatus.OPEN);
         when(threadRepository.findById(threadId)).thenReturn(Optional.of(thread));
 
         Member author = Member.reconstitute(authorId, "ext-1", "test@example.com", "Test User", false,
