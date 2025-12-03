@@ -12,19 +12,22 @@ import java.util.UUID;
 public class Post {
     private final UUID id;
     private final UUID threadId;
+    private final String tenantId;
     private final UUID authorId;
-    private final String content;
+    private String content; // Made mutable for editing
     private final Long version;
     private final UUID replyToPostId;
     private final Map<String, Object> metadata;
     private final Instant createdAt;
     private final List<UUID> mentionedUserIds;
+    private boolean isDeleted = false;
 
     private final List<Object> domainEvents = new ArrayList<>();
 
     private Post(Builder builder) {
         this.id = Objects.requireNonNull(builder.id, "id must not be null");
         this.threadId = Objects.requireNonNull(builder.threadId, "threadId must not be null");
+        this.tenantId = Objects.requireNonNull(builder.tenantId, "tenantId must not be null");
         this.authorId = Objects.requireNonNull(builder.authorId, "authorId must not be null");
         this.content = Objects.requireNonNull(builder.content, "content must not be null");
         this.version = builder.version;
@@ -47,6 +50,7 @@ public class Post {
     public static class Builder {
         private UUID id;
         private UUID threadId;
+        private String tenantId;
         private UUID authorId;
         private String content;
         private Long version;
@@ -64,6 +68,11 @@ public class Post {
 
         public Builder threadId(UUID threadId) {
             this.threadId = threadId;
+            return this;
+        }
+
+        public Builder tenantId(String tenantId) {
+            this.tenantId = tenantId;
             return this;
         }
 
@@ -157,5 +166,70 @@ public class Post {
         List<Object> events = new ArrayList<>(domainEvents);
         domainEvents.clear();
         return events;
+    }
+
+    public String getTenantId() {
+        return tenantId;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    /**
+     * Edits the post content if it's different from the current content.
+     * Emits a PostContentEdited event for history tracking.
+     * 
+     * @param newContent The new content for the post
+     * @param byUserId   The user making the edit
+     * @throws IllegalArgumentException if newContent is null or empty
+     * @throws IllegalStateException    if post is deleted
+     */
+    public void editContent(String newContent, UUID byUserId) {
+        if (newContent == null || newContent.trim().isEmpty()) {
+            throw new IllegalArgumentException("Post content cannot be null or empty");
+        }
+
+        if (this.isDeleted) {
+            throw new IllegalStateException("Cannot edit a deleted post");
+        }
+
+        // Only emit event if content actually changed
+        if (!this.content.equals(newContent)) {
+            this.domainEvents.add(
+                    new com.openforum.domain.events.PostContentEdited(
+                            this.id,
+                            this.threadId,
+                            this.tenantId,
+                            this.content,
+                            newContent,
+                            byUserId,
+                            Instant.now()));
+            this.content = newContent;
+        }
+    }
+
+    /**
+     * Marks the post as deleted.
+     * Emits a PostDeleted event for history tracking.
+     * 
+     * @param reason   The reason for deletion
+     * @param byUserId The user deleting the post
+     * @throws IllegalStateException if post is already deleted
+     */
+    public void delete(String reason, UUID byUserId) {
+        if (this.isDeleted) {
+            throw new IllegalStateException("Post is already deleted");
+        }
+
+        this.domainEvents.add(
+                new com.openforum.domain.events.PostDeleted(
+                        this.id,
+                        this.threadId,
+                        this.tenantId,
+                        reason,
+                        byUserId,
+                        Instant.now()));
+        this.isDeleted = true;
     }
 }

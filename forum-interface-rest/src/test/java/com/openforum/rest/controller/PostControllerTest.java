@@ -78,6 +78,7 @@ class PostControllerTest {
         Post post = Post.builder()
                 .id(postId)
                 .threadId(threadId)
+                .tenantId("test-tenant")
                 .authorId(testMember.getId())
                 .content("Test Content")
                 .isNew(true)

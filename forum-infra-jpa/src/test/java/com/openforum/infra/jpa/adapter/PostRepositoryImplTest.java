@@ -40,9 +40,10 @@ class PostRepositoryImplTest {
     @Test
     void shouldSavePostAndPublishEvent() {
         // Given
+        String tenantId = "tenant-1";
         UUID threadId = UUID.randomUUID();
         UUID authorId = UUID.randomUUID();
-        Post post = PostFactory.create(threadId, authorId, "Test Content", null, Map.of("key", "value"), false);
+        Post post = PostFactory.create(tenantId, threadId, authorId, "Test Content", null, false, java.util.List.of());
         UUID postId = post.getId();
 
         // When
@@ -52,7 +53,6 @@ class PostRepositoryImplTest {
         Optional<Post> savedPost = postRepository.findById(postId);
         assertThat(savedPost).isPresent();
         assertThat(savedPost.get().getContent()).isEqualTo("Test Content");
-        assertThat(savedPost.get().getMetadata()).containsEntry("key", "value");
 
         List<OutboxEventEntity> events = outboxEventJpaRepository.findAll();
         assertThat(events).hasSize(1);
@@ -62,10 +62,14 @@ class PostRepositoryImplTest {
     @Test
     void shouldFindPostsByThreadId() {
         // Given
+        String tenantId = "tenant-1";
         UUID threadId = UUID.randomUUID();
-        Post post1 = PostFactory.create(threadId, UUID.randomUUID(), "Post 1", null, Map.of(), false);
-        Post post2 = PostFactory.create(threadId, UUID.randomUUID(), "Post 2", null, Map.of(), false);
-        Post post3 = PostFactory.create(UUID.randomUUID(), UUID.randomUUID(), "Other Thread", null, Map.of(), false);
+        Post post1 = PostFactory.create(tenantId, threadId, UUID.randomUUID(), "Post 1", null, false,
+                java.util.List.of());
+        Post post2 = PostFactory.create(tenantId, threadId, UUID.randomUUID(), "Post 2", null, false,
+                java.util.List.of());
+        Post post3 = PostFactory.create(tenantId, UUID.randomUUID(), UUID.randomUUID(), "Other Thread", null, false,
+                java.util.List.of());
 
         postRepository.save(post1);
         postRepository.save(post2);

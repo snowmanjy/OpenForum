@@ -121,12 +121,13 @@ public class Thread {
 
         // 2. Create the Entity (Thread acts as Factory)
         Post newPost = PostFactory.create(
+                this.tenantId,
                 this.id,
                 authorId,
                 content,
                 null, // replyToId
-                Map.of(),
-                isBot);
+                isBot,
+                java.util.List.of()); // mentionedUserIds
 
         // 3. Update Thread State (The Cohesion Win)
         // We don't need to load the List<Post> to update a counter or timestamp!
@@ -194,5 +195,55 @@ public class Thread {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    /**
+     * Changes the thread title if it's different from the current title.
+     * Emits a ThreadTitleChanged event for history tracking.
+     * 
+     * @param newTitle The new title for the thread
+     * @param byUserId The user making the change
+     * @throws IllegalArgumentException if newTitle is null or empty
+     */
+    public void changeTitle(String newTitle, UUID byUserId) {
+        if (newTitle == null || newTitle.trim().isEmpty()) {
+            throw new IllegalArgumentException("Thread title cannot be null or empty");
+        }
+
+        // Only emit event if title actually changed
+        if (!this.title.equals(newTitle)) {
+            this.domainEvents.add(
+                    new com.openforum.domain.events.ThreadTitleChanged(
+                            this.id,
+                            this.tenantId,
+                            this.title,
+                            newTitle,
+                            byUserId,
+                            Instant.now()));
+            this.title = newTitle;
+        }
+    }
+
+    /**
+     * Closes the thread with a reason.
+     * Emits a ThreadClosed event for history tracking.
+     * 
+     * @param reason   The reason for closing the thread
+     * @param byUserId The user closing the thread
+     * @throws IllegalStateException if thread is already closed
+     */
+    public void close(String reason, UUID byUserId) {
+        if (this.status == ThreadStatus.CLOSED) {
+            throw new IllegalStateException("Thread is already closed");
+        }
+
+        this.domainEvents.add(
+                new com.openforum.domain.events.ThreadClosed(
+                        this.id,
+                        this.tenantId,
+                        reason,
+                        byUserId,
+                        Instant.now()));
+        this.status = ThreadStatus.CLOSED;
     }
 }

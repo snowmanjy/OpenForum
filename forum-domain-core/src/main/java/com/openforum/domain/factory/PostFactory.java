@@ -11,7 +11,8 @@ import java.util.UUID;
 // Added import for List
 
 public class PostFactory {
-        public static Post create(UUID threadId, UUID authorId, String content, UUID replyToPostId, boolean isBot,
+        public static Post create(String tenantId, UUID threadId, UUID authorId, String content, UUID replyToPostId,
+                        boolean isBot,
                         List<UUID> mentionedUserIds) {
                 if (content == null || content.isBlank()) {
                         throw new IllegalArgumentException("Post content cannot be empty");
@@ -19,6 +20,7 @@ public class PostFactory {
 
                 return Post.builder()
                                 .id(UUID.randomUUID())
+                                .tenantId(tenantId)
                                 .threadId(threadId)
                                 .authorId(authorId)
                                 .content(content)
@@ -29,10 +31,11 @@ public class PostFactory {
                                 .build();
         }
 
-        public static Post create(UUID threadId, UUID authorId, String content, UUID replyToPostId,
+        public static Post create(String tenantId, UUID threadId, UUID authorId, String content, UUID replyToPostId,
                         Map<String, Object> metadata, boolean isBot) {
                 return Post.builder()
                                 .id(UUID.randomUUID())
+                                .tenantId(tenantId)
                                 .threadId(threadId)
                                 .authorId(authorId)
                                 .content(content)
@@ -49,6 +52,7 @@ public class PostFactory {
          * Does NOT generate domain events to prevent notification storms.
          * 
          * @param id            Pre-existing post ID from legacy system
+         * @param tenantId      Tenant ID for multi-tenancy
          * @param threadId      Parent thread ID
          * @param authorId      Author UUID
          * @param content       Post content
@@ -60,6 +64,7 @@ public class PostFactory {
          */
         public static Post createImported(
                         UUID id,
+                        String tenantId,
                         UUID threadId,
                         UUID authorId,
                         String content,
@@ -69,12 +74,14 @@ public class PostFactory {
                         Instant createdAt) {
                 return Post.builder()
                                 .id(id)
+                                .tenantId(tenantId)
                                 .threadId(threadId)
                                 .authorId(authorId)
                                 .content(content)
                                 .version(1L)
                                 .replyToPostId(replyToPostId)
                                 .metadata(metadata)
+                                .createdAt(createdAt)
                                 .isNew(false) // Critical: Do NOT generate PostCreatedEvent
                                 .isBot(isBot)
                                 .build();

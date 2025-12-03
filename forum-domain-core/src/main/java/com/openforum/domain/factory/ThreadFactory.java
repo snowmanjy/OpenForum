@@ -66,6 +66,7 @@ public class ThreadFactory {
                 for (ImportedPostData postData : importedPosts) {
                         Post post = PostFactory.createImported(
                                         postData.id(),
+                                        tenantId,
                                         thread.getId(),
                                         postData.authorId(),
                                         postData.content(),

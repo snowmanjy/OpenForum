@@ -53,7 +53,8 @@ public class PostService {
                 .orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
         // 3. Create post
-        Post post = PostFactory.create(threadId, authorId, content, replyToPostId, member.isBot(), mentionedUserIds);
+        Post post = PostFactory.create(thread.getTenantId(), threadId, authorId, content, replyToPostId, member.isBot(),
+                mentionedUserIds);
         postRepository.save(post);
 
         return post;
