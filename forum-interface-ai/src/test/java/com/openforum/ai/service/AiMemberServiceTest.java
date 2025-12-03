@@ -37,7 +37,7 @@ class AiMemberServiceTest {
     @Test
     void shouldReturnExistingAiMember() {
         // Given
-        Member existingMember = Member.create("ai-assistant", "ai@forum.local", "AI Assistant", true);
+        Member existingMember = Member.create("ai-assistant", "ai@forum.local", "AI Assistant", true, tenantId);
         when(memberRepository.findByExternalId(eq(tenantId), anyString()))
                 .thenReturn(Optional.of(existingMember));
 

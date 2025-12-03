@@ -24,39 +24,43 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class TenantControllerIntegrationTest {
 
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+        @Container
+        @ServiceConnection
+        static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @Test
-    void shouldCreateTenant() throws Exception {
-        CreateTenantRequest request = new CreateTenantRequest("tenant-integration-test",
-                Map.<String, Object>of("theme", "dark"));
+        @Test
+        void shouldCreateTenant() throws Exception {
+                CreateTenantRequest request = new CreateTenantRequest("tenant-integration-test", "slug-integration",
+                                "Integration Tenant",
+                                Map.<String, Object>of("theme", "dark"));
 
-        mockMvc.perform(post("/api/v1/tenants")
-                .with(jwt().authorities(
-                        new org.springframework.security.core.authority.SimpleGrantedAuthority("SCOPE_create:tenant")))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
-    }
+                mockMvc.perform(post("/api/v1/tenants")
+                                .with(jwt().authorities(
+                                                new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                                                                "SCOPE_create:tenant")))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isOk());
+        }
 
-    @Test
-    void shouldReturn400WhenIdIsMissing() throws Exception {
-        // Create request with null id
-        CreateTenantRequest request = new CreateTenantRequest(null, Map.<String, Object>of("theme", "dark"));
+        @Test
+        void shouldReturn400WhenIdIsMissing() throws Exception {
+                // Create request with null id
+                CreateTenantRequest request = new CreateTenantRequest(null, "slug-missing-id", "Missing ID Tenant",
+                                Map.<String, Object>of("theme", "dark"));
 
-        mockMvc.perform(post("/api/v1/tenants")
-                .with(jwt().authorities(
-                        new org.springframework.security.core.authority.SimpleGrantedAuthority("SCOPE_create:tenant")))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
-    }
+                mockMvc.perform(post("/api/v1/tenants")
+                                .with(jwt().authorities(
+                                                new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                                                                "SCOPE_create:tenant")))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isBadRequest());
+        }
 }

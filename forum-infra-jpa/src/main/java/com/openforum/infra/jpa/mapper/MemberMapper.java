@@ -17,7 +17,9 @@ public class MemberMapper {
                 entity.getEmail(),
                 entity.getName(),
                 entity.isBot(),
-                entity.getJoinedAt());
+                entity.getJoinedAt(),
+                com.openforum.domain.valueobject.MemberRole.valueOf(entity.getRole()),
+                entity.getTenantId());
     }
 
     public MemberEntity toEntity(Member member) {
@@ -30,7 +32,8 @@ public class MemberMapper {
                 member.getEmail(),
                 member.getName(),
                 member.isBot(),
-                null,
-                member.getJoinedAt());
+                member.getTenantId(),
+                member.getJoinedAt(),
+                member.getRole().name());
     }
 }

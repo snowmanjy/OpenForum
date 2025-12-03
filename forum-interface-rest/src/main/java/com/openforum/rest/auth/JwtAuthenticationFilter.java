@@ -76,16 +76,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     // error.
                     // Given constraints, we should probably enforce it, but let's default to
                     // "default-tenant" if missing for backward compat during migration
-                    TenantContext.setTenantId("default-tenant");
+                    tenantId = "default-tenant";
+                    TenantContext.setTenantId(tenantId);
                 }
 
                 if (externalId != null) {
                     // 3. Check if Member exists in DB (JIT Provisioning)
+                    String finalTenantId = tenantId;
                     Member member = memberRepository.findByExternalId(tenantId, externalId)
                             .orElseGet(() -> {
                                 String safeEmail = email != null ? email : externalId + "@placeholder.com";
                                 String safeName = name != null ? name : "Unknown User";
-                                Member newMember = Member.create(externalId, safeEmail, safeName, false);
+                                Member newMember = Member.create(externalId, safeEmail, safeName, false, finalTenantId);
                                 memberRepository.save(newMember);
                                 return newMember;
                             });

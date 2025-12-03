@@ -4,5 +4,9 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.Map;
 
-public record CreateTenantRequest(@NotNull String id, Map<String, Object> config) {
+public record CreateTenantRequest(
+        @NotNull String id,
+        @NotNull String slug,
+        @NotNull String name,
+        Map<String, Object> config) {
 }

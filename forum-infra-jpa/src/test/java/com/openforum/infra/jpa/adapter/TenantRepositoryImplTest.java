@@ -42,7 +42,8 @@ class TenantRepositoryImplTest {
     void should_save_and_retrieve_tenant() {
         // Given
         String tenantId = "tenant-1";
-        Tenant tenant = com.openforum.domain.factory.TenantFactory.create(tenantId, Map.of("key", "value"));
+        Tenant tenant = com.openforum.domain.factory.TenantFactory.create(tenantId, "slug-1", "Tenant 1",
+                Map.of("key", "value"));
 
         // When
         tenantRepository.save(tenant);
@@ -51,6 +52,8 @@ class TenantRepositoryImplTest {
         // Then
         assertThat(retrieved).isPresent();
         assertThat(retrieved.get().getId()).isEqualTo(tenantId);
+        assertThat(retrieved.get().getSlug()).isEqualTo("slug-1");
+        assertThat(retrieved.get().getName()).isEqualTo("Tenant 1");
         assertThat(retrieved.get().getConfig()).containsEntry("key", "value");
     }
 

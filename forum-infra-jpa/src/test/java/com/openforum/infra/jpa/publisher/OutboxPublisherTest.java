@@ -71,7 +71,8 @@ class OutboxPublisherTest {
                 "Test User",
                 false,
                 "tenant-test",
-                java.time.Instant.now());
+                java.time.Instant.now(),
+                "MEMBER");
         memberJpaRepository.save(memberEntity);
 
         Thread thread = Thread.builder()

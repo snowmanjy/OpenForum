@@ -19,6 +19,8 @@ class TenantMapperTest {
         Map<String, Object> config = Map.of("theme", "dark", "features", Map.of("polls", true));
         TenantEntity entity = new TenantEntity();
         entity.setId(tenantId);
+        entity.setSlug("slug-1");
+        entity.setName("Tenant 1");
         entity.setConfig(config);
 
         // When
@@ -27,6 +29,8 @@ class TenantMapperTest {
         // Then
         assertThat(tenant).isNotNull();
         assertThat(tenant.getId()).isEqualTo(tenantId);
+        assertThat(tenant.getSlug()).isEqualTo("slug-1");
+        assertThat(tenant.getName()).isEqualTo("Tenant 1");
         assertThat(tenant.getConfig()).containsEntry("theme", "dark");
         assertThat(tenant.getConfig()).containsKey("features");
     }
@@ -35,7 +39,7 @@ class TenantMapperTest {
     void toEntity_shouldMapAllFields() {
         // Given
         Map<String, Object> config = Map.of("language", "en", "timezone", "UTC");
-        Tenant tenant = com.openforum.domain.factory.TenantFactory.create("tenant-2", config);
+        Tenant tenant = com.openforum.domain.factory.TenantFactory.create("tenant-2", "slug-2", "Tenant 2", config);
 
         // When
         TenantEntity entity = mapper.toEntity(tenant);
@@ -43,6 +47,8 @@ class TenantMapperTest {
         // Then
         assertThat(entity).isNotNull();
         assertThat(entity.getId()).isEqualTo("tenant-2");
+        assertThat(entity.getSlug()).isEqualTo("slug-2");
+        assertThat(entity.getName()).isEqualTo("Tenant 2");
         assertThat(entity.getConfig()).containsEntry("language", "en");
         assertThat(entity.getConfig()).containsEntry("timezone", "UTC");
     }

@@ -15,7 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -37,85 +37,88 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(CategoryController.class)
 @Import({ SecurityConfig.class, JwtAuthenticationFilter.class, MemberJwtAuthenticationConverter.class,
-        JwtConfig.class })
+                JwtConfig.class })
 class CategoryControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockBean
-    private CategoryService categoryService;
+        @MockitoBean
+        private CategoryService categoryService;
 
-    @MockBean
-    private MemberRepository memberRepository;
+        @MockitoBean
+        private MemberRepository memberRepository;
 
-    @MockBean
-    private java.security.interfaces.RSAPublicKey publicKey;
+        @MockitoBean
+        private java.security.interfaces.RSAPublicKey publicKey;
 
-    private Member testMember;
+        private Member testMember;
 
-    @BeforeEach
-    void setUp() {
-        testMember = Member.reconstitute(UUID.randomUUID(), "ext-123", "test@example.com", "Test User", false,
-                java.time.Instant.now());
-    }
+        @BeforeEach
+        void setUp() {
+                testMember = Member.reconstitute(UUID.randomUUID(), "ext-123", "test@example.com", "Test User", false,
+                                java.time.Instant.now(), com.openforum.domain.valueobject.MemberRole.MEMBER,
+                                "default-tenant");
+        }
 
-    @AfterEach
-    void tearDown() {
-        com.openforum.rest.context.TenantContext.clear();
-        org.springframework.security.core.context.SecurityContextHolder.clearContext();
-    }
+        @AfterEach
+        void tearDown() {
+                com.openforum.rest.context.TenantContext.clear();
+                org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        }
 
-    @Test
-    void getCategories_shouldReturnList_whenAuthenticated() throws Exception {
-        // Given
-        UUID categoryId = UUID.randomUUID();
-        Category category = Category.reconstitute(categoryId, "default-tenant", "General", "general",
-                "General discussions", false);
-        when(categoryService.getCategories(anyString())).thenReturn(List.of(category));
+        @Test
+        void getCategories_shouldReturnList_whenAuthenticated() throws Exception {
+                // Given
+                UUID categoryId = UUID.randomUUID();
+                Category category = Category.reconstitute(categoryId, "default-tenant", "General", "general",
+                                "General discussions", false);
+                when(categoryService.getCategories(anyString())).thenReturn(List.of(category));
 
-        // When & Then
-        mockMvc.perform(get("/api/v1/categories")
-                .with(authWithTenant(testMember, "default-tenant")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(categoryId.toString()))
-                .andExpect(jsonPath("$[0].name").value("General"))
-                .andExpect(jsonPath("$[0].slug").value("general"));
-    }
+                // When & Then
+                mockMvc.perform(get("/api/v1/categories")
+                                .with(authWithTenant(testMember, "default-tenant")))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$[0].id").value(categoryId.toString()))
+                                .andExpect(jsonPath("$[0].name").value("General"))
+                                .andExpect(jsonPath("$[0].slug").value("general"));
+        }
 
-    @Test
-    void createCategory_shouldReturnCreated_whenAuthenticated() throws Exception {
-        // Given
-        UUID categoryId = UUID.randomUUID();
-        CreateCategoryRequest request = new CreateCategoryRequest("News", "news", "News and announcements", false);
-        Category category = Category.reconstitute(categoryId, "default-tenant", "News", "news",
-                "News and announcements", false);
+        @Test
+        void createCategory_shouldReturnCreated_whenAuthenticated() throws Exception {
+                // Given
+                UUID categoryId = UUID.randomUUID();
+                CreateCategoryRequest request = new CreateCategoryRequest("News", "news", "News and announcements",
+                                false);
+                Category category = Category.reconstitute(categoryId, "default-tenant", "News", "news",
+                                "News and announcements", false);
 
-        when(categoryService.createCategory(anyString(), anyString(), anyString(), anyString(), anyBoolean()))
-                .thenReturn(category);
+                when(categoryService.createCategory(anyString(), anyString(), anyString(), anyString(), anyBoolean()))
+                                .thenReturn(category);
 
-        // When & Then
-        mockMvc.perform(post("/api/v1/categories")
-                .with(authWithTenant(testMember, "default-tenant"))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(categoryId.toString()))
-                .andExpect(jsonPath("$.name").value("News"))
-                .andExpect(jsonPath("$.slug").value("news"));
-    }
+                // When & Then
+                mockMvc.perform(post("/api/v1/categories")
+                                .with(authWithTenant(testMember, "default-tenant"))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(categoryId.toString()))
+                                .andExpect(jsonPath("$.name").value("News"))
+                                .andExpect(jsonPath("$.slug").value("news"));
+        }
 
-    private RequestPostProcessor authWithTenant(Member member, String tenantId) {
-        return request -> {
-            Authentication auth = new UsernamePasswordAuthenticationToken(member, null, Collections.emptyList());
-            request = org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
-                    .authentication(auth)
-                    .postProcessRequest(request);
-            com.openforum.rest.context.TenantContext.setTenantId(tenantId);
-            return request;
-        };
-    }
+        private RequestPostProcessor authWithTenant(Member member, String tenantId) {
+                return request -> {
+                        Authentication auth = new UsernamePasswordAuthenticationToken(member, null,
+                                        Collections.emptyList());
+                        request = org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                                        .authentication(auth)
+                                        .postProcessRequest(request);
+                        com.openforum.rest.context.TenantContext.setTenantId(tenantId);
+                        return request;
+                };
+        }
 }

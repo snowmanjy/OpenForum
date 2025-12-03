@@ -49,7 +49,7 @@ public class TenantController {
     public ResponseEntity<TenantResponse> createTenant(
             @RequestBody @Valid com.openforum.rest.controller.dto.CreateTenantRequest request) {
         logger.info("Received create tenant request: {}", request);
-        Tenant tenant = tenantService.createTenant(request.id(), request.config());
+        Tenant tenant = tenantService.createTenant(request.id(), request.slug(), request.name(), request.config());
         return ResponseEntity.ok(TenantResponse.from(tenant));
     }
 }
