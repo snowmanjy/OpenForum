@@ -18,4 +18,9 @@ public class TestApplication {
         mapper.registerModule(new JavaTimeModule());
         return mapper;
     }
+
+    @Bean
+    public io.micrometer.core.instrument.MeterRegistry meterRegistry() {
+        return new io.micrometer.core.instrument.simple.SimpleMeterRegistry();
+    }
 }

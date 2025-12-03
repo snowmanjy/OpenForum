@@ -50,7 +50,8 @@ public class BulkMemberImportService {
                         item.externalId(),
                         item.email(),
                         item.name(),
-                        item.joinedAt());
+                        item.joinedAt(),
+                        request.tenantId());
                 newMembers.add(newMember);
                 correlationIdMap.put(item.correlationId(), newMember.getId());
             }

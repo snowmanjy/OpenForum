@@ -82,7 +82,8 @@ public class MemberRepositoryImpl implements MemberRepository {
                 domain.getEmail(),
                 domain.getName(),
                 domain.isBot(),
-                null,
-                domain.getJoinedAt());
+                domain.getTenantId(),
+                domain.getJoinedAt(),
+                domain.getRole().name());
     }
 }

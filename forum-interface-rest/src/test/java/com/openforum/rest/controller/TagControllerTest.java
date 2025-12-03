@@ -13,7 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -39,13 +39,13 @@ class TagControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private TagRepository tagRepository;
 
-    @MockBean
+    @MockitoBean
     private MemberRepository memberRepository;
 
-    @MockBean
+    @MockitoBean
     private java.security.interfaces.RSAPublicKey publicKey;
 
     private Member testMember;
@@ -55,7 +55,7 @@ class TagControllerTest {
     void setUp() {
         userId = UUID.randomUUID();
         testMember = Member.reconstitute(userId, "ext-123", "test@example.com", "Test User", false,
-                java.time.Instant.now());
+                java.time.Instant.now(), com.openforum.domain.valueobject.MemberRole.MEMBER, "test-tenant");
     }
 
     @AfterEach

@@ -14,6 +14,8 @@ public class TenantMapper {
         }
         TenantEntity entity = new TenantEntity();
         entity.setId(domain.getId());
+        entity.setSlug(domain.getSlug());
+        entity.setName(domain.getName());
         entity.setConfig(domain.getConfig());
         return entity;
     }
@@ -22,6 +24,6 @@ public class TenantMapper {
         if (entity == null) {
             return null;
         }
-        return TenantFactory.create(entity.getId(), entity.getConfig());
+        return TenantFactory.create(entity.getId(), entity.getSlug(), entity.getName(), entity.getConfig());
     }
 }

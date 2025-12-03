@@ -42,7 +42,7 @@ public class MemberJwtAuthenticationConverter implements Converter<Jwt, Abstract
         String tenantId = TenantContext.getTenantId();
         return memberRepository.findByExternalId(tenantId, externalId)
                 .or(() -> {
-                    Member newMember = Member.create(externalId, email, name, false);
+                    Member newMember = Member.create(externalId, email, name, false, tenantId);
                     memberRepository.save(newMember);
                     return Optional.of(newMember);
                 });

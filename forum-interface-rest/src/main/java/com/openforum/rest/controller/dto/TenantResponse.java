@@ -6,10 +6,14 @@ import java.util.Map;
 
 public record TenantResponse(
         String id,
+        String slug,
+        String name,
         Map<String, Object> config) {
     public static TenantResponse from(Tenant tenant) {
         return new TenantResponse(
                 tenant.getId(),
+                tenant.getSlug(),
+                tenant.getName(),
                 tenant.getConfig());
     }
 }

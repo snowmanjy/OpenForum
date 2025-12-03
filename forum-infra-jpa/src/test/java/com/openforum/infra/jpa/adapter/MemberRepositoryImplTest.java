@@ -43,11 +43,11 @@ class MemberRepositoryImplTest {
     void should_save_and_retrieve_member() {
         // Given
         String externalId = "ext-123";
-        Member member = Member.create(externalId, "test@example.com", "Test User", false);
+        Member member = Member.create(externalId, "test@example.com", "Test User", false, "tenant-1");
 
         // When
         memberRepository.save(member);
-        Optional<Member> retrieved = memberRepository.findByExternalId(null, externalId);
+        Optional<Member> retrieved = memberRepository.findByExternalId("tenant-1", externalId);
 
         // Then
         assertThat(retrieved).isPresent();
@@ -59,7 +59,7 @@ class MemberRepositoryImplTest {
     @Test
     void should_findById() {
         // Given
-        Member member = Member.create("ext-456", "john@example.com", "John Doe", false);
+        Member member = Member.create("ext-456", "john@example.com", "John Doe", false, "tenant-1");
         memberRepository.save(member);
         UUID memberId = member.getId();
 
@@ -75,12 +75,12 @@ class MemberRepositoryImplTest {
     void should_search_by_handle_or_name() {
         // Given
         String tenantId = "tenant-1";
-        memberRepository.save(Member.create("ext-1", "alice@example.com", "Alice Smith", false));
-        memberRepository.save(Member.create("ext-2", "bob@example.com", "Bob Johnson", false));
-        memberRepository.save(Member.create("ext-3", "charlie@example.com", "Charlie Brown", false));
+        memberRepository.save(Member.create("ext-1", "alice@example.com", "Alice Smith", false, tenantId));
+        memberRepository.save(Member.create("ext-2", "bob@example.com", "Bob Johnson", false, tenantId));
+        memberRepository.save(Member.create("ext-3", "charlie@example.com", "Charlie Brown", false, tenantId));
 
         // When
-        List<Member> results = memberRepository.searchByHandleOrName(null, "ali", 10);
+        List<Member> results = memberRepository.searchByHandleOrName(tenantId, "ali", 10);
 
         // Then
         assertThat(results).hasSize(1);

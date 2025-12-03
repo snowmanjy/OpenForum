@@ -26,17 +26,18 @@ public class TenantService {
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Tenant not found: " + tenantId));
 
-        // Create new tenant with updated config using factory
-        Tenant updatedTenant = com.openforum.domain.factory.TenantFactory.create(tenant.getId(), config);
+        // Create new tenant with updated config using factory, preserving slug and name
+        Tenant updatedTenant = com.openforum.domain.factory.TenantFactory.create(tenant.getId(), tenant.getSlug(),
+                tenant.getName(), config);
         return tenantRepository.save(updatedTenant);
     }
 
     @Transactional
-    public Tenant createTenant(String tenantId, Map<String, Object> config) {
+    public Tenant createTenant(String tenantId, String slug, String name, Map<String, Object> config) {
         if (tenantRepository.findById(tenantId).isPresent()) {
             throw new IllegalArgumentException("Tenant already exists: " + tenantId);
         }
-        Tenant newTenant = com.openforum.domain.factory.TenantFactory.create(tenantId, config);
+        Tenant newTenant = com.openforum.domain.factory.TenantFactory.create(tenantId, slug, name, config);
         return tenantRepository.save(newTenant);
     }
 }

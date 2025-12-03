@@ -13,7 +13,7 @@ import com.openforum.rest.controller.dto.CreatePostRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -46,13 +46,13 @@ class PostControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private PostService postService;
 
-    @MockBean
+    @MockitoBean
     private MemberRepository memberRepository;
 
-    @MockBean
+    @MockitoBean
     private java.security.interfaces.RSAPublicKey publicKey;
 
     private Member testMember;
@@ -60,7 +60,7 @@ class PostControllerTest {
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
         testMember = Member.reconstitute(UUID.randomUUID(), "ext-123", "test@example.com", "Test User", false,
-                java.time.Instant.now());
+                java.time.Instant.now(), com.openforum.domain.valueobject.MemberRole.MEMBER, "default-tenant");
     }
 
     @org.junit.jupiter.api.AfterEach

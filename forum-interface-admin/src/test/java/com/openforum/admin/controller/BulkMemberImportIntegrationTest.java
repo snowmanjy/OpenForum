@@ -30,69 +30,70 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Testcontainers
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {
-        "spring.jpa.hibernate.ddl-auto=validate",
-        "spring.flyway.enabled=true"
+                "spring.jpa.hibernate.ddl-auto=validate",
+                "spring.flyway.enabled=true"
 })
 class BulkMemberImportIntegrationTest {
 
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+        @Container
+        @ServiceConnection
+        static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+        @Autowired
+        private JdbcTemplate jdbcTemplate;
 
-    @Test
-    void shouldImportMembersAndHandleIdempotency() throws Exception {
-        // Given
-        String tenantId = "tenant-member-import";
-        String externalId1 = "ext-1";
-        String externalId2 = "ext-2";
-        Instant joinedAt = Instant.now();
+        @Test
+        void shouldImportMembersAndHandleIdempotency() throws Exception {
+                // Given
+                String tenantId = "tenant-member-import";
+                String externalId1 = "ext-1";
+                String externalId2 = "ext-2";
+                Instant joinedAt = Instant.now();
 
-        // Create Tenant
-        jdbcTemplate.update("INSERT INTO tenants (id, config) VALUES (?, ?::jsonb)", tenantId, "{}");
+                // Create Tenant
+                jdbcTemplate.update("INSERT INTO tenants (id, config) VALUES (?, ?::jsonb)", tenantId, "{}");
 
-        // Pre-create one member to test idempotency
-        UUID existingMemberId = UUID.randomUUID();
-        jdbcTemplate.update(
-                "INSERT INTO members (id, external_id, email, name, is_bot, reputation, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                existingMemberId, externalId1, "existing@example.com", "Existing User", false, 0,
-                java.sql.Timestamp.from(joinedAt));
+                // Pre-create one member to test idempotency
+                UUID existingMemberId = UUID.randomUUID();
+                jdbcTemplate.update(
+                                "INSERT INTO members (id, external_id, email, name, is_bot, reputation, joined_at, tenant_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                                existingMemberId, externalId1, "existing@example.com", "Existing User", false, 0,
+                                java.sql.Timestamp.from(joinedAt), tenantId);
 
-        MemberImportRequest.MemberImportItem item1 = new MemberImportRequest.MemberImportItem(
-                "corr-1", externalId1, "existing@example.com", "Existing User", joinedAt);
-        MemberImportRequest.MemberImportItem item2 = new MemberImportRequest.MemberImportItem(
-                "corr-2", externalId2, "new@example.com", "New User", joinedAt);
+                MemberImportRequest.MemberImportItem item1 = new MemberImportRequest.MemberImportItem(
+                                "corr-1", externalId1, "existing@example.com", "Existing User", joinedAt);
+                MemberImportRequest.MemberImportItem item2 = new MemberImportRequest.MemberImportItem(
+                                "corr-2", externalId2, "new@example.com", "New User", joinedAt);
 
-        MemberImportRequest request = new MemberImportRequest(List.of(item1, item2));
+                MemberImportRequest request = new MemberImportRequest(tenantId, List.of(item1, item2));
 
-        // When
-        mockMvc.perform(post("/admin/v1/bulk/members")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.importedCount").value(1)) // Only 1 new member imported
-                .andExpect(jsonPath("$.correlationIdMap.*", hasSize(2)))
-                .andExpect(jsonPath("$.correlationIdMap.corr-1").value(existingMemberId.toString()));
+                // When
+                mockMvc.perform(post("/admin/v1/bulk/members")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.importedCount").value(1)) // Only 1 new member imported
+                                .andExpect(jsonPath("$.correlationIdMap.*", hasSize(2)))
+                                .andExpect(jsonPath("$.correlationIdMap.corr-1").value(existingMemberId.toString()));
 
-        // Then
-        // Verify new member persistence
-        Integer memberCount = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM members WHERE external_id = ?", Integer.class, externalId2);
-        assertThat(memberCount).isEqualTo(1);
+                // Then
+                // Verify new member persistence
+                Integer memberCount = jdbcTemplate.queryForObject(
+                                "SELECT count(*) FROM members WHERE external_id = ?", Integer.class, externalId2);
+                assertThat(memberCount).isEqualTo(1);
 
-        // Verify joined_at persistence
-        java.sql.Timestamp savedJoinedAt = jdbcTemplate.queryForObject(
-                "SELECT joined_at FROM members WHERE external_id = ?", java.sql.Timestamp.class, externalId2);
-        assertThat(savedJoinedAt).isNotNull();
-        // Allow small difference due to DB precision
-        assertThat(savedJoinedAt.toInstant()).isBetween(joinedAt.minusMillis(100), joinedAt.plusMillis(100));
-    }
+                // Verify joined_at persistence
+                java.sql.Timestamp savedJoinedAt = jdbcTemplate.queryForObject(
+                                "SELECT joined_at FROM members WHERE external_id = ?", java.sql.Timestamp.class,
+                                externalId2);
+                assertThat(savedJoinedAt).isNotNull();
+                // Allow small difference due to DB precision
+                assertThat(savedJoinedAt.toInstant()).isBetween(joinedAt.minusMillis(100), joinedAt.plusMillis(100));
+        }
 }

@@ -30,7 +30,7 @@ class TenantServiceTest {
     void getTenant_shouldReturnTenant_whenExists() {
         // Given
         String tenantId = "tenant-1";
-        Tenant tenant = com.openforum.domain.factory.TenantFactory.create(tenantId, Map.of());
+        Tenant tenant = com.openforum.domain.factory.TenantFactory.create(tenantId, "slug-1", "Tenant 1", Map.of());
         when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
 
         // When
@@ -48,7 +48,8 @@ class TenantServiceTest {
         Map<String, Object> oldConfig = Map.of("key", "old");
         Map<String, Object> newConfig = Map.of("key", "new");
 
-        Tenant existingTenant = com.openforum.domain.factory.TenantFactory.create(tenantId, oldConfig);
+        Tenant existingTenant = com.openforum.domain.factory.TenantFactory.create(tenantId, "slug-1", "Tenant 1",
+                oldConfig);
         when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(existingTenant));
         when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
 

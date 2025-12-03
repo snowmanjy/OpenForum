@@ -50,7 +50,7 @@ class PostServiceTest {
         when(threadRepository.findById(threadId)).thenReturn(Optional.of(thread));
 
         Member author = Member.reconstitute(authorId, "ext-1", "test@example.com", "Test User", false,
-                java.time.Instant.now());
+                java.time.Instant.now(), com.openforum.domain.valueobject.MemberRole.MEMBER, "test-tenant");
         when(memberRepository.findById(authorId)).thenReturn(Optional.of(author));
 
         when(postRepository.save(any(Post.class))).thenAnswer(invocation -> invocation.getArgument(0));

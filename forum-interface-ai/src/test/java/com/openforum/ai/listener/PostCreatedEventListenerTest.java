@@ -197,7 +197,7 @@ class PostCreatedEventListenerTest {
                                 .version(1L)
                                 .build();
 
-                Member aiMember = Member.create("ai-assistant", "ai@forum.local", "AI Assistant", true);
+                Member aiMember = Member.create("ai-assistant", "ai@forum.local", "AI Assistant", true, "tenant123");
 
                 // Setup mocks
                 when(threadRepository.findById(threadId)).thenReturn(Optional.of(thread));
@@ -387,7 +387,7 @@ class PostCreatedEventListenerTest {
                                 .build();
 
                 TenantAiConfig config = new TenantAiConfig(true, "prompt", "context", "encrypted_key");
-                Member aiMember = Member.create("ai-assistant", "ai@forum.local", "AI Assistant", true);
+                Member aiMember = Member.create("ai-assistant", "ai@forum.local", "AI Assistant", true, "tenant123");
 
                 when(threadRepository.findById(threadId)).thenReturn(Optional.of(thread));
                 when(tenantAiConfigService.getConfig("tenant123")).thenReturn(Optional.of(config));
@@ -436,7 +436,7 @@ class PostCreatedEventListenerTest {
                                 .build();
 
                 TenantAiConfig config = new TenantAiConfig(true, "prompt", "context", "encrypted_key");
-                Member aiMember = Member.create("ai-assistant", "ai@forum.local", "AI Assistant", true);
+                Member aiMember = Member.create("ai-assistant", "ai@forum.local", "AI Assistant", true, "tenant123");
 
                 when(threadRepository.findById(threadId)).thenReturn(Optional.of(thread));
                 when(tenantAiConfigService.getConfig("tenant123")).thenReturn(Optional.of(config));
