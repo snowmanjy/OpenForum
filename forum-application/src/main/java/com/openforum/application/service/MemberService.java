@@ -24,14 +24,14 @@ public class MemberService {
         try {
             role = MemberRole.valueOf(roleName);
         } catch (IllegalArgumentException | NullPointerException e) {
-            role = MemberRole.MEMBER; 
+            throw new IllegalArgumentException("Invalid role: " + roleName);
         }
         Optional<Member> existingMember = memberRepository.findByExternalId(tenantId, externalId);
 
         if (existingMember.isPresent()) {
             Member member = existingMember.get();
             boolean changed = false;
-            
+
             // 2. Handle Role Change
             if (member.getRole() != role) {
                 member = member.promoteTo(role);

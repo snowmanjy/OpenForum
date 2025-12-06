@@ -78,4 +78,19 @@ class MemberServiceTest {
         assertThat(savedMember.getName()).isEqualTo(name);
         assertThat(savedMember.getRole()).isEqualTo(MemberRole.MODERATOR);
     }
+
+    @Test
+    void shouldThrowExceptionWhenRoleIsInvalid() {
+        // Given
+        String externalId = "ext-1";
+        String email = "test@example.com";
+        String name = "Test User";
+        String invalidRole = "INVALID_ROLE";
+        String tenantId = "tenant-1";
+
+        // When & Then
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
+            memberService.upsertMember(externalId, email, name, invalidRole, tenantId);
+        });
+    }
 }
