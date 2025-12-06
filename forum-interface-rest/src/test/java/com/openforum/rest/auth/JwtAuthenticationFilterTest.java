@@ -137,6 +137,42 @@ class JwtAuthenticationFilterTest {
         verify(filterChain).doFilter(request, response);
     }
 
+    @Test
+    void shouldHandleRaceConditionDuringMemberCreation() throws Exception {
+        // Given
+        String tenantId = "tenant-1";
+        String userId = "user-race-condition";
+        Member existingMember = Member.create(userId, "test@example.com", "Test User", false, tenantId);
+
+        // First find returns empty (simulating new user)
+        // Second find returns member (simulating created by another thread)
+        when(memberRepository.findByExternalId(tenantId, userId))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(existingMember));
+
+        // Save throws DataIntegrityViolationException (simulating race condition)
+        when(memberRepository.save(any(Member.class)))
+                .thenThrow(new org.springframework.dao.DataIntegrityViolationException("Duplicate key"));
+
+        String token = createValidToken(tenantId, userId);
+        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+
+        // Capture authentication inside the filter chain
+        doAnswer(invocation -> {
+            assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
+            assertThat(SecurityContextHolder.getContext().getAuthentication().getPrincipal()).isEqualTo(existingMember);
+            return null;
+        }).when(filterChain).doFilter(request, response);
+
+        // When
+        filter.doFilterInternal(request, response, filterChain);
+
+        // Then
+        verify(memberRepository, times(2)).findByExternalId(tenantId, userId);
+        verify(memberRepository).save(any(Member.class));
+        verify(filterChain).doFilter(request, response);
+    }
+
     private String createValidToken(String tenantId, String userId) throws Exception {
         JWSSigner signer = new RSASSASigner(privateKey);
 

@@ -88,8 +88,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 String safeEmail = email != null ? email : externalId + "@placeholder.com";
                                 String safeName = name != null ? name : "Unknown User";
                                 Member newMember = Member.create(externalId, safeEmail, safeName, false, finalTenantId);
-                                memberRepository.save(newMember);
-                                return newMember;
+                                try {
+                                    memberRepository.save(newMember);
+                                    return newMember;
+                                } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                                    // Race condition: Member was created by another request in the meantime
+                                    return memberRepository.findByExternalId(finalTenantId, externalId)
+                                            .orElseThrow(() -> new IllegalStateException(
+                                                    "Member creation failed and could not be retrieved", e));
+                                }
                             });
 
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
