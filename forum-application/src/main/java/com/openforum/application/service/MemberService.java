@@ -24,7 +24,7 @@ public class MemberService {
         try {
             role = MemberRole.valueOf(roleName);
         } catch (IllegalArgumentException | NullPointerException e) {
-            throw new IllegalArgument
+            throw new IllegalArgumentException("Invalid role: " + roleName);
         }
         Optional<Member> existingMember = memberRepository.findByExternalId(tenantId, externalId);
 
