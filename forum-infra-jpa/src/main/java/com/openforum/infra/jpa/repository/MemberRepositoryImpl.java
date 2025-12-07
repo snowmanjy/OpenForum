@@ -1,10 +1,9 @@
-package com.openforum.infra.jpa.adapter;
+package com.openforum.infra.jpa.repository;
 
 import com.openforum.domain.aggregate.Member;
 import com.openforum.domain.repository.MemberRepository;
 import com.openforum.infra.jpa.entity.MemberEntity;
 import com.openforum.infra.jpa.mapper.MemberMapper;
-import com.openforum.infra.jpa.repository.MemberJpaRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 

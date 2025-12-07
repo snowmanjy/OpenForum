@@ -1,4 +1,4 @@
-package com.openforum.infra.jpa.adapter;
+package com.openforum.infra.jpa.repository;
 
 import com.openforum.domain.aggregate.Poll;
 import com.openforum.domain.factory.PollFactory;

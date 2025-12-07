@@ -1,4 +1,4 @@
-package com.openforum.infra.jpa.adapter;
+package com.openforum.infra.jpa.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,8 +7,6 @@ import com.openforum.domain.repository.PostRepository;
 import com.openforum.infra.jpa.entity.OutboxEventEntity;
 import com.openforum.infra.jpa.entity.PostEntity;
 import com.openforum.infra.jpa.mapper.PostMapper;
-import com.openforum.infra.jpa.repository.OutboxEventJpaRepository;
-import com.openforum.infra.jpa.repository.PostJpaRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
@@ -65,6 +63,20 @@ public class PostRepositoryImpl implements PostRepository {
         return postJpaRepository.findByThreadId(threadId, pageRequest).stream()
                 .map(postMapper::toDomain)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<Post> findByIdAndTenantId(UUID id, String tenantId) {
+        return postJpaRepository.findByIdAndTenantId(id, tenantId)
+                .map(postMapper::toDomain);
+    }
+
+    @Override
+    public List<Post> findByTenantId(String tenantId, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+        return postJpaRepository.findByTenantId(tenantId, pageRequest)
+                .map(postMapper::toDomain)
+                .getContent();
     }
 
     private OutboxEventEntity toOutboxEntity(Object event) {

@@ -1,37 +1,17 @@
 package com.openforum.infra.jpa.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
-import java.util.UUID;
 
 @Entity
 @Table(name = "tags")
-public class TagEntity {
+public class TagEntity extends TenantAwareEntity {
 
-    @Id
-    private UUID id;
-
-    private String tenantId;
     private String name;
+
+    @Column(name = "usage_count")
     private long usageCount;
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
-    }
 
     public String getName() {
         return name;

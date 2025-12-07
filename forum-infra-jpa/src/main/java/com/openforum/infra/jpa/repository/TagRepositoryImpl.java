@@ -1,9 +1,8 @@
-package com.openforum.infra.jpa.adapter;
+package com.openforum.infra.jpa.repository;
 
 import com.openforum.domain.aggregate.Tag;
 import com.openforum.domain.repository.TagRepository;
 import com.openforum.infra.jpa.entity.TagEntity;
-import com.openforum.infra.jpa.repository.TagJpaRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;

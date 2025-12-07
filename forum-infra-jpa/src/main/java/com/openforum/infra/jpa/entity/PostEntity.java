@@ -1,47 +1,47 @@
 package com.openforum.infra.jpa.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 @Entity
 @Table(name = "posts")
-public class PostEntity {
+public class PostEntity extends TenantAwareEntity {
 
-    @Id
-    private UUID id;
-
+    @Column(name = "thread_id", nullable = false)
     private UUID threadId;
-    private String tenantId;
+
+    @Column(name = "author_id", nullable = false)
     private UUID authorId;
+
+    @Column(nullable = false)
     private String content;
-    private Long version;
+
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at")
+    private Instant updatedAt;
+
+    @Column(name = "reply_to_id")
     private UUID replyToPostId;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "mentioned_user_ids", columnDefinition = "jsonb")
+    private List<UUID> mentionedUserIds;
 
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> metadata;
 
-    @jakarta.persistence.ElementCollection
-    @jakarta.persistence.CollectionTable(name = "post_mentions", joinColumns = @jakarta.persistence.JoinColumn(name = "post_id"))
-    @jakarta.persistence.Column(name = "user_id")
-    private java.util.List<UUID> mentionedUserIds = new java.util.ArrayList<>();
-
-    private Instant createdAt;
-
-    // Getters and Setters
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
+    @Column
+    private Long version;
 
     public UUID getThreadId() {
         return threadId;
@@ -49,14 +49,6 @@ public class PostEntity {
 
     public void setThreadId(UUID threadId) {
         this.threadId = threadId;
-    }
-
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
     }
 
     public UUID getAuthorId() {
@@ -75,12 +67,20 @@ public class PostEntity {
         this.content = content;
     }
 
-    public Long getVersion() {
-        return version;
+    public Instant getCreatedAt() {
+        return createdAt;
     }
 
-    public void setVersion(Long version) {
-        this.version = version;
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     public UUID getReplyToPostId() {
@@ -91,6 +91,14 @@ public class PostEntity {
         this.replyToPostId = replyToPostId;
     }
 
+    public List<UUID> getMentionedUserIds() {
+        return mentionedUserIds;
+    }
+
+    public void setMentionedUserIds(List<UUID> mentionedUserIds) {
+        this.mentionedUserIds = mentionedUserIds;
+    }
+
     public Map<String, Object> getMetadata() {
         return metadata;
     }
@@ -99,19 +107,11 @@ public class PostEntity {
         this.metadata = metadata;
     }
 
-    public java.util.List<UUID> getMentionedUserIds() {
-        return mentionedUserIds;
+    public Long getVersion() {
+        return version;
     }
 
-    public void setMentionedUserIds(java.util.List<UUID> mentionedUserIds) {
-        this.mentionedUserIds = mentionedUserIds;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
+    public void setVersion(Long version) {
+        this.version = version;
     }
 }

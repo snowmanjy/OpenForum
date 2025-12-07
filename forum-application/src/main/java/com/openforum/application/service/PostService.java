@@ -13,12 +13,12 @@ import com.openforum.domain.aggregate.ThreadStatus;
 import com.openforum.domain.repository.MemberRepository;
 import com.openforum.domain.repository.PostRepository;
 import com.openforum.domain.repository.ThreadRepository;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -27,14 +27,12 @@ public class PostService {
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
     private final ThreadRepository threadRepository;
-    private final ApplicationEventPublisher eventPublisher;
 
     public PostService(PostRepository postRepository, MemberRepository memberRepository,
-            ThreadRepository threadRepository, ApplicationEventPublisher eventPublisher) {
+            ThreadRepository threadRepository) {
         this.postRepository = postRepository;
         this.memberRepository = memberRepository;
         this.threadRepository = threadRepository;
-        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -58,5 +56,20 @@ public class PostService {
         postRepository.save(post);
 
         return post;
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Post> getPost(String tenantId, UUID id) {
+        return postRepository.findByIdAndTenantId(id, tenantId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Post> getPosts(String tenantId, int page, int size) {
+        return postRepository.findByTenantId(tenantId, page, size);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Post> getPostsByThread(UUID threadId, int limit) {
+        return postRepository.findByThreadId(threadId, limit);
     }
 }

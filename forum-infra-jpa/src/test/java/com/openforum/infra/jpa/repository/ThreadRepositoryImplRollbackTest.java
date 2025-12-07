@@ -1,4 +1,4 @@
-package com.openforum.infra.jpa.adapter;
+package com.openforum.infra.jpa.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

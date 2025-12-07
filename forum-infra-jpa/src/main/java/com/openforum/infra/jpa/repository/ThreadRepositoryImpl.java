@@ -1,4 +1,4 @@
-package com.openforum.infra.jpa.adapter;
+package com.openforum.infra.jpa.repository;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,8 +9,6 @@ import com.openforum.domain.events.ThreadImportedEvent;
 import com.openforum.infra.jpa.entity.OutboxEventEntity;
 import com.openforum.infra.jpa.entity.ThreadEntity;
 import com.openforum.infra.jpa.mapper.ThreadMapper;
-import com.openforum.infra.jpa.repository.OutboxEventJpaRepository;
-import com.openforum.infra.jpa.repository.ThreadJpaRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -155,22 +153,23 @@ public class ThreadRepositoryImpl implements ThreadRepository {
 
         if (!allPosts.isEmpty()) {
             String postSql = """
-                    INSERT INTO posts (id, thread_id, author_id, content, reply_to_post_id, metadata, version)
-                    VALUES (?, ?, ?, ?, ?, ?::jsonb, ?)
+                    INSERT INTO posts (id, thread_id, tenant_id, author_id, content, reply_to_post_id, metadata, version)
+                    VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?)
                     """;
 
             jdbcTemplate.batchUpdate(postSql, allPosts, allPosts.size(), (ps, post) -> {
                 ps.setObject(1, post.getId());
                 ps.setObject(2, post.getThreadId());
-                ps.setObject(3, post.getAuthorId());
-                ps.setString(4, post.getContent());
-                ps.setObject(5, post.getReplyToPostId()); // Handles null automatically
+                ps.setString(3, post.getTenantId());
+                ps.setObject(4, post.getAuthorId());
+                ps.setString(5, post.getContent());
+                ps.setObject(6, post.getReplyToPostId()); // Handles null automatically
                 try {
-                    ps.setString(6, objectMapper.writeValueAsString(post.getMetadata()));
+                    ps.setString(7, objectMapper.writeValueAsString(post.getMetadata()));
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException("Failed to serialize post metadata", e);
                 }
-                ps.setObject(7, post.getVersion() != null ? post.getVersion() : 0L);
+                ps.setObject(8, post.getVersion() != null ? post.getVersion() : 0L);
             });
         }
 
@@ -234,6 +233,20 @@ public class ThreadRepositoryImpl implements ThreadRepository {
     public List<Thread> search(String tenantId, String query, int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);
         return threadJpaRepository.search(tenantId, query, pageRequest)
+                .map(threadMapper::toDomain)
+                .getContent();
+    }
+
+    @Override
+    public Optional<Thread> findByIdAndTenantId(UUID id, String tenantId) {
+        return threadJpaRepository.findByIdAndTenantId(id, tenantId)
+                .map(threadMapper::toDomain);
+    }
+
+    @Override
+    public List<Thread> findByTenantId(String tenantId, int page, int size) {
+        PageRequest pageRequest = PageRequest.of(page, size);
+        return threadJpaRepository.findByTenantId(tenantId, pageRequest)
                 .map(threadMapper::toDomain)
                 .getContent();
     }

@@ -65,7 +65,7 @@ class ThreadControllerTest {
 
     @org.junit.jupiter.api.AfterEach
     void tearDown() {
-        com.openforum.rest.context.TenantContext.clear();
+        com.openforum.domain.context.TenantContext.clear();
         org.springframework.security.core.context.SecurityContextHolder.clearContext();
     }
 
@@ -112,7 +112,7 @@ class ThreadControllerTest {
                     .postProcessRequest(request);
 
             // Then set tenant context
-            com.openforum.rest.context.TenantContext.setTenantId(tenantId);
+            com.openforum.domain.context.TenantContext.setTenantId(tenantId);
             return request;
         };
     }

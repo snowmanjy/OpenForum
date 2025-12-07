@@ -67,7 +67,7 @@ class SubscriptionControllerTest {
 
         @org.junit.jupiter.api.AfterEach
         void tearDown() {
-                com.openforum.rest.context.TenantContext.clear();
+                com.openforum.domain.context.TenantContext.clear();
                 org.springframework.security.core.context.SecurityContextHolder.clearContext();
         }
 
@@ -150,7 +150,7 @@ class SubscriptionControllerTest {
                         request = org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
                                         .authentication(auth)
                                         .postProcessRequest(request);
-                        com.openforum.rest.context.TenantContext.setTenantId(tenantId);
+                        com.openforum.domain.context.TenantContext.setTenantId(tenantId);
                         return request;
                 };
         }

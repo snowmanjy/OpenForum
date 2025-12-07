@@ -11,5 +11,9 @@ public interface PostRepository {
 
     Optional<Post> findById(UUID id);
 
+    Optional<Post> findByIdAndTenantId(UUID id, String tenantId);
+
     List<Post> findByThreadId(UUID threadId, int limit);
+
+    List<Post> findByTenantId(String tenantId, int page, int size);
 }

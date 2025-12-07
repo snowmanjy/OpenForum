@@ -4,7 +4,6 @@ import com.openforum.domain.valueobject.TargetType;
 import jakarta.persistence.*;
 
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "subscriptions", uniqueConstraints = {
@@ -13,19 +12,13 @@ import java.util.UUID;
         @Index(name = "idx_subscription_target", columnList = "target_id"),
         @Index(name = "idx_subscription_user", columnList = "user_id")
 })
-public class SubscriptionEntity {
-
-    @Id
-    private UUID id;
-
-    @Column(name = "tenant_id", nullable = false)
-    private String tenantId;
+public class SubscriptionEntity extends TenantAwareEntity {
 
     @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    private java.util.UUID userId;
 
     @Column(name = "target_id", nullable = false)
-    private UUID targetId;
+    private java.util.UUID targetId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "target_type", nullable = false)
@@ -34,37 +27,19 @@ public class SubscriptionEntity {
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    // Getters and Setters
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public UUID getUserId() {
+    public java.util.UUID getUserId() {
         return userId;
     }
 
-    public void setUserId(UUID userId) {
+    public void setUserId(java.util.UUID userId) {
         this.userId = userId;
     }
 
-    public UUID getTargetId() {
+    public java.util.UUID getTargetId() {
         return targetId;
     }
 
-    public void setTargetId(UUID targetId) {
+    public void setTargetId(java.util.UUID targetId) {
         this.targetId = targetId;
     }
 

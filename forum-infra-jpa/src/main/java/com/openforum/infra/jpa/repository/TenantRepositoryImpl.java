@@ -1,10 +1,9 @@
-package com.openforum.infra.jpa.adapter;
+package com.openforum.infra.jpa.repository;
 
 import com.openforum.domain.aggregate.Tenant;
 import com.openforum.domain.repository.TenantRepository;
 import com.openforum.infra.jpa.entity.TenantEntity;
 import com.openforum.infra.jpa.mapper.TenantMapper;
-import com.openforum.infra.jpa.repository.TenantJpaRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;

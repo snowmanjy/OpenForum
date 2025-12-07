@@ -14,7 +14,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-import com.openforum.rest.context.TenantContext;
+import com.openforum.domain.context.TenantContext;
+import com.openforum.shared.api.TenantId;
 
 @RestController
 @RequestMapping("/api/v1/threads")
@@ -31,9 +32,8 @@ public class ThreadController {
     @PostMapping
     public ResponseEntity<ThreadResponse> createThread(
             @RequestBody CreateThreadRequest request,
+            @TenantId String tenantId,
             @AuthenticationPrincipal Member member) {
-
-        String tenantId = TenantContext.getTenantId();
 
         Thread thread = threadService.createThread(tenantId, member.getId(), request.title());
 
@@ -48,5 +48,20 @@ public class ThreadController {
                 .map(thread -> new ThreadResponse(thread.getId(), thread.getTitle(), thread.getStatus().name()))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @Operation(summary = "List Threads", description = "Retrieves a list of threads for a tenant")
+    @GetMapping
+    public ResponseEntity<java.util.List<ThreadResponse>> getThreads(
+            @TenantId String tenantId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        java.util.List<Thread> threads = threadService.getThreads(tenantId, page, size);
+        java.util.List<ThreadResponse> response = threads.stream()
+                .map(thread -> new ThreadResponse(thread.getId(), thread.getTitle(), thread.getStatus().name()))
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 }

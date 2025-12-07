@@ -1,12 +1,11 @@
 package com.openforum.infra.jpa.entity;
 
 import com.openforum.domain.aggregate.ThreadStatus;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.Version;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -16,42 +15,36 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "threads")
-public class ThreadEntity {
+public class ThreadEntity extends TenantAwareEntity {
 
-    @Id
-    private UUID id;
-
-    private String tenantId;
-    private UUID authorId;
-    private UUID categoryId;
+    @Column(nullable = false)
     private String title;
 
+    @Column(name = "author_id", nullable = false)
+    private UUID authorId;
+
+    @Column(name = "category_id")
+    private UUID categoryId;
+
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private ThreadStatus status;
+
+    @Column(name = "created_at", nullable = false)
+    private Instant createdAt;
 
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> metadata;
 
-    private Instant createdAt;
-
-    @Version
+    @Column
     private Long version;
 
-    // Getters and Setters
-    public UUID getId() {
-        return id;
+    public String getTitle() {
+        return title;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public UUID getAuthorId() {
@@ -70,20 +63,20 @@ public class ThreadEntity {
         this.categoryId = categoryId;
     }
 
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
     public ThreadStatus getStatus() {
         return status;
     }
 
     public void setStatus(ThreadStatus status) {
         this.status = status;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
     }
 
     public Map<String, Object> getMetadata() {
@@ -100,13 +93,5 @@ public class ThreadEntity {
 
     public void setVersion(Long version) {
         this.version = version;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
     }
 }

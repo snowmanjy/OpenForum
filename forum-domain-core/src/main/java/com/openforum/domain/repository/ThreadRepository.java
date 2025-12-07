@@ -13,4 +13,8 @@ public interface ThreadRepository {
     List<Thread> search(String tenantId, String query, int page, int size);
 
     Optional<Thread> findById(UUID id);
+
+    Optional<Thread> findByIdAndTenantId(UUID id, String tenantId);
+
+    List<Thread> findByTenantId(String tenantId, int page, int size);
 }

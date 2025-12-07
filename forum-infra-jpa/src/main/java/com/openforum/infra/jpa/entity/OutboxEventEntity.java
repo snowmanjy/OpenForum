@@ -1,7 +1,7 @@
 package com.openforum.infra.jpa.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -11,10 +11,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "outbox_events")
-public class OutboxEventEntity {
-
-    @Id
-    private UUID id;
+public class OutboxEventEntity extends BaseEntity {
 
     private UUID aggregateId;
     private String type;
@@ -24,8 +21,12 @@ public class OutboxEventEntity {
 
     private Instant createdAt;
 
+    @Column(name = "retry_count")
     private Integer retryCount = 0;
+
     private String status = "PENDING";
+
+    @Column(name = "error_message")
     private String errorMessage;
 
     public OutboxEventEntity() {
@@ -37,15 +38,6 @@ public class OutboxEventEntity {
         this.type = type;
         this.payload = payload;
         this.createdAt = createdAt;
-    }
-
-    // Getters and Setters
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
     }
 
     public UUID getAggregateId() {

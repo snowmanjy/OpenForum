@@ -1,4 +1,4 @@
-package com.openforum.rest.context;
+package com.openforum.domain.context;
 
 /**
  * Holds the Tenant ID for the current request.

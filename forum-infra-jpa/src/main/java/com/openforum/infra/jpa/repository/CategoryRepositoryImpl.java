@@ -1,9 +1,8 @@
-package com.openforum.infra.jpa.adapter;
+package com.openforum.infra.jpa.repository;
 
 import com.openforum.domain.aggregate.Category;
 import com.openforum.domain.repository.CategoryRepository;
 import com.openforum.infra.jpa.entity.CategoryEntity;
-import com.openforum.infra.jpa.repository.CategoryJpaRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

@@ -2,7 +2,7 @@ package com.openforum.rest.controller;
 
 import com.openforum.domain.aggregate.Tag;
 import com.openforum.domain.repository.TagRepository;
-import com.openforum.rest.context.TenantContext;
+import com.openforum.domain.context.TenantContext;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

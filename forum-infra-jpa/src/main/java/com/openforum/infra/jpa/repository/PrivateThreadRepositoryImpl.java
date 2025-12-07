@@ -1,4 +1,4 @@
-package com.openforum.infra.jpa.adapter;
+package com.openforum.infra.jpa.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openforum.domain.aggregate.PrivateThread;
@@ -7,9 +7,6 @@ import com.openforum.infra.jpa.entity.OutboxEventEntity;
 import com.openforum.infra.jpa.entity.PrivatePostEntity;
 import com.openforum.infra.jpa.entity.PrivateThreadEntity;
 import com.openforum.infra.jpa.mapper.PrivateThreadMapper;
-import com.openforum.infra.jpa.repository.OutboxEventJpaRepository;
-import com.openforum.infra.jpa.repository.PrivatePostJpaRepository;
-import com.openforum.infra.jpa.repository.PrivateThreadJpaRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;

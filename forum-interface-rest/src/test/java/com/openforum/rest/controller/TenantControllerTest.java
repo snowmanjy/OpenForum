@@ -9,7 +9,7 @@ import com.openforum.rest.auth.JwtAuthenticationFilter;
 import com.openforum.rest.auth.MemberJwtAuthenticationConverter;
 import com.openforum.rest.config.JwtConfig;
 import com.openforum.rest.config.SecurityConfig;
-import com.openforum.rest.context.TenantContext;
+import com.openforum.domain.context.TenantContext;
 import com.openforum.rest.controller.dto.UpdateTenantConfigRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
