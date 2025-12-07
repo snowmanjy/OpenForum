@@ -2,7 +2,7 @@ package com.openforum.rest.controller;
 
 import com.openforum.application.service.SubscriptionService;
 import com.openforum.domain.aggregate.Member;
-import com.openforum.rest.context.TenantContext;
+import com.openforum.domain.context.TenantContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;

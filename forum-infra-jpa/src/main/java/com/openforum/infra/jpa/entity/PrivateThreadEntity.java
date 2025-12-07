@@ -9,13 +9,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "private_threads")
-public class PrivateThreadEntity {
-
-    @Id
-    private UUID id;
-
-    @Column(name = "tenant_id", nullable = false)
-    private String tenantId;
+public class PrivateThreadEntity extends TenantAwareEntity {
 
     @Column(nullable = false)
     private String subject;
@@ -42,22 +36,6 @@ public class PrivateThreadEntity {
         this.createdAt = createdAt;
         this.lastActivityAt = lastActivityAt;
         this.participantIds = participantIds;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
     }
 
     public String getSubject() {

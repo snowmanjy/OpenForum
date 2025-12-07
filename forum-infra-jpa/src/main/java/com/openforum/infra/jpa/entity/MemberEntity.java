@@ -1,22 +1,26 @@
 package com.openforum.infra.jpa.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.util.UUID;
 
 @Entity
 @Table(name = "members")
-public class MemberEntity {
+public class MemberEntity extends TenantAwareEntity {
 
-    @Id
-    private UUID id;
+    @Column(name = "external_id")
     private String externalId;
+
     private String email;
     private String name;
-    private String tenantId;
+
+    @Column(name = "is_bot")
     private boolean isBot;
+
+    @Column(name = "joined_at")
     private java.time.Instant joinedAt;
+
     private String role;
 
     public MemberEntity() {
@@ -34,32 +38,36 @@ public class MemberEntity {
         this.role = role;
     }
 
-    public UUID getId() {
-        return id;
-    }
-
     public String getExternalId() {
         return externalId;
+    }
+
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
 
     public String getEmail() {
         return email;
     }
 
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public boolean isBot() {
         return isBot;
     }
 
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
+    public void setBot(boolean bot) {
+        isBot = bot;
     }
 
     public java.time.Instant getJoinedAt() {

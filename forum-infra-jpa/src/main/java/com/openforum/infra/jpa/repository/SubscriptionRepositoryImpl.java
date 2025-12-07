@@ -1,9 +1,8 @@
-package com.openforum.infra.jpa.adapter;
+package com.openforum.infra.jpa.repository;
 
 import com.openforum.domain.aggregate.Subscription;
 import com.openforum.domain.repository.SubscriptionRepository;
 import com.openforum.infra.jpa.entity.SubscriptionEntity;
-import com.openforum.infra.jpa.repository.SubscriptionJpaRepository;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

@@ -1,7 +1,7 @@
 package com.openforum.infra.jpa.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
@@ -9,14 +9,18 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "poll_votes")
-public class PollVoteEntity {
+public class PollVoteEntity extends BaseEntity {
 
-    @Id
-    private UUID id;
-
+    @Column(name = "poll_id")
     private UUID pollId;
+
+    @Column(name = "voter_id")
     private UUID voterId;
+
+    @Column(name = "option_index")
     private int optionIndex;
+
+    @Column(name = "created_at")
     private Instant createdAt;
 
     public PollVoteEntity() {
@@ -28,14 +32,6 @@ public class PollVoteEntity {
         this.voterId = voterId;
         this.optionIndex = optionIndex;
         this.createdAt = createdAt;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
     }
 
     public UUID getPollId() {

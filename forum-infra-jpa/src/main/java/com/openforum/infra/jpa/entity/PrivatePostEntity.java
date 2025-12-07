@@ -2,7 +2,6 @@ package com.openforum.infra.jpa.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 import java.time.Instant;
@@ -10,10 +9,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "private_posts")
-public class PrivatePostEntity {
-
-    @Id
-    private UUID id;
+public class PrivatePostEntity extends BaseEntity {
 
     @Column(name = "thread_id", nullable = false)
     private UUID threadId;
@@ -36,14 +32,6 @@ public class PrivatePostEntity {
         this.authorId = authorId;
         this.content = content;
         this.createdAt = createdAt;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
     }
 
     public UUID getThreadId() {

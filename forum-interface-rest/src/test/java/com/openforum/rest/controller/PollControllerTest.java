@@ -7,7 +7,7 @@ import com.openforum.application.dto.VotePollRequest;
 import com.openforum.application.service.PollService;
 import com.openforum.domain.repository.MemberRepository;
 import com.openforum.rest.security.SecurityContext;
-import com.openforum.rest.context.TenantContext;
+import com.openforum.domain.context.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

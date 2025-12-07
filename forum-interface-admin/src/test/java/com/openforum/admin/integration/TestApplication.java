@@ -13,7 +13,6 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "com.openforum.infra.jpa",
         "com.openforum.application"
 })
-@org.springframework.context.annotation.Import(com.openforum.infra.jpa.adapter.ThreadRepositoryImpl.class)
 @EntityScan(basePackages = "com.openforum.infra.jpa.entity")
 @EnableJpaRepositories(basePackages = "com.openforum.infra.jpa.repository")
 public class TestApplication {

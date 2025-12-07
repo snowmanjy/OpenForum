@@ -4,7 +4,7 @@ import com.openforum.application.dto.CreatePollRequest;
 import com.openforum.application.dto.PollDto;
 import com.openforum.application.dto.VotePollRequest;
 import com.openforum.application.service.PollService;
-import com.openforum.rest.context.TenantContext;
+import com.openforum.domain.context.TenantContext;
 import com.openforum.rest.security.SecurityContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -6,6 +6,7 @@ import com.openforum.domain.repository.ThreadRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -28,5 +29,15 @@ public class ThreadService {
     @Transactional(readOnly = true)
     public Optional<Thread> getThread(UUID id) {
         return threadRepository.findById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Thread> getThread(String tenantId, UUID id) {
+        return threadRepository.findByIdAndTenantId(id, tenantId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Thread> getThreads(String tenantId, int page, int size) {
+        return threadRepository.findByTenantId(tenantId, page, size);
     }
 }

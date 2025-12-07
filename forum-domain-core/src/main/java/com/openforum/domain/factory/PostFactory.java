@@ -14,6 +14,7 @@ public class PostFactory {
         public static Post create(String tenantId, UUID threadId, UUID authorId, String content, UUID replyToPostId,
                         boolean isBot,
                         List<UUID> mentionedUserIds) {
+                java.util.Objects.requireNonNull(tenantId, "Tenant ID cannot be null when creating a Post");
                 if (content == null || content.isBlank()) {
                         throw new IllegalArgumentException("Post content cannot be empty");
                 }
@@ -33,6 +34,7 @@ public class PostFactory {
 
         public static Post create(String tenantId, UUID threadId, UUID authorId, String content, UUID replyToPostId,
                         Map<String, Object> metadata, boolean isBot) {
+                java.util.Objects.requireNonNull(tenantId, "Tenant ID cannot be null when creating a Post");
                 return Post.builder()
                                 .id(UUID.randomUUID())
                                 .tenantId(tenantId)
@@ -72,6 +74,7 @@ public class PostFactory {
                         Map<String, Object> metadata,
                         boolean isBot,
                         Instant createdAt) {
+                java.util.Objects.requireNonNull(tenantId, "Tenant ID cannot be null when creating a Post");
                 return Post.builder()
                                 .id(id)
                                 .tenantId(tenantId)

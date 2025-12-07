@@ -1,4 +1,4 @@
-package com.openforum.infra.jpa.adapter;
+package com.openforum.infra.jpa.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openforum.domain.aggregate.Poll;
@@ -7,9 +7,6 @@ import com.openforum.infra.jpa.entity.OutboxEventEntity;
 import com.openforum.infra.jpa.entity.PollEntity;
 import com.openforum.infra.jpa.entity.PollVoteEntity;
 import com.openforum.infra.jpa.mapper.PollMapper;
-import com.openforum.infra.jpa.repository.OutboxEventJpaRepository;
-import com.openforum.infra.jpa.repository.PollJpaRepository;
-import com.openforum.infra.jpa.repository.PollVoteJpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 

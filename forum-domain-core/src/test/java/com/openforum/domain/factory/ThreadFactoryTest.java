@@ -128,4 +128,36 @@ class ThreadFactoryTest {
                 assertThat(thread.pollEvents()).isEmpty();
                 assertThat(thread.getStatus()).isEqualTo(ThreadStatus.CLOSED);
         }
+
+        @Test
+        void shouldThrowExceptionWhenTenantIdIsNull() {
+                // Given
+                UUID authorId = UUID.randomUUID();
+                String title = "Test Thread";
+
+                // When & Then
+                assertThatThrownBy(() -> ThreadFactory.create(null, authorId, null, title, Map.of()))
+                                .isInstanceOf(NullPointerException.class)
+                                .hasMessage("Tenant ID cannot be null when creating a Thread");
+        }
+
+        @Test
+        void createImported_shouldThrowExceptionWhenTenantIdIsNull() {
+                // Given
+                UUID threadId = UUID.randomUUID();
+
+                // When & Then
+                assertThatThrownBy(() -> ThreadFactory.createImported(
+                                threadId,
+                                null, // null tenantId
+                                UUID.randomUUID(),
+                                null,
+                                "Thread Title",
+                                ThreadStatus.OPEN,
+                                Instant.now(),
+                                Map.of(),
+                                List.of()))
+                                .isInstanceOf(NullPointerException.class)
+                                .hasMessage("Tenant ID cannot be null when creating a Thread");
+        }
 }

@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.openforum.domain.context.TenantContext;
+import com.openforum.shared.api.TenantId;
 import java.net.URI;
 import java.util.List;
 import java.util.UUID;
@@ -29,7 +31,7 @@ public class PrivateThreadController {
     @Operation(summary = "Create Private Thread", description = "Creates a new private thread")
     @PostMapping
     public ResponseEntity<Void> createThread(
-            @RequestHeader("X-Tenant-ID") String tenantId,
+            @TenantId String tenantId,
             @RequestBody CreatePrivateThreadRequest request,
             UriComponentsBuilder uriBuilder) {
         UUID userId = SecurityContext.getCurrentUserId();
@@ -45,7 +47,7 @@ public class PrivateThreadController {
     @Operation(summary = "Add Message", description = "Adds a message to a private thread")
     @PostMapping("/{id}/posts")
     public ResponseEntity<Void> createPost(
-            @RequestHeader("X-Tenant-ID") String tenantId,
+            @TenantId String tenantId,
             @PathVariable UUID id,
             @RequestBody CreatePrivatePostRequest request) {
         UUID userId = SecurityContext.getCurrentUserId();
@@ -56,7 +58,7 @@ public class PrivateThreadController {
     @Operation(summary = "List My Private Threads", description = "Retrieves private threads for the current user")
     @GetMapping
     public ResponseEntity<List<PrivateThreadDto>> getMyThreads(
-            @RequestHeader("X-Tenant-ID") String tenantId,
+            @TenantId String tenantId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         UUID userId = SecurityContext.getCurrentUserId();

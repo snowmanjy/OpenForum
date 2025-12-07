@@ -5,7 +5,7 @@ import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jwt.SignedJWT;
 import com.openforum.domain.aggregate.Member;
 import com.openforum.domain.repository.MemberRepository;
-import com.openforum.rest.context.TenantContext;
+import com.openforum.domain.context.TenantContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,6 +39,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String token = authHeader.substring(7);
                 processToken(token);
+            } else {
+                // Fallback: Check X-Tenant-ID header for public requests
+                String tenantId = request.getHeader("X-Tenant-ID");
+                if (tenantId != null && !tenantId.isBlank()) {
+                    TenantContext.setTenantId(tenantId);
+                }
             }
             filterChain.doFilter(request, response);
         } finally {

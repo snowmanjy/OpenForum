@@ -13,6 +13,7 @@ public class ThreadFactory {
 
         public static Thread create(String tenantId, UUID authorId, UUID categoryId, String title,
                         Map<String, Object> metadata) {
+                java.util.Objects.requireNonNull(tenantId, "Tenant ID cannot be null when creating a Thread");
                 return Thread.builder()
                                 .id(UUID.randomUUID())
                                 .tenantId(tenantId)
@@ -49,6 +50,8 @@ public class ThreadFactory {
                         Instant createdAt,
                         Map<String, Object> metadata,
                         List<ImportedPostData> importedPosts) {
+
+                java.util.Objects.requireNonNull(tenantId, "Tenant ID cannot be null when creating a Thread");
 
                 Thread thread = Thread.builder()
                                 .id(id)

@@ -8,7 +8,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.openforum.domain.aggregate.Member;
 import com.openforum.domain.repository.MemberRepository;
-import com.openforum.rest.context.TenantContext;
+import com.openforum.domain.context.TenantContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

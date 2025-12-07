@@ -2,22 +2,14 @@ package com.openforum.infra.jpa.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.util.UUID;
 
 @Entity
 @Table(name = "categories", uniqueConstraints = {
         @UniqueConstraint(name = "uk_category_tenant_slug", columnNames = { "tenant_id", "slug" })
 })
-public class CategoryEntity {
-
-    @Id
-    private UUID id;
-
-    @Column(name = "tenant_id", nullable = false)
-    private String tenantId;
+public class CategoryEntity extends TenantAwareEntity {
 
     @Column(nullable = false)
     private String name;
@@ -29,23 +21,6 @@ public class CategoryEntity {
 
     @Column(name = "is_read_only", nullable = false)
     private boolean isReadOnly;
-
-    // Getters and Setters
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(String tenantId) {
-        this.tenantId = tenantId;
-    }
 
     public String getName() {
         return name;

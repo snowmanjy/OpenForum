@@ -2,7 +2,7 @@ package com.openforum.rest.auth;
 
 import com.openforum.domain.aggregate.Member;
 import com.openforum.domain.repository.MemberRepository;
-import com.openforum.rest.context.TenantContext;
+import com.openforum.domain.context.TenantContext;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
