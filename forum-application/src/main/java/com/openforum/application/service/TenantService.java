@@ -21,6 +21,10 @@ public class TenantService {
         return tenantRepository.findById(tenantId);
     }
 
+    public Optional<Tenant> getTenantBySlug(String slug) {
+        return tenantRepository.findBySlug(slug);
+    }
+
     @Transactional
     public Tenant updateTenantConfig(String tenantId, Map<String, Object> config) {
         Tenant tenant = tenantRepository.findById(tenantId)

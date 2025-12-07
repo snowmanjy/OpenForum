@@ -35,6 +35,20 @@ public class TenantController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @Operation(summary = "Lookup Tenant by Slug", description = "Retrieves tenant public details by slug")
+    @GetMapping("/lookup")
+    public ResponseEntity<com.openforum.rest.controller.dto.TenantLookupResponse> lookupTenant(
+            @RequestParam String slug) {
+        return tenantService.getTenantBySlug(slug)
+                .map(tenant -> new com.openforum.rest.controller.dto.TenantLookupResponse(
+                        java.util.UUID.fromString(tenant.getId()),
+                        tenant.getName(),
+                        (String) tenant.getConfig().get("primaryColor"),
+                        (String) tenant.getConfig().get("logoUrl")))
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @Operation(summary = "Update Tenant Config", description = "Updates configuration for a specific tenant")
     @PutMapping("/{tenantId}/config")
     public ResponseEntity<TenantResponse> updateTenantConfig(
