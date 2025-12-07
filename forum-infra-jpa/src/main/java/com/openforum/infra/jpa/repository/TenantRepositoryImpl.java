@@ -31,4 +31,10 @@ public class TenantRepositoryImpl implements TenantRepository {
         return tenantJpaRepository.findById(id)
                 .map(tenantMapper::toDomain);
     }
+
+    @Override
+    public Optional<Tenant> findBySlug(String slug) {
+        return tenantJpaRepository.findBySlug(slug)
+                .map(tenantMapper::toDomain);
+    }
 }

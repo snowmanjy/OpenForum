@@ -17,7 +17,9 @@ import java.util.Map;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
 @Testcontainers
@@ -62,5 +64,38 @@ class TenantControllerIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                                 .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void shouldReturnTenantId_WhenSlugExists() throws Exception {
+                // Given
+                String tenantId = java.util.UUID.randomUUID().toString();
+                String slug = "lookup-slug";
+                CreateTenantRequest request = new CreateTenantRequest(tenantId, slug, "Lookup Tenant",
+                                java.util.Map.of("primaryColor", "#000000", "logoUrl", "http://logo.com"));
+
+                mockMvc.perform(post("/api/v1/tenants")
+                                .with(jwt().authorities(
+                                                new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                                                                "SCOPE_create:tenant")))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isOk());
+
+                // When & Then
+                mockMvc.perform(get("/api/v1/tenants/lookup")
+                                .param("slug", slug))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(tenantId))
+                                .andExpect(jsonPath("$.name").value("Lookup Tenant"))
+                                .andExpect(jsonPath("$.primaryColor").value("#000000"))
+                                .andExpect(jsonPath("$.logoUrl").value("http://logo.com"));
+        }
+
+        @Test
+        void shouldReturn404_WhenSlugIsUnknown() throws Exception {
+                mockMvc.perform(get("/api/v1/tenants/lookup")
+                                .param("slug", "unknown-slug"))
+                                .andExpect(status().isNotFound());
         }
 }
