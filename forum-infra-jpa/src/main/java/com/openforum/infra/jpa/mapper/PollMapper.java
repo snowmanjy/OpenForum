@@ -20,8 +20,7 @@ public class PollMapper {
                 domain.getQuestion(),
                 domain.getOptions(),
                 domain.getExpiresAt(),
-                domain.isAllowMultipleVotes(),
-                domain.getCreatedAt());
+                domain.isAllowMultipleVotes());
     }
 
     public PollVoteEntity toEntity(PollVote domain) {
@@ -29,8 +28,7 @@ public class PollMapper {
                 domain.getId(),
                 domain.getPollId(),
                 domain.getVoterId(),
-                domain.getOptionIndex(),
-                domain.getCreatedAt());
+                domain.getOptionIndex());
     }
 
     public Poll toDomain(PollEntity entity, List<PollVoteEntity> votes) {

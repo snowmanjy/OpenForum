@@ -20,6 +20,7 @@ public class Thread {
     private final Map<String, Object> metadata;
     private Long version;
     private final Instant createdAt;
+    private int postCount;
 
     private final List<Object> domainEvents = new ArrayList<>();
 
@@ -37,6 +38,7 @@ public class Thread {
         this.metadata = builder.metadata != null ? Map.copyOf(builder.metadata) : Map.of();
         this.version = builder.version;
         this.createdAt = builder.createdAt != null ? builder.createdAt : Instant.now();
+        this.postCount = builder.postCount;
         if (builder.isNew) {
             this.domainEvents.add(new ThreadCreatedEvent(id, tenantId, authorId, title, this.createdAt));
         }
@@ -57,6 +59,7 @@ public class Thread {
         private Long version;
         private boolean isNew = false;
         private Instant createdAt;
+        private int postCount = 0;
 
         public Builder id(UUID id) {
             this.id = id;
@@ -100,6 +103,11 @@ public class Thread {
 
         public Builder createdAt(Instant createdAt) {
             this.createdAt = createdAt;
+            return this;
+        }
+
+        public Builder postCount(int postCount) {
+            this.postCount = postCount;
             return this;
         }
 
@@ -195,6 +203,16 @@ public class Thread {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public int getPostCount() {
+        return postCount;
+    }
+
+    public void incrementPostCount() {
+        this.postCount++;
+        // We could emit an event here if needed, but usually this is internal state for
+        // consistency
     }
 
     /**

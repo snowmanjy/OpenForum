@@ -22,6 +22,9 @@ class ThreadServiceTest {
     @Mock
     private ThreadRepository threadRepository;
 
+    @Mock
+    private com.openforum.domain.repository.PostRepository postRepository;
+
     @InjectMocks
     private ThreadService threadService;
 
@@ -31,9 +34,10 @@ class ThreadServiceTest {
         String tenantId = "tenant-1";
         UUID authorId = UUID.randomUUID();
         String title = "Test Thread";
+        String content = "Test Content";
 
         // When
-        Thread result = threadService.createThread(tenantId, authorId, title);
+        Thread result = threadService.createThread(tenantId, authorId, title, content);
 
         // Then
         assertThat(result).isNotNull();
@@ -43,6 +47,7 @@ class ThreadServiceTest {
         assertThat(result.getId()).isNotNull();
 
         verify(threadRepository).save(any(Thread.class));
+        verify(postRepository).save(any(com.openforum.domain.aggregate.Post.class));
     }
 
     @Test
@@ -51,7 +56,7 @@ class ThreadServiceTest {
         doThrow(new RuntimeException("DB Error")).when(threadRepository).save(any(Thread.class));
 
         // When/Then
-        assertThatThrownBy(() -> threadService.createThread("t1", UUID.randomUUID(), "Title"))
+        assertThatThrownBy(() -> threadService.createThread("t1", UUID.randomUUID(), "Title", "Content"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("DB Error");
     }

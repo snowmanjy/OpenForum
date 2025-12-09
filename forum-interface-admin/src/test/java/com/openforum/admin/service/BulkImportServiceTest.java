@@ -25,102 +25,104 @@ import static org.mockito.Mockito.verify;
 @ExtendWith(MockitoExtension.class)
 class BulkImportServiceTest {
 
-    @Mock
-    private ThreadRepository threadRepository;
+        @Mock
+        private ThreadRepository threadRepository;
 
-    @Mock
-    private com.openforum.domain.repository.MemberRepository memberRepository;
+        @Mock
+        private com.openforum.domain.repository.MemberRepository memberRepository;
 
-    private BulkImportService bulkImportService;
+        private BulkImportService bulkImportService;
 
-    @BeforeEach
-    void setUp() {
-        bulkImportService = new BulkImportService(threadRepository, memberRepository);
-    }
+        @BeforeEach
+        void setUp() {
+                bulkImportService = new BulkImportService(threadRepository, memberRepository);
+        }
 
-    @Test
-    void shouldImportThreadsAndPostsSuccessfully() {
-        // Given
-        UUID threadId = UUID.randomUUID();
-        UUID authorId = UUID.randomUUID();
-        UUID postId = UUID.randomUUID();
-        Instant now = Instant.now();
+        @Test
+        void shouldImportThreadsAndPostsSuccessfully() {
+                // Given
+                UUID threadId = UUID.randomUUID();
+                UUID authorId = UUID.randomUUID();
+                UUID postId = UUID.randomUUID();
+                Instant now = Instant.now();
 
-        ImportPostDto postDto = new ImportPostDto(
-                postId,
-                authorId,
-                "Test Content",
-                null,
-                Map.of(),
-                false,
-                now);
+                ImportPostDto postDto = new ImportPostDto(
+                                postId,
+                                authorId,
+                                "Test Content",
+                                null,
+                                Map.of(),
+                                false,
+                                now);
 
-        ImportThreadDto threadDto = new ImportThreadDto(
-                threadId,
-                "tenant-1",
-                authorId,
-                null, // categoryId
-                "Test Thread",
-                ThreadStatus.OPEN,
-                now,
-                Map.of(),
-                List.of(postDto));
+                ImportThreadDto threadDto = new ImportThreadDto(
+                                threadId,
+                                "tenant-1",
+                                authorId,
+                                null, // categoryId
+                                "Test Thread",
+                                ThreadStatus.OPEN,
+                                now,
+                                Map.of(),
+                                List.of(postDto));
 
-        BulkImportRequest request = new BulkImportRequest(List.of(threadDto));
+                BulkImportRequest request = new BulkImportRequest(List.of(threadDto));
 
-        org.mockito.Mockito.when(memberRepository.existsAllById(org.mockito.ArgumentMatchers.anyList()))
-                .thenReturn(true);
+                org.mockito.Mockito.when(memberRepository.existsAllById(org.mockito.ArgumentMatchers.anyList()))
+                                .thenReturn(true);
 
-        // When
-        BulkImportResponse response = bulkImportService.importThreads(request);
+                // When
+                BulkImportResponse response = bulkImportService.importThreads(request);
 
-        // Then
-        assertThat(response.threadsImported()).isEqualTo(1);
-        assertThat(response.postsImported()).isEqualTo(1);
-        assertThat(response.errors()).isEmpty();
+                // Then
+                assertThat(response.threadsImported()).isEqualTo(1);
+                assertThat(response.postsImported()).isEqualTo(1);
+                assertThat(response.errors()).isEmpty();
 
-        ArgumentCaptor<List<Thread>> captor = ArgumentCaptor.forClass(List.class);
-        verify(threadRepository).saveAll(captor.capture());
+                @SuppressWarnings("unchecked")
+                ArgumentCaptor<List<Thread>> captor = ArgumentCaptor.forClass(List.class);
+                verify(threadRepository).saveAll(captor.capture());
 
-        List<Thread> savedThreads = captor.getValue();
-        assertThat(savedThreads).hasSize(1);
+                List<Thread> savedThreads = captor.getValue();
+                assertThat(savedThreads).hasSize(1);
 
-        Thread savedThread = savedThreads.get(0);
-        assertThat(savedThread.getId()).isEqualTo(threadId);
-        assertThat(savedThread.getPosts()).hasSize(1);
-        assertThat(savedThread.getPosts().get(0).getId()).isEqualTo(postId);
+                Thread savedThread = savedThreads.get(0);
+                assertThat(savedThread.getId()).isEqualTo(threadId);
+                assertThat(savedThread.getPosts()).hasSize(1);
+                assertThat(savedThread.getPosts().get(0).getId()).isEqualTo(postId);
 
-        // Critical: Verify no events generated
-        assertThat(savedThread.pollEvents()).isEmpty();
-    }
+                // Critical: Verify no events generated
+                assertThat(savedThread.pollEvents()).isEmpty();
+        }
 
-    @Test
-    void shouldThrowBadRequestWhenAuthorDoesNotExist() {
-        // Given
-        UUID threadId = UUID.randomUUID();
-        UUID authorId = UUID.randomUUID();
-        Instant now = Instant.now();
+        @Test
+        void shouldThrowBadRequestWhenAuthorDoesNotExist() {
+                // Given
+                UUID threadId = UUID.randomUUID();
+                UUID authorId = UUID.randomUUID();
+                Instant now = Instant.now();
 
-        ImportThreadDto threadDto = new ImportThreadDto(
-                threadId,
-                "tenant-1",
-                authorId,
-                null,
-                "Test Thread",
-                ThreadStatus.OPEN,
-                now,
-                Map.of(),
-                List.of());
+                ImportThreadDto threadDto = new ImportThreadDto(
+                                threadId,
+                                "tenant-1",
+                                authorId,
+                                null,
+                                "Test Thread",
+                                ThreadStatus.OPEN,
+                                now,
+                                Map.of(),
+                                List.of());
 
-        BulkImportRequest request = new BulkImportRequest(List.of(threadDto));
+                BulkImportRequest request = new BulkImportRequest(List.of(threadDto));
 
-        org.mockito.Mockito.when(memberRepository.existsAllById(org.mockito.ArgumentMatchers.anyList()))
-                .thenReturn(false);
+                org.mockito.Mockito.when(memberRepository.existsAllById(org.mockito.ArgumentMatchers.anyList()))
+                                .thenReturn(false);
 
-        // When & Then
-        org.junit.jupiter.api.Assertions.assertThrows(org.springframework.web.server.ResponseStatusException.class,
-                () -> {
-                    bulkImportService.importThreads(request);
-                });
-    }
+                // When & Then
+                org.junit.jupiter.api.Assertions.assertThrows(
+                                org.springframework.web.server.ResponseStatusException.class,
+                                () -> {
+                                        bulkImportService.importThreads(request);
+                                });
+        }
 }

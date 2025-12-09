@@ -22,7 +22,7 @@ class PrivateThreadMapperTest {
         UUID participant2 = UUID.randomUUID();
         Instant now = Instant.now();
         PrivateThreadEntity entity = new PrivateThreadEntity(id, "tenant-1",
-                "Private Discussion", now, now,
+                "Private Discussion", now,
                 new java.util.HashSet<>(java.util.Arrays.asList(participant1, participant2)));
 
         // When

@@ -9,6 +9,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "private_posts")
+@jakarta.persistence.EntityListeners(org.springframework.data.jpa.domain.support.AuditingEntityListener.class)
 public class PrivatePostEntity extends BaseEntity {
 
     @Column(name = "thread_id", nullable = false)
@@ -20,18 +21,19 @@ public class PrivatePostEntity extends BaseEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "created_at", nullable = false)
+    @org.springframework.data.annotation.CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
     public PrivatePostEntity() {
     }
 
-    public PrivatePostEntity(UUID id, UUID threadId, UUID authorId, String content, Instant createdAt) {
+    public PrivatePostEntity(UUID id, UUID threadId, UUID authorId, String content) {
         this.id = id;
         this.threadId = threadId;
         this.authorId = authorId;
         this.content = content;
-        this.createdAt = createdAt;
+        // this.createdAt = createdAt;
     }
 
     public UUID getThreadId() {

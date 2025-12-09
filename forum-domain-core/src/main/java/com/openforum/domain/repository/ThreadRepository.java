@@ -16,5 +16,12 @@ public interface ThreadRepository {
 
     Optional<Thread> findByIdAndTenantId(UUID id, String tenantId);
 
+    /**
+     * Find thread by ID with a pessimistic write lock for race condition
+     * prevention.
+     * Used when calculating postNumber for replies.
+     */
+    Optional<Thread> findByIdWithLock(UUID id, String tenantId);
+
     List<Thread> findByTenantId(String tenantId, int page, int size);
 }

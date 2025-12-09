@@ -14,9 +14,6 @@ public class PrivateThreadEntity extends TenantAwareEntity {
     @Column(nullable = false)
     private String subject;
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-
     @Column(name = "last_activity_at", nullable = false)
     private Instant lastActivityAt;
 
@@ -28,12 +25,11 @@ public class PrivateThreadEntity extends TenantAwareEntity {
     public PrivateThreadEntity() {
     }
 
-    public PrivateThreadEntity(UUID id, String tenantId, String subject, Instant createdAt, Instant lastActivityAt,
+    public PrivateThreadEntity(UUID id, String tenantId, String subject, Instant lastActivityAt,
             Set<UUID> participantIds) {
         this.id = id;
         this.tenantId = tenantId;
         this.subject = subject;
-        this.createdAt = createdAt;
         this.lastActivityAt = lastActivityAt;
         this.participantIds = participantIds;
     }
@@ -44,14 +40,6 @@ public class PrivateThreadEntity extends TenantAwareEntity {
 
     public void setSubject(String subject) {
         this.subject = subject;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
     }
 
     public Instant getLastActivityAt() {

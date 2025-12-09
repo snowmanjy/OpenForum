@@ -20,6 +20,7 @@ public class Post {
     private final Map<String, Object> metadata;
     private final Instant createdAt;
     private final List<UUID> mentionedUserIds;
+    private final Integer postNumber;
     private boolean isDeleted = false;
 
     private final List<Object> domainEvents = new ArrayList<>();
@@ -35,6 +36,7 @@ public class Post {
         this.metadata = builder.metadata != null ? Map.copyOf(builder.metadata) : Map.of();
         this.createdAt = builder.createdAt != null ? builder.createdAt : Instant.now();
         this.mentionedUserIds = builder.mentionedUserIds != null ? List.copyOf(builder.mentionedUserIds) : List.of();
+        this.postNumber = builder.postNumber;
 
         if (builder.isNew) {
             this.domainEvents
@@ -58,6 +60,7 @@ public class Post {
         private Map<String, Object> metadata;
         private Instant createdAt;
         private List<UUID> mentionedUserIds;
+        private Integer postNumber;
         private boolean isNew = false;
         private boolean isBot = false;
 
@@ -111,6 +114,11 @@ public class Post {
             return this;
         }
 
+        public Builder postNumber(Integer postNumber) {
+            this.postNumber = postNumber;
+            return this;
+        }
+
         public Builder isNew(boolean isNew) {
             this.isNew = isNew;
             return this;
@@ -160,6 +168,10 @@ public class Post {
 
     public List<UUID> getMentionedUserIds() {
         return mentionedUserIds;
+    }
+
+    public Integer getPostNumber() {
+        return postNumber;
     }
 
     public List<Object> pollEvents() {

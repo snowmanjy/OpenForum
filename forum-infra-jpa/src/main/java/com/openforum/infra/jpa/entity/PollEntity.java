@@ -28,14 +28,11 @@ public class PollEntity extends TenantAwareEntity {
     @Column(name = "allow_multiple_votes")
     private boolean allowMultipleVotes;
 
-    @Column(name = "created_at")
-    private Instant createdAt;
-
     public PollEntity() {
     }
 
     public PollEntity(UUID id, String tenantId, UUID postId, String question, List<String> options, Instant expiresAt,
-            boolean allowMultipleVotes, Instant createdAt) {
+            boolean allowMultipleVotes) {
         this.id = id;
         this.tenantId = tenantId;
         this.postId = postId;
@@ -43,7 +40,8 @@ public class PollEntity extends TenantAwareEntity {
         this.options = options;
         this.expiresAt = expiresAt;
         this.allowMultipleVotes = allowMultipleVotes;
-        this.createdAt = createdAt;
+        // this.createdAt = createdAt; // Removed as it's handled by auditing and not
+        // passed in constructor
     }
 
     public UUID getPostId() {
@@ -84,13 +82,5 @@ public class PollEntity extends TenantAwareEntity {
 
     public void setAllowMultipleVotes(boolean allowMultipleVotes) {
         this.allowMultipleVotes = allowMultipleVotes;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
     }
 }

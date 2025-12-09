@@ -6,7 +6,7 @@ import com.openforum.domain.aggregate.Member;
 import com.openforum.domain.aggregate.Thread;
 import com.openforum.domain.factory.ThreadFactory;
 import com.openforum.domain.repository.MemberRepository;
-import com.openforum.rest.auth.JwtAuthenticationFilter;
+import com.openforum.rest.auth.HybridJwtAuthenticationConverter;
 import com.openforum.rest.auth.MemberJwtAuthenticationConverter;
 import com.openforum.rest.config.JwtConfig;
 import com.openforum.rest.config.SecurityConfig;
@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ThreadController.class)
-@Import({ SecurityConfig.class, JwtAuthenticationFilter.class, MemberJwtAuthenticationConverter.class,
+@Import({ SecurityConfig.class, HybridJwtAuthenticationConverter.class, MemberJwtAuthenticationConverter.class,
         JwtConfig.class })
 class ThreadControllerTest {
 
@@ -52,7 +52,7 @@ class ThreadControllerTest {
     private MemberRepository memberRepository;
 
     @MockitoBean
-    private java.security.interfaces.RSAPublicKey publicKey; // Required by JwtAuthenticationFilter
+    private java.security.interfaces.RSAPublicKey publicKey; // Required by HybridJwtAuthenticationConverter
 
     private Member testMember;
 
@@ -76,7 +76,7 @@ class ThreadControllerTest {
         Thread thread = ThreadFactory.create("default-tenant", testMember.getId(), null, "Test Thread",
                 java.util.Map.of());
 
-        when(threadService.createThread(anyString(), any(UUID.class), anyString())).thenReturn(thread);
+        when(threadService.createThread(anyString(), any(UUID.class), anyString(), anyString())).thenReturn(thread);
 
         // When & Then
         mockMvc.perform(post("/api/v1/threads")

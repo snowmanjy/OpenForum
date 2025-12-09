@@ -126,8 +126,8 @@ public class ThreadRepositoryImpl implements ThreadRepository {
 
         // 1. Batch Insert Threads
         String threadSql = """
-                INSERT INTO threads (id, tenant_id, author_id, title, status, metadata, version, created_at)
-                VALUES (?, ?, ?, ?, ?, ?::jsonb, ?, ?)
+                INSERT INTO threads (id, tenant_id, author_id, title, status, metadata, version, created_at, post_count)
+                VALUES (?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?)
                 """;
 
         jdbcTemplate.batchUpdate(threadSql, threads, threads.size(), (ps, thread) -> {
@@ -143,6 +143,7 @@ public class ThreadRepositoryImpl implements ThreadRepository {
             }
             ps.setObject(7, thread.getVersion() != null ? thread.getVersion() : 0L);
             ps.setTimestamp(8, Timestamp.from(thread.getCreatedAt()));
+            ps.setInt(9, thread.getPostCount());
         });
 
         // 2. Batch Insert Posts
@@ -153,8 +154,8 @@ public class ThreadRepositoryImpl implements ThreadRepository {
 
         if (!allPosts.isEmpty()) {
             String postSql = """
-                    INSERT INTO posts (id, thread_id, tenant_id, author_id, content, reply_to_post_id, metadata, version)
-                    VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?)
+                    INSERT INTO posts (id, thread_id, tenant_id, author_id, content, reply_to_post_id, metadata, version, created_at, mentioned_user_ids, post_number)
+                    VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?::jsonb, ?)
                     """;
 
             jdbcTemplate.batchUpdate(postSql, allPosts, allPosts.size(), (ps, post) -> {
@@ -170,6 +171,13 @@ public class ThreadRepositoryImpl implements ThreadRepository {
                     throw new RuntimeException("Failed to serialize post metadata", e);
                 }
                 ps.setObject(8, post.getVersion() != null ? post.getVersion() : 0L);
+                ps.setTimestamp(9, Timestamp.from(post.getCreatedAt()));
+                try {
+                    ps.setString(10, objectMapper.writeValueAsString(post.getMentionedUserIds()));
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException("Failed to serialize mentionedUserIds", e);
+                }
+                ps.setObject(11, post.getPostNumber());
             });
         }
 
@@ -240,6 +248,12 @@ public class ThreadRepositoryImpl implements ThreadRepository {
     @Override
     public Optional<Thread> findByIdAndTenantId(UUID id, String tenantId) {
         return threadJpaRepository.findByIdAndTenantId(id, tenantId)
+                .map(threadMapper::toDomain);
+    }
+
+    @Override
+    public Optional<Thread> findByIdWithLock(UUID id, String tenantId) {
+        return threadJpaRepository.findByIdWithLock(id, tenantId)
                 .map(threadMapper::toDomain);
     }
 

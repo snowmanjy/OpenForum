@@ -6,7 +6,6 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -24,13 +23,7 @@ public class PostEntity extends TenantAwareEntity {
     @Column(nullable = false)
     private String content;
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at")
-    private Instant updatedAt;
-
-    @Column(name = "reply_to_id")
+    @Column(name = "reply_to_post_id")
     private UUID replyToPostId;
 
     @JdbcTypeCode(SqlTypes.JSON)
@@ -40,7 +33,11 @@ public class PostEntity extends TenantAwareEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> metadata;
 
-    @Column
+    @Column(name = "post_number")
+    private Integer postNumber;
+
+    @jakarta.persistence.Version
+    @Column(nullable = false)
     private Long version;
 
     public UUID getThreadId() {
@@ -67,24 +64,8 @@ public class PostEntity extends TenantAwareEntity {
         this.content = content;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
     public UUID getReplyToPostId() {
-        return replyToPostId;
+        return replyToPostId; // Retaining getReplyToPostId
     }
 
     public void setReplyToPostId(UUID replyToPostId) {
@@ -113,5 +94,13 @@ public class PostEntity extends TenantAwareEntity {
 
     public void setVersion(Long version) {
         this.version = version;
+    }
+
+    public Integer getPostNumber() {
+        return postNumber;
+    }
+
+    public void setPostNumber(Integer postNumber) {
+        this.postNumber = postNumber;
     }
 }
