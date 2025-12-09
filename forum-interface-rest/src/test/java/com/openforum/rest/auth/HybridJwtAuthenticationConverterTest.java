@@ -89,4 +89,18 @@ class HybridJwtAuthenticationConverterTest {
             converter.convert(jwt);
         });
     }
+
+    @Test
+    void convert_shouldThrowException_whenJwtHasNoEmail_orName() {
+        // Given
+        Jwt jwt = Mockito.mock(Jwt.class);
+        when(jwt.getSubject()).thenReturn("user-1");
+        when(jwt.getClaimAsString("tenant_id")).thenReturn("tenant-1");
+        // Name and Email are null by default mock
+
+        // When & Then
+        Assertions.assertThrows(org.springframework.security.authentication.BadCredentialsException.class, () -> {
+            converter.convert(jwt);
+        });
+    }
 }
