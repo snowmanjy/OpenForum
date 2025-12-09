@@ -1,7 +1,9 @@
 package com.openforum.rest.config;
 
 import com.openforum.domain.context.TenantContext;
+import com.openforum.rest.exception.MissingTenantIdException;
 import com.openforum.shared.api.TenantId;
+
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -20,7 +22,7 @@ public class TenantIdArgumentResolver implements HandlerMethodArgumentResolver {
             NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
         String tenantId = TenantContext.getTenantId();
         if (tenantId == null || tenantId.isBlank()) {
-            throw new IllegalArgumentException("Tenant ID is missing in context");
+            throw new MissingTenantIdException("Tenant ID is missing in context");
         }
         return tenantId;
     }

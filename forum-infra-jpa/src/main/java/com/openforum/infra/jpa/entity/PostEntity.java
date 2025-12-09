@@ -20,7 +20,7 @@ public class PostEntity extends TenantAwareEntity {
     @Column(name = "author_id", nullable = false)
     private UUID authorId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @Column(name = "reply_to_post_id")
