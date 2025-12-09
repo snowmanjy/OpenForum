@@ -9,6 +9,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "poll_votes")
+@jakarta.persistence.EntityListeners(org.springframework.data.jpa.domain.support.AuditingEntityListener.class)
 public class PollVoteEntity extends BaseEntity {
 
     @Column(name = "poll_id")
@@ -20,18 +21,19 @@ public class PollVoteEntity extends BaseEntity {
     @Column(name = "option_index")
     private int optionIndex;
 
-    @Column(name = "created_at")
+    @org.springframework.data.annotation.CreatedDate
+    @Column(name = "created_at", updatable = false)
     private Instant createdAt;
 
     public PollVoteEntity() {
     }
 
-    public PollVoteEntity(UUID id, UUID pollId, UUID voterId, int optionIndex, Instant createdAt) {
+    public PollVoteEntity(UUID id, UUID pollId, UUID voterId, int optionIndex) {
         this.id = id;
         this.pollId = pollId;
         this.voterId = voterId;
         this.optionIndex = optionIndex;
-        this.createdAt = createdAt;
+        // this.createdAt = createdAt;
     }
 
     public UUID getPollId() {

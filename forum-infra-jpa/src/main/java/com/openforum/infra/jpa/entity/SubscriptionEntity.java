@@ -3,8 +3,6 @@ package com.openforum.infra.jpa.entity;
 import com.openforum.domain.valueobject.TargetType;
 import jakarta.persistence.*;
 
-import java.time.Instant;
-
 @Entity
 @Table(name = "subscriptions", uniqueConstraints = {
         @UniqueConstraint(name = "uk_subscription_user_target", columnNames = { "user_id", "target_id" })
@@ -23,9 +21,6 @@ public class SubscriptionEntity extends TenantAwareEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "target_type", nullable = false)
     private TargetType targetType;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
 
     public java.util.UUID getUserId() {
         return userId;
@@ -49,13 +44,5 @@ public class SubscriptionEntity extends TenantAwareEntity {
 
     public void setTargetType(TargetType targetType) {
         this.targetType = targetType;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
     }
 }

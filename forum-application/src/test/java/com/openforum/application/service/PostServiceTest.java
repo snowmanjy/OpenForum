@@ -47,16 +47,24 @@ class PostServiceTest {
         UUID authorId = UUID.randomUUID();
         String content = "Test Content";
 
-        Thread thread = org.mockito.Mockito.mock(Thread.class);
-        when(thread.getTenantId()).thenReturn("test-tenant");
-        when(thread.getStatus()).thenReturn(ThreadStatus.OPEN);
+        Thread thread = Thread.builder()
+                .id(threadId)
+                .tenantId("test-tenant")
+                .status(ThreadStatus.OPEN)
+                .postCount(5) // Initial count
+                .build();
+
         when(threadRepository.findById(threadId)).thenReturn(Optional.of(thread));
 
         Member author = Member.reconstitute(authorId, "ext-1", "test@example.com", "Test User", false,
                 java.time.Instant.now(), com.openforum.domain.valueobject.MemberRole.MEMBER, "test-tenant");
         when(memberRepository.findById(authorId)).thenReturn(Optional.of(author));
 
-        when(postRepository.save(any(Post.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(postRepository.save(any(Post.class))).thenAnswer(invocation -> {
+            Post savedPost = invocation.getArgument(0);
+            // Simulate repository returning the saved entity
+            return savedPost;
+        });
 
         // When
         Post post = postService.createPost(threadId, authorId, content, null, null, List.of());
@@ -64,6 +72,10 @@ class PostServiceTest {
         // Then
         assertThat(post).isNotNull();
         assertThat(post.getContent()).isEqualTo(content);
+        assertThat(post.getPostNumber()).isEqualTo(6); // Should be 5 + 1
+
+        assertThat(thread.getPostCount()).isEqualTo(6);
+        verify(threadRepository).save(thread); // Verify thread is saved (for lock/count)
         verify(postRepository).save(any(Post.class));
     }
 

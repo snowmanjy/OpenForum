@@ -9,7 +9,6 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
@@ -30,12 +29,13 @@ public class ThreadEntity extends TenantAwareEntity {
     @Column(nullable = false)
     private ThreadStatus status;
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> metadata;
 
+    @Column(name = "post_count", nullable = false)
+    private Integer postCount = 0;
+
+    @jakarta.persistence.Version
     @Column
     private Long version;
 
@@ -71,14 +71,6 @@ public class ThreadEntity extends TenantAwareEntity {
         this.status = status;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
     public Map<String, Object> getMetadata() {
         return metadata;
     }
@@ -93,5 +85,13 @@ public class ThreadEntity extends TenantAwareEntity {
 
     public void setVersion(Long version) {
         this.version = version;
+    }
+
+    public Integer getPostCount() {
+        return postCount;
+    }
+
+    public void setPostCount(Integer postCount) {
+        this.postCount = postCount;
     }
 }

@@ -22,7 +22,7 @@ class PollMapperTest {
         Instant now = Instant.now();
         Instant expiresAt = now.plusSeconds(86400);
         PollEntity entity = new PollEntity(id, "tenant-1", postId, "What color?",
-                List.of("Red", "Blue"), expiresAt, true, now);
+                List.of("Red", "Blue"), expiresAt, true);
 
         // When
         Poll poll = mapper.toDomain(entity, List.of());

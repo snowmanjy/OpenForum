@@ -407,3 +407,109 @@ Do not create hardcoded Java classes for Vertical data (e.g., no PetThread.java)
 
 - forum-domain-core: Unit tests only (No Spring, No DB).
 - forum-infra-jpa: Integration tests with Testcontainers (Postgres).
+
+-----
+
+## 9\. Future Architecture: Media & File Storage
+
+**Goal:** Document the architectural decisions for file uploads and media management to ensure a scalable, cost-effective solution.
+
+### 9.1 Storage Abstraction
+
+The system will use a `FileStorageService` interface to abstract storage implementations:
+
+```java
+public interface FileStorageService {
+    PresignedUrl generateUploadUrl(String tenantId, String fileName, String contentType, long maxSizeBytes);
+    void deleteFile(String tenantId, String fileKey);
+    String getPublicUrl(String fileKey);
+}
+```
+
+**Profile-Based Implementations:**
+
+| Profile | Implementation | Description |
+|---------|----------------|-------------|
+| `dev` | `LocalFileSystemStorage` | Saves files to a local folder (e.g., `/uploads/{tenantId}/`) |
+| `prod` | `S3ObjectStorage` | Uses AWS SDK to interact with S3, GCS, or MinIO |
+
+### 9.2 Security & Performance Strategy
+
+#### Presigned URLs (Direct Upload)
+
+- **Philosophy:** Heavy file traffic MUST NOT proxy through the Java application.
+- **Flow:**
+  1. Client requests upload permission: `POST /api/v1/uploads/presign`
+  2. API validates quota, file size, and MIME type.
+  3. API returns a **Presigned Upload URL** (time-limited, typically 15 minutes).
+  4. Client uploads directly to S3 using the presigned URL.
+  5. Client notifies completion: `POST /api/v1/uploads/{uploadId}/complete`
+
+#### CDN for Reads
+
+- **Strategy:** All file reads are served via CDN (CloudFront, Cloudflare, or equivalent).
+- **Configuration:** CDN points to the S3 bucket origin.
+- **Caching:** Aggressive caching for immutable assets (images, videos).
+
+#### Quota & Validation (API Level)
+
+Before generating presigned URLs, the API MUST enforce:
+
+| Validation | Example |
+|------------|---------|
+| **Max File Size** | 10MB for images, 100MB for videos |
+| **Allowed MIME Types** | `image/jpeg`, `image/png`, `image/gif`, `video/mp4` |
+| **Tenant Quota** | Total storage per tenant (e.g., 10GB) |
+| **Rate Limiting** | Max uploads per hour per user |
+
+### 9.3 Data Model
+
+Files will be tracked in an `attachments` table for lifecycle management:
+
+```sql
+CREATE TABLE attachments (
+    id UUID PRIMARY KEY,
+    tenant_id VARCHAR(255) NOT NULL,
+    uploader_id UUID NOT NULL,
+    file_key VARCHAR(500) NOT NULL,      -- S3 object key
+    file_name VARCHAR(255) NOT NULL,     -- Original filename
+    content_type VARCHAR(100) NOT NULL,
+    size_bytes BIGINT NOT NULL,
+    status VARCHAR(50) NOT NULL,          -- PENDING, COMPLETED, ORPHANED
+    linked_post_id UUID,                  -- FK to posts (nullable)
+    linked_thread_id UUID,                -- FK to threads (nullable)
+    created_at TIMESTAMP NOT NULL,
+    completed_at TIMESTAMP,
+    
+    CONSTRAINT fk_attachment_post FOREIGN KEY (linked_post_id) REFERENCES posts(id),
+    CONSTRAINT fk_attachment_thread FOREIGN KEY (linked_thread_id) REFERENCES threads(id)
+);
+
+CREATE INDEX idx_attachments_tenant ON attachments(tenant_id);
+CREATE INDEX idx_attachments_status ON attachments(status);
+CREATE INDEX idx_attachments_orphan ON attachments(status, created_at) 
+    WHERE linked_post_id IS NULL AND linked_thread_id IS NULL;
+```
+
+#### Orphan File Cleanup
+
+- **Scheduled Job:** `AttachmentCleanupJob` runs periodically (e.g., hourly).
+- **Logic:** Delete attachments where `status = PENDING` and `created_at < NOW() - 24 hours`.
+- **Cascade:** When a Post/Thread is deleted, corresponding attachments are marked for deletion.
+
+### 9.4 API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/v1/uploads/presign` | Request presigned upload URL |
+| `POST` | `/api/v1/uploads/{id}/complete` | Mark upload as complete |
+| `DELETE` | `/api/v1/uploads/{id}` | Delete an attachment |
+| `GET` | `/api/v1/posts/{postId}/attachments` | List attachments for a post |
+
+### 9.5 Why This Architecture?
+
+1. **Scalability:** No file bytes pass through the API server; uploads go directly to object storage.
+2. **Cost Efficiency:** CDN caching reduces egress costs and latency.
+3. **Security:** Presigned URLs are time-limited and scoped to specific operations.
+4. **Flexibility:** Storage abstraction allows easy switching between local dev and cloud prod.
+5. **Data Integrity:** Attachment tracking enables quota enforcement and orphan cleanup.

@@ -17,7 +17,6 @@ public class PrivateThreadMapper {
                 domain.getId(),
                 domain.getTenantId(),
                 domain.getSubject(),
-                domain.getCreatedAt(),
                 domain.getLastActivityAt(),
                 new java.util.HashSet<>(domain.getParticipantIds()));
     }
@@ -27,8 +26,7 @@ public class PrivateThreadMapper {
                 domain.getId(),
                 domain.getThreadId(),
                 domain.getAuthorId(),
-                domain.getContent(),
-                domain.getCreatedAt());
+                domain.getContent());
     }
 
     public PrivateThread toDomain(PrivateThreadEntity entity, List<PrivatePostEntity> posts) {

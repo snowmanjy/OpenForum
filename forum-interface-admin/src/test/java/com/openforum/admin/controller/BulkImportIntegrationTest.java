@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -89,6 +91,8 @@ class BulkImportIntegrationTest {
 
                 // When
                 mockMvc.perform(post("/admin/v1/bulk/import")
+                                .with(user("admin").roles("ADMIN"))
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                                 .andExpect(status().isCreated());
@@ -157,6 +161,8 @@ class BulkImportIntegrationTest {
 
                 // When: Import the thread
                 mockMvc.perform(post("/admin/v1/bulk/import")
+                                .with(user("admin").roles("ADMIN"))
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                                 .andExpect(status().isCreated());
@@ -215,6 +221,8 @@ class BulkImportIntegrationTest {
                 // When: Import is called
                 // We expect this to fail with 400 Bad Request because the author does not exist
                 mockMvc.perform(post("/admin/v1/bulk/import")
+                                .with(user("admin").roles("ADMIN"))
+                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
                                 .andExpect(status().isBadRequest());

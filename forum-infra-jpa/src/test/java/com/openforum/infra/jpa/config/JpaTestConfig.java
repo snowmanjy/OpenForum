@@ -11,6 +11,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @TestConfiguration
+@org.springframework.context.annotation.Import(JpaAuditingConfig.class)
 public class JpaTestConfig {
 
     @Bean

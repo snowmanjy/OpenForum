@@ -63,6 +63,7 @@ class ThreadRepositoryImplTest {
                 assertThat(savedThread.get().getTitle()).isEqualTo("Integration Test");
                 assertThat(savedThread.get().getMetadata()).containsEntry("key", "value");
                 assertThat(savedThread.get().getVersion()).isNotNull();
+                assertThat(savedThread.get().getPostCount()).isEqualTo(0); // Default from factory
 
                 List<OutboxEventEntity> events = outboxEventJpaRepository.findAll();
                 assertThat(events).hasSize(1);

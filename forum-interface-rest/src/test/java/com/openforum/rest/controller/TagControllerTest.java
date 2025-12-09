@@ -4,7 +4,7 @@ import com.openforum.domain.aggregate.Member;
 import com.openforum.domain.aggregate.Tag;
 import com.openforum.domain.repository.MemberRepository;
 import com.openforum.domain.repository.TagRepository;
-import com.openforum.rest.auth.JwtAuthenticationFilter;
+import com.openforum.rest.auth.HybridJwtAuthenticationConverter;
 import com.openforum.rest.auth.MemberJwtAuthenticationConverter;
 import com.openforum.rest.config.JwtConfig;
 import com.openforum.rest.config.SecurityConfig;
@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(TagController.class)
-@Import({ SecurityConfig.class, JwtAuthenticationFilter.class, MemberJwtAuthenticationConverter.class,
+@Import({ SecurityConfig.class, HybridJwtAuthenticationConverter.class, MemberJwtAuthenticationConverter.class,
         JwtConfig.class })
 class TagControllerTest {
 
