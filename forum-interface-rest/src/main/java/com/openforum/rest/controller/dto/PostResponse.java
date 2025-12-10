@@ -16,13 +16,19 @@ public record PostResponse(
         UUID replyToPostId,
         Map<String, Object> metadata,
         Instant createdAt,
-        Integer postNumber) {
+        Integer postNumber,
+        Integer score,
+        Integer userVote) {
 
     public static PostResponse from(Post post) {
-        return from(post, null);
+        return from(post, null, 0, 0);
     }
 
     public static PostResponse from(Post post, String authorName) {
+        return from(post, authorName, 0, 0);
+    }
+
+    public static PostResponse from(Post post, String authorName, int score, int userVote) {
         return new PostResponse(
                 post.getId(),
                 post.getThreadId(),
@@ -33,6 +39,29 @@ public record PostResponse(
                 post.getReplyToPostId(),
                 post.getMetadata(),
                 post.getCreatedAt(),
-                post.getPostNumber());
+                post.getPostNumber(),
+                score,
+                userVote);
+    }
+
+    /**
+     * Factory method for creating PostResponse directly from PostEntity.
+     * This preserves the score field which lives on the entity.
+     */
+    public static PostResponse fromEntity(com.openforum.infra.jpa.entity.PostEntity entity, String authorName,
+            Integer userVote) {
+        return new PostResponse(
+                entity.getId(),
+                entity.getThreadId(),
+                entity.getAuthorId(),
+                authorName,
+                entity.getContent(),
+                entity.getVersion(),
+                entity.getReplyToPostId(),
+                entity.getMetadata(),
+                entity.getCreatedAt(),
+                entity.getPostNumber(),
+                entity.getScore(),
+                userVote);
     }
 }

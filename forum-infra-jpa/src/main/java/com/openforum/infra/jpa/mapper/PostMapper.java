@@ -37,6 +37,7 @@ public class PostMapper {
                 .metadata(entity.getMetadata())
                 .mentionedUserIds(entity.getMentionedUserIds())
                 .postNumber(entity.getPostNumber())
+                .createdAt(entity.getCreatedAt())
                 .build();
     }
 }

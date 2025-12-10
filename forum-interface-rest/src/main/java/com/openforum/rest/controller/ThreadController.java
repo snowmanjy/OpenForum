@@ -29,99 +29,100 @@ import com.openforum.shared.api.TenantId;
 @Tag(name = "Threads", description = "Thread management APIs")
 public class ThreadController {
 
-    private final ThreadService threadService;
-    private final ThreadJpaRepository threadJpaRepository;
-    private final MemberRepository memberRepository;
+        private final ThreadService threadService;
+        private final ThreadJpaRepository threadJpaRepository;
+        private final MemberRepository memberRepository;
 
-    public ThreadController(ThreadService threadService,
-            ThreadJpaRepository threadJpaRepository,
-            MemberRepository memberRepository) {
-        this.threadService = threadService;
-        this.threadJpaRepository = threadJpaRepository;
-        this.memberRepository = memberRepository;
-    }
+        public ThreadController(ThreadService threadService,
+                        ThreadJpaRepository threadJpaRepository,
+                        MemberRepository memberRepository) {
+                this.threadService = threadService;
+                this.threadJpaRepository = threadJpaRepository;
+                this.memberRepository = memberRepository;
+        }
 
-    @Operation(summary = "Create Thread", description = "Creates a new thread")
-    @PostMapping
-    public ResponseEntity<ThreadResponse> createThread(
-            @RequestBody CreateThreadRequest request,
-            @TenantId String tenantId,
-            @AuthenticationPrincipal Member member) {
+        @Operation(summary = "Create Thread", description = "Creates a new thread")
+        @PostMapping
+        public ResponseEntity<ThreadResponse> createThread(
+                        @RequestBody CreateThreadRequest request,
+                        @TenantId String tenantId,
+                        @AuthenticationPrincipal Member member) {
 
-        Thread thread = threadService.createThread(tenantId, member.getId(), request.title(), request.content());
+                Thread thread = threadService.createThread(tenantId, member.getId(), request.title(),
+                                request.content());
 
-        // API Aggregation: get author name from the authenticated member
-        String authorName = member.getName();
+                // API Aggregation: get author name from the authenticated member
+                String authorName = member.getName();
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ThreadResponse(
-                        thread.getId(),
-                        thread.getTitle(),
-                        thread.getStatus().name(),
-                        request.content(),
-                        thread.getCreatedAt(),
-                        thread.getAuthorId(),
-                        authorName,
-                        thread.getPostCount()));
-    }
+                return ResponseEntity.status(HttpStatus.CREATED)
+                                .body(new ThreadResponse(
+                                                thread.getId(),
+                                                thread.getTitle(),
+                                                thread.getStatus().name(),
+                                                request.content(),
+                                                thread.getCreatedAt(),
+                                                thread.getAuthorId(),
+                                                authorName,
+                                                thread.getPostCount()));
+        }
 
-    @Operation(summary = "Get Thread", description = "Retrieves thread details by ID")
-    @GetMapping("/{id}")
-    public ResponseEntity<ThreadResponse> getThread(@PathVariable UUID id) {
-        return threadService.getThread(id)
-                .map(thread -> {
-                    // API Aggregation: fetch author name
-                    String authorName = memberRepository.findById(thread.getAuthorId())
-                            .map(Member::getName)
-                            .orElse(null);
-                    return new ThreadResponse(
-                            thread.getId(),
-                            thread.getTitle(),
-                            thread.getStatus().name(),
-                            null,
-                            thread.getCreatedAt(),
-                            thread.getAuthorId(),
-                            authorName,
-                            thread.getPostCount());
-                })
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+        @Operation(summary = "Get Thread", description = "Retrieves thread details by ID with OP content")
+        @GetMapping("/{id}")
+        public ResponseEntity<ThreadResponse> getThread(@PathVariable UUID id) {
+                return threadJpaRepository.findRichThreadById(id)
+                                .map(thread -> {
+                                        // API Aggregation: fetch author name
+                                        String authorName = memberRepository.findById(thread.getAuthorId())
+                                                        .map(Member::getName)
+                                                        .orElse(null);
+                                        return new ThreadResponse(
+                                                        thread.getId(),
+                                                        thread.getTitle(),
+                                                        thread.getStatus(),
+                                                        thread.getContent(),
+                                                        thread.getCreatedAt(),
+                                                        thread.getAuthorId(),
+                                                        authorName,
+                                                        thread.getPostCount() != null ? thread.getPostCount() : 0);
+                                })
+                                .map(ResponseEntity::ok)
+                                .orElse(ResponseEntity.notFound().build());
+        }
 
-    @Operation(summary = "List Threads", description = "Retrieves a list of threads with OP content for a tenant")
-    @GetMapping
-    public ResponseEntity<List<ThreadResponse>> getThreads(
-            @TenantId String tenantId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+        @Operation(summary = "List Threads", description = "Retrieves a list of threads with OP content for a tenant")
+        @GetMapping
+        public ResponseEntity<List<ThreadResponse>> getThreads(
+                        @TenantId String tenantId,
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "10") int size) {
 
-        // Fetch threads with OP content
-        Page<ThreadWithOPProjection> richThreads = threadJpaRepository.findRichThreads(
-                tenantId, PageRequest.of(page, size));
+                // Fetch threads with OP content
+                Page<ThreadWithOPProjection> richThreads = threadJpaRepository.findRichThreads(
+                                tenantId, PageRequest.of(page, size));
 
-        // API Aggregation: batch fetch all author IDs to avoid N+1
-        List<UUID> authorIds = richThreads.getContent().stream()
-                .map(ThreadWithOPProjection::getAuthorId)
-                .distinct()
-                .toList();
+                // API Aggregation: batch fetch all author IDs to avoid N+1
+                List<UUID> authorIds = richThreads.getContent().stream()
+                                .map(ThreadWithOPProjection::getAuthorId)
+                                .distinct()
+                                .toList();
 
-        Map<UUID, String> authorNames = authorIds.stream()
-                .map(id -> memberRepository.findById(id).orElse(null))
-                .filter(m -> m != null)
-                .collect(Collectors.toMap(Member::getId, Member::getName));
+                Map<UUID, String> authorNames = authorIds.stream()
+                                .map(id -> memberRepository.findById(id).orElse(null))
+                                .filter(m -> m != null)
+                                .collect(Collectors.toMap(Member::getId, Member::getName));
 
-        List<ThreadResponse> response = richThreads.getContent().stream()
-                .map(p -> new ThreadResponse(
-                        p.getId(),
-                        p.getTitle(),
-                        p.getStatus(),
-                        p.getContent(),
-                        p.getCreatedAt(),
-                        p.getAuthorId(),
-                        authorNames.get(p.getAuthorId()),
-                        p.getPostCount() != null ? p.getPostCount() : 0))
-                .toList();
+                List<ThreadResponse> response = richThreads.getContent().stream()
+                                .map(p -> new ThreadResponse(
+                                                p.getId(),
+                                                p.getTitle(),
+                                                p.getStatus(),
+                                                p.getContent(),
+                                                p.getCreatedAt(),
+                                                p.getAuthorId(),
+                                                authorNames.get(p.getAuthorId()),
+                                                p.getPostCount() != null ? p.getPostCount() : 0))
+                                .toList();
 
-        return ResponseEntity.ok(response);
-    }
+                return ResponseEntity.ok(response);
+        }
 }
