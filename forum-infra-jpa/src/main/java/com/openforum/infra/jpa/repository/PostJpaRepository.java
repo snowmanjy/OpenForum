@@ -23,6 +23,11 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, UUID> {
      */
     Page<PostEntity> findByThreadIdAndTenantIdOrderByPostNumberAsc(UUID threadId, String tenantId, Pageable pageable);
 
+    /**
+     * Tenant-aware paginated query with dynamic sorting.
+     */
+    Page<PostEntity> findByThreadIdAndTenantId(UUID threadId, String tenantId, Pageable pageable);
+
     @Override
     @Query("select p from PostEntity p where p.id = :id")
     Optional<PostEntity> findById(@Param("id") UUID id);

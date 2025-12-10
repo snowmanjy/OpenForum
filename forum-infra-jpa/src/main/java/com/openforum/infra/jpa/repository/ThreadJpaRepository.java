@@ -52,4 +52,21 @@ public interface ThreadJpaRepository extends JpaRepository<ThreadEntity, UUID> {
             ORDER BY t.created_at DESC
             """, countQuery = "SELECT count(*) FROM threads WHERE tenant_id = :tenantId", nativeQuery = true)
     Page<ThreadWithOPProjection> findRichThreads(@Param("tenantId") String tenantId, Pageable pageable);
+
+    /**
+     * Fetch a single thread with its OP content.
+     */
+    @Query(value = """
+            SELECT t.id AS id,
+                   t.title AS title,
+                   t.status AS status,
+                   p.content AS content,
+                   t.created_at AS createdAt,
+                   t.author_id AS authorId,
+                   t.post_count AS postCount
+            FROM threads t
+            LEFT JOIN posts p ON t.id = p.thread_id AND p.post_number = 1
+            WHERE t.id = :id
+            """, nativeQuery = true)
+    Optional<ThreadWithOPProjection> findRichThreadById(@Param("id") UUID id);
 }

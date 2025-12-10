@@ -52,6 +52,9 @@ class ThreadControllerTest {
     private MemberRepository memberRepository;
 
     @MockitoBean
+    private com.openforum.infra.jpa.repository.ThreadJpaRepository threadJpaRepository;
+
+    @MockitoBean
     private java.security.interfaces.RSAPublicKey publicKey; // Required by HybridJwtAuthenticationConverter
 
     private Member testMember;
@@ -91,16 +94,45 @@ class ThreadControllerTest {
     @Test
     void getThread_shouldReturnThread_whenExistsAndAuthenticated() throws Exception {
         // Given
-        Thread thread = ThreadFactory.create("tenant-1", testMember.getId(), null, "Existing Thread",
-                java.util.Map.of());
+        UUID threadId = UUID.randomUUID();
+        com.openforum.infra.jpa.projection.ThreadWithOPProjection projection = new com.openforum.infra.jpa.projection.ThreadWithOPProjection() {
+            public UUID getId() {
+                return threadId;
+            }
 
-        when(threadService.getThread(any(UUID.class))).thenReturn(Optional.of(thread));
+            public String getTitle() {
+                return "Existing Thread";
+            }
+
+            public String getStatus() {
+                return "OPEN";
+            }
+
+            public String getContent() {
+                return "OP Content";
+            }
+
+            public java.time.Instant getCreatedAt() {
+                return java.time.Instant.now();
+            }
+
+            public UUID getAuthorId() {
+                return testMember.getId();
+            }
+
+            public Integer getPostCount() {
+                return 5;
+            }
+        };
+
+        when(threadJpaRepository.findRichThreadById(any(UUID.class))).thenReturn(Optional.of(projection));
 
         // When & Then
-        mockMvc.perform(get("/api/v1/threads/" + thread.getId())
+        mockMvc.perform(get("/api/v1/threads/" + threadId)
                 .with(authWithTenant(testMember, "tenant-1")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("Existing Thread"));
+                .andExpect(jsonPath("$.title").value("Existing Thread"))
+                .andExpect(jsonPath("$.content").value("OP Content"));
     }
 
     private RequestPostProcessor authWithTenant(Member member, String tenantId) {

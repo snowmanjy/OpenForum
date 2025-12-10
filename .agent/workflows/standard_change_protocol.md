@@ -13,6 +13,8 @@ Follow this protocol for EVERY code change task.
 2. **Verify with Assertions (CRITICAL)**
     - **NEVER** just check for `status().isOk()`.
     - **ALWAYS** add `jsonPath` assertions for specific data values.
+    - **Tests MUST verify the actual code changes** - not just that the endpoint works.
+    - Example: If you add a `score` field, assert `jsonPath("$.score").value(42)` with a known test value.
     - Example:
 
       ```java

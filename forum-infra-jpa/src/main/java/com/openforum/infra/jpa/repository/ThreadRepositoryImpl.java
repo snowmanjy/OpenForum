@@ -154,8 +154,8 @@ public class ThreadRepositoryImpl implements ThreadRepository {
 
         if (!allPosts.isEmpty()) {
             String postSql = """
-                    INSERT INTO posts (id, thread_id, tenant_id, author_id, content, reply_to_post_id, metadata, version, created_at, mentioned_user_ids, post_number)
-                    VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?::jsonb, ?)
+                    INSERT INTO posts (id, thread_id, tenant_id, author_id, content, reply_to_post_id, metadata, version, created_at, mentioned_user_ids, post_number, score)
+                    VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?::jsonb, ?, ?)
                     """;
 
             jdbcTemplate.batchUpdate(postSql, allPosts, allPosts.size(), (ps, post) -> {
@@ -178,6 +178,7 @@ public class ThreadRepositoryImpl implements ThreadRepository {
                     throw new RuntimeException("Failed to serialize mentionedUserIds", e);
                 }
                 ps.setObject(11, post.getPostNumber());
+                ps.setInt(12, 0); // Default score for imports
             });
         }
 

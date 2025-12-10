@@ -36,6 +36,9 @@ public class PostEntity extends TenantAwareEntity {
     @Column(name = "post_number")
     private Integer postNumber;
 
+    @Column(nullable = false)
+    private Integer score = 0;
+
     @jakarta.persistence.Version
     @Column(nullable = false)
     private Long version;
@@ -102,5 +105,13 @@ public class PostEntity extends TenantAwareEntity {
 
     public void setPostNumber(Integer postNumber) {
         this.postNumber = postNumber;
+    }
+
+    public Integer getScore() {
+        return score;
+    }
+
+    public void setScore(Integer score) {
+        this.score = score;
     }
 }
