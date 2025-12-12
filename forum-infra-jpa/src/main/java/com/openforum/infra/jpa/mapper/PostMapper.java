@@ -20,6 +20,7 @@ public class PostMapper {
         entity.setMentionedMemberIds(domain.getMentionedMemberIds());
         entity.setPostNumber(domain.getPostNumber());
         entity.setScore(domain.getScore());
+        entity.setBookmarkCount(domain.getBookmarkCount());
         entity.setDeleted(domain.isDeleted());
         entity.setEmbedding(domain.getEmbedding());
         entity.setDeletedAt(domain.getDeletedAt());
@@ -51,6 +52,7 @@ public class PostMapper {
                 .postNumber(entity.getPostNumber())
                 .isDeleted(entity.getDeleted())
                 .score(entity.getScore())
+                .bookmarkCount(entity.getBookmarkCount() != null ? entity.getBookmarkCount() : 0)
                 .embedding(entity.getEmbedding())
                 .deletedAt(entity.getDeletedAt())
                 .lastModifiedAt(entity.getLastModifiedAt())
@@ -70,6 +72,7 @@ public class PostMapper {
         target.setMentionedMemberIds(domain.getMentionedMemberIds());
         target.setPostNumber(domain.getPostNumber());
         target.setScore(domain.getScore());
+        target.setBookmarkCount(domain.getBookmarkCount());
         target.setDeleted(domain.isDeleted());
         target.setDeletedAt(domain.getDeletedAt());
         target.setLastModifiedAt(domain.getLastModifiedAt());

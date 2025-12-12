@@ -137,4 +137,68 @@ class ThreadE2ETest extends AbstractIntegrationTest {
                 .then()
                 .statusCode(500); // TODO: Should be 400 when validation is implemented
     }
+
+    @Test
+    void shouldGetThreads_FilteredByMetadata() throws Exception {
+        // Given: Create threads with different metadata
+        var threadWithMetadata = createThreadWithMetadata(TENANT_ID, memberId, categoryId,
+                "SAT Question 102 Discussion", java.util.Map.of("questionId", "102"));
+        var threadWithOtherMetadata = createThreadWithMetadata(TENANT_ID, memberId, categoryId,
+                "SAT Question 103 Discussion", java.util.Map.of("questionId", "103"));
+        var threadWithoutMetadata = dataFactory.createThread(TENANT_ID, memberId, categoryId,
+                "General Discussion");
+
+        String token = createValidToken(TENANT_ID, EXTERNAL_ID);
+
+        // When & Then: GET with metadata filter should return only matching thread
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
+                .header("X-Tenant-ID", TENANT_ID)
+                .param("metadataKey", "questionId")
+                .param("metadataValue", "102")
+                .when()
+                .get("/threads")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(1))
+                .body("[0].title", equalTo("SAT Question 102 Discussion"));
+    }
+
+    @Test
+    void shouldGetAllThreads_WhenNoMetadataFilter() throws Exception {
+        // Given: Create multiple threads
+        dataFactory.createThread(TENANT_ID, memberId, categoryId, "Thread 1");
+        dataFactory.createThread(TENANT_ID, memberId, categoryId, "Thread 2");
+
+        String token = createValidToken(TENANT_ID, EXTERNAL_ID);
+
+        // When & Then: GET without metadata filter should return all threads
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + token)
+                .header("X-Tenant-ID", TENANT_ID)
+                .when()
+                .get("/threads")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(2));
+    }
+
+    private com.openforum.infra.jpa.entity.ThreadEntity createThreadWithMetadata(
+            String tenantId, UUID authorId, UUID catId, String title, java.util.Map<String, Object> metadata) {
+        com.openforum.infra.jpa.entity.ThreadEntity thread = new com.openforum.infra.jpa.entity.ThreadEntity();
+        thread.setId(UUID.randomUUID());
+        thread.setTenantId(tenantId);
+        thread.setTitle(title);
+        thread.setAuthorId(authorId);
+        thread.setCategoryId(catId);
+        thread.setCreatedAt(java.time.Instant.now());
+        thread.setStatus(com.openforum.domain.aggregate.ThreadStatus.OPEN);
+        thread.setPostCount(0);
+        thread.setDeleted(false);
+        thread.setLastActivityAt(java.time.Instant.now());
+        thread.setMetadata(metadata);
+        return threadJpaRepository.save(thread);
+    }
 }

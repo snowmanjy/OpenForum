@@ -79,6 +79,8 @@ public class PostController {
                                                 result.postNumber(),
                                                 result.score(),
                                                 null, // userVote not available in this query
+                                                0, // bookmarkCount - not available in this query
+                                                false, // isBookmarked - not available in this query
                                                 null, // deletedAt
                                                 null)) // lastModifiedAt
                                 .toList();
