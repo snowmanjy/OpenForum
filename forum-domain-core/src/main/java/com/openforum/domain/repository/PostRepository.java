@@ -16,4 +16,6 @@ public interface PostRepository {
     List<Post> findByThreadId(UUID threadId, int limit);
 
     List<Post> findByTenantId(String tenantId, int page, int size);
+
+    int deleteBatch(java.time.Instant cutoff, int limit);
 }

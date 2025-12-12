@@ -41,7 +41,7 @@ class MemberServiceTest {
         when(memberRepository.findByExternalId(tenantId, externalId)).thenReturn(Optional.empty());
 
         // When
-        memberService.upsertMember(externalId, email, name, role, tenantId);
+        memberService.upsertMember(externalId, email, name, role, tenantId, null);
 
         // Then
         ArgumentCaptor<Member> captor = ArgumentCaptor.forClass(Member.class);
@@ -67,7 +67,7 @@ class MemberServiceTest {
         when(memberRepository.findByExternalId(tenantId, externalId)).thenReturn(Optional.of(existingMember));
 
         // When
-        memberService.upsertMember(externalId, email, name, role, tenantId);
+        memberService.upsertMember(externalId, email, name, role, tenantId, null);
 
         // Then
         ArgumentCaptor<Member> captor = ArgumentCaptor.forClass(Member.class);
@@ -90,7 +90,7 @@ class MemberServiceTest {
 
         // When & Then
         org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            memberService.upsertMember(externalId, email, name, invalidRole, tenantId);
+            memberService.upsertMember(externalId, email, name, invalidRole, tenantId, null);
         });
     }
 }

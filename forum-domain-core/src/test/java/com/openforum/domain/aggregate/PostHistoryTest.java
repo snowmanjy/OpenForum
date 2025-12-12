@@ -78,7 +78,7 @@ class PostHistoryTest {
         PostContentEdited event = (PostContentEdited) events.get(0);
         assertThat(event.oldContent()).isEqualTo(originalContent);
         assertThat(event.newContent()).isEqualTo(newContent);
-        assertThat(event.byUserId()).isEqualTo(editorId);
+        assertThat(event.byMemberId()).isEqualTo(editorId);
         assertThat(event.postId()).isEqualTo(post.getId());
         assertThat(event.threadId()).isEqualTo(post.getThreadId());
         assertThat(event.tenantId()).isEqualTo("tenant-1");
@@ -177,7 +177,7 @@ class PostHistoryTest {
 
         PostDeleted event = (PostDeleted) events.get(0);
         assertThat(event.reason()).isEqualTo(reason);
-        assertThat(event.byUserId()).isEqualTo(deleterId);
+        assertThat(event.byMemberId()).isEqualTo(deleterId);
         assertThat(event.postId()).isEqualTo(post.getId());
         assertThat(event.threadId()).isEqualTo(post.getThreadId());
         assertThat(event.tenantId()).isEqualTo("tenant-1");

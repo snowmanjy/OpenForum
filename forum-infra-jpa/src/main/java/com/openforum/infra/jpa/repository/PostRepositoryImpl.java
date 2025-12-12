@@ -39,7 +39,13 @@ public class PostRepositoryImpl implements PostRepository {
     @Transactional
     public Post save(Post post) {
         // 1. Save Post Entity
-        PostEntity entity = postMapper.toEntity(post);
+        PostEntity entity = postJpaRepository.findById(post.getId())
+                .map(existing -> {
+                    postMapper.updateEntity(post, existing);
+                    return existing;
+                })
+                .orElseGet(() -> postMapper.toEntity(post));
+
         postJpaRepository.save(entity);
 
         // 2. Poll and Save Events
@@ -77,6 +83,11 @@ public class PostRepositoryImpl implements PostRepository {
         return postJpaRepository.findByTenantId(tenantId, pageRequest)
                 .map(postMapper::toDomain)
                 .getContent();
+    }
+
+    @Override
+    public int deleteBatch(java.time.Instant cutoff, int limit) {
+        return postJpaRepository.deleteBatch(cutoff, limit);
     }
 
     private OutboxEventEntity toOutboxEntity(Object event) {

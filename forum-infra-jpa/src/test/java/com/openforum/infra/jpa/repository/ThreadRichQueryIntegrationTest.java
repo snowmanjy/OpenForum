@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ThreadRichQueryIntegrationTest {
 
     @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("pgvector/pgvector:pg16")
             .withDatabaseName("testdb")
             .withUsername("test")
             .withPassword("test");
@@ -78,6 +78,7 @@ class ThreadRichQueryIntegrationTest {
         thread.setAuthorId(authorId);
         thread.setPostCount(2);
         thread.setCreatedAt(Instant.now());
+        thread.setLastActivityAt(Instant.now());
         threadJpaRepository.save(thread);
         threadId = thread.getId();
 
@@ -135,6 +136,7 @@ class ThreadRichQueryIntegrationTest {
         emptyThread.setAuthorId(authorId);
         emptyThread.setPostCount(0);
         emptyThread.setCreatedAt(Instant.now());
+        emptyThread.setLastActivityAt(Instant.now());
         threadJpaRepository.save(emptyThread);
 
         // When

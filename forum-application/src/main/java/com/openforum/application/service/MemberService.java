@@ -18,7 +18,8 @@ public class MemberService {
     }
 
     @Transactional
-    public void upsertMember(String externalId, String email, String name, String roleName, String tenantId) {
+    public void upsertMember(String externalId, String email, String name, String roleName, String tenantId,
+            String avatarUrl) {
         // 1. Parse Role (Default to MEMBER if invalid)
         MemberRole role;
         try {
@@ -39,8 +40,9 @@ public class MemberService {
             }
 
             // 3. Handle Details Change
-            if (!member.getEmail().equals(email) || !member.getName().equals(name)) {
-                member = member.updateDetails(email, name);
+            if (!member.getEmail().equals(email) || !member.getName().equals(name)
+                    || (avatarUrl != null && !avatarUrl.equals(member.getAvatarUrl()))) {
+                member = member.updateDetails(email, name, avatarUrl);
                 changed = true;
             }
 
@@ -50,7 +52,20 @@ public class MemberService {
 
         } else {
             Member newMember = Member.createWithRole(externalId, email, name, false, role, tenantId);
+            if (avatarUrl != null) {
+                newMember = newMember.updateDetails(email, name, avatarUrl);
+            }
             memberRepository.save(newMember);
         }
+    }
+
+    @Transactional
+    public Member createOwnerMember(String tenantId, String externalId, String email, String name) {
+        Optional<Member> existingMember = memberRepository.findByExternalId(tenantId, externalId);
+        if (existingMember.isPresent()) {
+            return existingMember.get();
+        }
+        Member newMember = Member.createWithRole(externalId, email, name, false, MemberRole.ADMIN, tenantId);
+        return memberRepository.save(newMember);
     }
 }

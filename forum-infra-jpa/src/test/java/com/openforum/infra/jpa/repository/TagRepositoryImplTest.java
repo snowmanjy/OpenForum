@@ -34,7 +34,7 @@ class TagRepositoryImplTest {
 
     @Container
     @ServiceConnection
-    public static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+    public static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("pgvector/pgvector:pg16");
 
     @Autowired
     private TagRepository tagRepository;
@@ -43,7 +43,7 @@ class TagRepositoryImplTest {
     void should_save_and_retrieve_tag() {
         // Given
         String tenantId = "tenant-1";
-        Tag tag = TagFactory.create(tenantId, "java");
+        Tag tag = TagFactory.create(tenantId, "java", java.util.UUID.randomUUID());
 
         // When
         tagRepository.save(tag);
@@ -59,9 +59,9 @@ class TagRepositoryImplTest {
     void should_search_by_name_prefix() {
         // Given
         String tenantId = "tenant-1";
-        tagRepository.save(TagFactory.create(tenantId, "java"));
-        tagRepository.save(TagFactory.create(tenantId, "javascript"));
-        tagRepository.save(TagFactory.create(tenantId, "python"));
+        tagRepository.save(TagFactory.create(tenantId, "java", java.util.UUID.randomUUID()));
+        tagRepository.save(TagFactory.create(tenantId, "javascript", java.util.UUID.randomUUID()));
+        tagRepository.save(TagFactory.create(tenantId, "python", java.util.UUID.randomUUID()));
 
         // When
         List<Tag> results = tagRepository.findByNameStartingWith(tenantId, "jav", 10);
@@ -74,8 +74,8 @@ class TagRepositoryImplTest {
     @Test
     void should_respect_tenant_isolation() {
         // Given
-        tagRepository.save(TagFactory.create("tenant-1", "java"));
-        tagRepository.save(TagFactory.create("tenant-2", "java"));
+        tagRepository.save(TagFactory.create("tenant-1", "java", java.util.UUID.randomUUID()));
+        tagRepository.save(TagFactory.create("tenant-2", "java", java.util.UUID.randomUUID()));
 
         // When
         Optional<Tag> tenant1Tag = tagRepository.findByName("tenant-1", "java");

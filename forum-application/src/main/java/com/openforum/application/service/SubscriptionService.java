@@ -26,8 +26,8 @@ public class SubscriptionService {
     }
 
     @Transactional
-    public void subscribe(String tenantId, UUID userId, UUID targetId, TargetType targetType) {
-        if (subscriptionRepository.exists(userId, targetId)) {
+    public void subscribe(String tenantId, UUID memberId, UUID targetId, TargetType targetType) {
+        if (subscriptionRepository.exists(memberId, targetId)) {
             return;
         }
 
@@ -42,26 +42,26 @@ public class SubscriptionService {
             }
         }
 
-        Subscription subscription = Subscription.create(tenantId, userId, targetId, targetType);
+        Subscription subscription = Subscription.create(tenantId, memberId, targetId, targetType);
         subscriptionRepository.save(subscription);
     }
 
     @Transactional
-    public void unsubscribe(String tenantId, UUID userId, UUID targetId) {
-        subscriptionRepository.delete(tenantId, userId, targetId);
+    public void unsubscribe(String tenantId, UUID memberId, UUID targetId) {
+        subscriptionRepository.delete(tenantId, memberId, targetId);
     }
 
     @Transactional(readOnly = true)
     public List<UUID> getSubscribers(UUID targetId) {
         return subscriptionRepository.findByTarget(targetId).stream()
-                .map(Subscription::getUserId)
+                .map(Subscription::getMemberId)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public List<com.openforum.application.dto.SubscriptionDto> getSubscriptionsForUser(String tenantId,
-            UUID userId, int page, int size) {
-        List<Subscription> subscriptions = subscriptionRepository.findByUserId(userId, page, size);
+    public List<com.openforum.application.dto.SubscriptionDto> getSubscriptionsForMember(String tenantId,
+            UUID memberId, int page, int size) {
+        List<Subscription> subscriptions = subscriptionRepository.findByMemberId(memberId, page, size);
 
         if (subscriptions.isEmpty()) {
             return List.of();
@@ -87,7 +87,7 @@ public class SubscriptionService {
     }
 
     @Transactional(readOnly = true)
-    public long countSubscriptionsForUser(UUID userId) {
-        return subscriptionRepository.countByUserId(userId);
+    public long countSubscriptionsForMember(UUID memberId) {
+        return subscriptionRepository.countByMemberId(memberId);
     }
 }

@@ -20,7 +20,11 @@ public class Thread {
     private final Map<String, Object> metadata;
     private Long version;
     private final Instant createdAt;
+    private Instant lastActivityAt;
     private int postCount;
+    private final Instant lastModifiedAt;
+    private final UUID createdBy;
+    private final UUID lastModifiedBy;
 
     private final List<Object> domainEvents = new ArrayList<>();
 
@@ -38,7 +42,16 @@ public class Thread {
         this.metadata = builder.metadata != null ? Map.copyOf(builder.metadata) : Map.of();
         this.version = builder.version;
         this.createdAt = builder.createdAt != null ? builder.createdAt : Instant.now();
+        // Default lastModifiedAt to NOW if missing
+        this.lastActivityAt = builder.lastActivityAt != null ? builder.lastActivityAt : this.createdAt;
+        this.lastModifiedAt = builder.lastModifiedAt != null ? builder.lastModifiedAt : Instant.now();
+
+        this.createdBy = builder.createdBy; // nullable? usually not if authenticated
+        this.lastModifiedBy = builder.lastModifiedBy;
+
         this.postCount = builder.postCount;
+        this.deleted = builder.deleted;
+        this.deletedAt = builder.deletedAt;
         if (builder.isNew) {
             this.domainEvents.add(new ThreadCreatedEvent(id, tenantId, authorId, title, this.createdAt));
         }
@@ -59,7 +72,13 @@ public class Thread {
         private Long version;
         private boolean isNew = false;
         private Instant createdAt;
+        private Instant lastActivityAt;
+        private Instant lastModifiedAt;
+        private UUID createdBy;
+        private UUID lastModifiedBy;
         private int postCount = 0;
+        private boolean deleted = false;
+        private Instant deletedAt;
 
         public Builder id(UUID id) {
             this.id = id;
@@ -106,6 +125,26 @@ public class Thread {
             return this;
         }
 
+        public Builder lastActivityAt(Instant lastActivityAt) {
+            this.lastActivityAt = lastActivityAt;
+            return this;
+        }
+
+        public Builder lastModifiedAt(Instant lastModifiedAt) {
+            this.lastModifiedAt = lastModifiedAt;
+            return this;
+        }
+
+        public Builder createdBy(UUID createdBy) {
+            this.createdBy = createdBy;
+            return this;
+        }
+
+        public Builder lastModifiedBy(UUID lastModifiedBy) {
+            this.lastModifiedBy = lastModifiedBy;
+            return this;
+        }
+
         public Builder postCount(int postCount) {
             this.postCount = postCount;
             return this;
@@ -113,6 +152,16 @@ public class Thread {
 
         public Builder isNew(boolean isNew) {
             this.isNew = isNew;
+            return this;
+        }
+
+        public Builder deleted(boolean deleted) {
+            this.deleted = deleted;
+            return this;
+        }
+
+        public Builder deletedAt(Instant deletedAt) {
+            this.deletedAt = deletedAt;
             return this;
         }
 
@@ -135,7 +184,7 @@ public class Thread {
                 content,
                 null, // replyToId
                 isBot,
-                java.util.List.of()); // mentionedUserIds
+                java.util.List.of()); // mentionedMemberIds
 
         // 3. Update Thread State (The Cohesion Win)
         // We don't need to load the List<Post> to update a counter or timestamp!
@@ -205,6 +254,29 @@ public class Thread {
         return createdAt;
     }
 
+    public Instant getLastActivityAt() {
+        return lastActivityAt;
+    }
+
+    public Instant getLastModifiedAt() {
+        return lastModifiedAt;
+    }
+
+    public UUID getCreatedBy() {
+        return createdBy;
+    }
+
+    public UUID getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    /**
+     * Updates the last activity timestamp to now.
+     */
+    public void bumpActivity() {
+        this.lastActivityAt = Instant.now();
+    }
+
     public int getPostCount() {
         return postCount;
     }
@@ -219,11 +291,11 @@ public class Thread {
      * Changes the thread title if it's different from the current title.
      * Emits a ThreadTitleChanged event for history tracking.
      * 
-     * @param newTitle The new title for the thread
-     * @param byUserId The user making the change
+     * @param newTitle   The new title for the thread
+     * @param byMemberId The user making the change
      * @throws IllegalArgumentException if newTitle is null or empty
      */
-    public void changeTitle(String newTitle, UUID byUserId) {
+    public void changeTitle(String newTitle, UUID byMemberId) {
         if (newTitle == null || newTitle.trim().isEmpty()) {
             throw new IllegalArgumentException("Thread title cannot be null or empty");
         }
@@ -236,7 +308,7 @@ public class Thread {
                             this.tenantId,
                             this.title,
                             newTitle,
-                            byUserId,
+                            byMemberId,
                             Instant.now()));
             this.title = newTitle;
         }
@@ -246,11 +318,11 @@ public class Thread {
      * Closes the thread with a reason.
      * Emits a ThreadClosed event for history tracking.
      * 
-     * @param reason   The reason for closing the thread
-     * @param byUserId The user closing the thread
+     * @param reason     The reason for closing the thread
+     * @param byMemberId The user closing the thread
      * @throws IllegalStateException if thread is already closed
      */
-    public void close(String reason, UUID byUserId) {
+    public void close(String reason, UUID byMemberId) {
         if (this.status == ThreadStatus.CLOSED) {
             throw new IllegalStateException("Thread is already closed");
         }
@@ -260,8 +332,52 @@ public class Thread {
                         this.id,
                         this.tenantId,
                         reason,
-                        byUserId,
+                        byMemberId,
                         Instant.now()));
         this.status = ThreadStatus.CLOSED;
     }
+
+    /**
+     * Opens/reopens the thread.
+     * Emits a ThreadOpened event for history tracking.
+     * 
+     * @param reason     The reason for opening the thread
+     * @param byMemberId The user opening the thread
+     * @throws IllegalStateException if thread is already open
+     */
+    public void open(String reason, UUID byMemberId) {
+        if (this.status == ThreadStatus.OPEN) {
+            throw new IllegalStateException("Thread is already open");
+        }
+
+        this.domainEvents.add(
+                new com.openforum.domain.events.ThreadOpened(
+                        this.id,
+                        this.tenantId,
+                        reason,
+                        byMemberId,
+                        Instant.now()));
+        this.status = ThreadStatus.OPEN;
+    }
+
+    private boolean deleted;
+    private Instant deletedAt;
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public Instant getDeletedAt() {
+        return deletedAt;
+    }
+
+    // Builder update needed?
+    // Wait, I need to update the Builder class and private constructor too.
+    // Since replace_file_content works on chunks, I'll start with just adding
+    // fields/methods here
+    // and then update Builder in a separate call or same call if contiguous.
+    // They are not contiguous. Thread fields are at top. Builder is in middle.
+    // I will just add getters here and update builder separately.
+    // Wait, Thread params are final mostly.
+    // I should update the constructor and fields at top.
 }

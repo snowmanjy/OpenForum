@@ -28,14 +28,15 @@ public class PollService {
     }
 
     @Transactional
-    public UUID createPoll(String tenantId, UUID postId, CreatePollRequest request) {
+    public UUID createPoll(String tenantId, UUID postId, CreatePollRequest request, UUID createdBy) {
         Poll poll = pollFactory.create(
                 tenantId,
                 postId,
                 request.question(),
                 request.options(),
                 request.expiresAt(),
-                request.allowMultipleVotes());
+                request.allowMultipleVotes(),
+                createdBy);
         pollRepository.save(poll);
         return poll.getId();
     }
@@ -54,7 +55,7 @@ public class PollService {
     }
 
     @Transactional(readOnly = true)
-    public PollDto getPoll(String tenantId, UUID pollId, UUID currentUserId) {
+    public PollDto getPoll(String tenantId, UUID pollId, UUID currentMemberId) {
         Poll poll = pollRepository.findById(pollId)
                 .orElseThrow(() -> new IllegalArgumentException("Poll not found"));
 
@@ -71,7 +72,7 @@ public class PollService {
         }
 
         List<Integer> myVotes = poll.getVotes().stream()
-                .filter(v -> v.getVoterId().equals(currentUserId))
+                .filter(v -> v.getVoterId().equals(currentMemberId))
                 .map(PollVote::getOptionIndex)
                 .collect(Collectors.toList());
 

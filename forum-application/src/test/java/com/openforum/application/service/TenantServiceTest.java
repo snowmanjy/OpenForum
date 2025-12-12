@@ -23,6 +23,9 @@ class TenantServiceTest {
     @Mock
     private TenantRepository tenantRepository;
 
+    @Mock
+    private org.springframework.context.ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private TenantService tenantService;
 
@@ -30,7 +33,9 @@ class TenantServiceTest {
     void getTenant_shouldReturnTenant_whenExists() {
         // Given
         String tenantId = "tenant-1";
-        Tenant tenant = com.openforum.domain.factory.TenantFactory.create(tenantId, "slug-1", "Tenant 1", Map.of());
+        Tenant tenant = com.openforum.domain.factory.TenantFactory.create(tenantId, "slug-1", "Tenant 1", Map.of(),
+                java.time.Instant.now(), java.util.UUID.randomUUID(), java.time.Instant.now(),
+                java.util.UUID.randomUUID());
         when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(tenant));
 
         // When
@@ -49,7 +54,8 @@ class TenantServiceTest {
         Map<String, Object> newConfig = Map.of("key", "new");
 
         Tenant existingTenant = com.openforum.domain.factory.TenantFactory.create(tenantId, "slug-1", "Tenant 1",
-                oldConfig);
+                oldConfig, java.time.Instant.now(), java.util.UUID.randomUUID(), java.time.Instant.now(),
+                java.util.UUID.randomUUID());
         when(tenantRepository.findById(tenantId)).thenReturn(Optional.of(existingTenant));
         when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -59,6 +65,31 @@ class TenantServiceTest {
         // Then
         assertThat(updatedTenant.getConfig()).containsEntry("key", "new");
         verify(tenantRepository).save(any(Tenant.class));
+    }
+
+    @Test
+    void createTenant_shouldCreateAndPublishEvent() {
+        // Given
+        String tenantId = "tenant-new";
+        String slug = "new-slug";
+        String name = "New Tenant";
+        String externalOwnerId = "user_123";
+        String ownerEmail = "test@example.com";
+        String ownerName = "Test User";
+        Map<String, Object> config = Map.of();
+
+        when(tenantRepository.findById(tenantId)).thenReturn(Optional.empty());
+        when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When
+        Tenant result = tenantService.createTenant(tenantId, slug, name, externalOwnerId, ownerEmail, ownerName,
+                config);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(tenantId);
+        verify(tenantRepository).save(any(Tenant.class));
+        verify(eventPublisher).publishEvent(any(com.openforum.application.event.TenantCreatedEvent.class));
     }
 
     @Test

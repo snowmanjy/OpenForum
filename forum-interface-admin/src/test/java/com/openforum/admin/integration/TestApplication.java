@@ -36,12 +36,6 @@ public class TestApplication {
     }
 
     @org.springframework.context.annotation.Bean
-    public com.openforum.domain.factory.PrivateThreadFactory privateThreadFactory(
-            com.openforum.domain.repository.MemberRepository memberRepository) {
-        return new com.openforum.domain.factory.PrivateThreadFactory(memberRepository);
-    }
-
-    @org.springframework.context.annotation.Bean
     public com.openforum.domain.factory.TagFactory tagFactory() {
         return new com.openforum.domain.factory.TagFactory();
     }

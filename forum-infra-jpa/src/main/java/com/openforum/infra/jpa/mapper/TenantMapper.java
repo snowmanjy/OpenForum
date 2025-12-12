@@ -24,6 +24,7 @@ public class TenantMapper {
         if (entity == null) {
             return null;
         }
-        return TenantFactory.create(entity.getId(), entity.getSlug(), entity.getName(), entity.getConfig());
+        return TenantFactory.create(entity.getId().toString(), entity.getSlug(), entity.getName(), entity.getConfig(),
+                entity.getCreatedAt(), entity.getCreatedBy(), entity.getLastModifiedAt(), entity.getLastModifiedBy());
     }
 }

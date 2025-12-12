@@ -1,112 +1,60 @@
 package com.openforum.boot;
 
-import com.openforum.domain.aggregate.Member;
-import com.openforum.domain.aggregate.Thread;
-import com.openforum.domain.repository.MemberRepository;
-import com.openforum.domain.repository.ThreadRepository;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.*;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.util.Base64;
+import com.openforum.infra.jpa.entity.ThreadEntity;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@Testcontainers
+/**
+ * Integration test for public thread access without JWT token.
+ * 
+ * Uses E2ETestDataFactory for consistent data setup.
+ */
 @AutoConfigureMockMvc
-class PublicThreadAccessIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+class PublicThreadAccessIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ThreadRepository threadRepository;
+    private E2ETestDataFactory dataFactory;
+    private UUID threadId;
 
-    @Autowired
-    private MemberRepository memberRepository;
+    @BeforeEach
+    void setUpTestData() {
+        dataFactory = new E2ETestDataFactory(
+                tenantJpaRepository,
+                memberJpaRepository,
+                categoryJpaRepository,
+                threadJpaRepository,
+                postJpaRepository);
 
-    @TempDir
-    static Path tempDir;
-
-    // We need to mock the JWT key setup because the application context requires it
-    // to start,
-    // even though we are testing public access.
-    @BeforeAll
-    static void setupKeys() throws Exception {
-        KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-        generator.initialize(2048);
-        KeyPair keyPair = generator.generateKeyPair();
-        RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-
-        // Write public key to temp file in PEM format
-        String pem = "-----BEGIN PUBLIC KEY-----\n" +
-                Base64.getEncoder().encodeToString(publicKey.getEncoded()) +
-                "\n-----END PUBLIC KEY-----";
-
-        File publicKeyFile = tempDir.resolve("public-key.pem").toFile();
-        Files.writeString(publicKeyFile.toPath(), pem);
-
-        System.setProperty("TEST_PUBLIC_KEY_PATH", "file:" + publicKeyFile.getAbsolutePath());
-    }
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("jwt.public-key", () -> System.getProperty("TEST_PUBLIC_KEY_PATH"));
+        // Create Tenant → Member → Category → Thread chain
+        String tenantId = "public-tenant";
+        dataFactory.createTenant(tenantId);
+        var member = dataFactory.createMember(tenantId, "auth0|123456");
+        var category = dataFactory.createCategory(tenantId, "General");
+        var thread = dataFactory.createThread(tenantId, member.getId(), category.getId(), "Public Thread Title");
+        threadId = thread.getId();
     }
 
     @Test
     void shouldAccessThreadPublicly_WithoutJwtToken() throws Exception {
-        // Given
-        String tenantId = "public-tenant";
-
-        // Create Author (Member)
-        Member author = Member.create(
-                "auth0|123456",
-                "author@test.com",
-                "Test Author",
-                false,
-                tenantId);
-        memberRepository.save(author);
-
-        // Create Thread
-        Thread thread = Thread.builder()
-                .id(UUID.randomUUID())
-                .tenantId(tenantId)
-                .authorId(author.getId())
-                .title("Public Thread Title")
-                .isNew(true)
-                .build();
-        threadRepository.save(thread);
-
-        // When & Then
-        mockMvc.perform(get("/api/v1/threads/" + thread.getId()))
+        // When & Then - Access thread without authentication
+        mockMvc.perform(get("/api/v1/threads/" + threadId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(thread.getId().toString()))
+                .andExpect(jsonPath("$.id").value(threadId.toString()))
                 .andExpect(jsonPath("$.title").value("Public Thread Title"));
     }
 }

@@ -55,14 +55,15 @@ class SubscriptionControllerTest {
         private java.security.interfaces.RSAPublicKey publicKey;
 
         private Member testMember;
-        private UUID userId;
+        private UUID memberId;
 
         @org.junit.jupiter.api.BeforeEach
         void setUp() {
-                userId = UUID.randomUUID();
-                testMember = Member.reconstitute(userId, "ext-123", "test@example.com", "Test User", false,
-                                java.time.Instant.now(), com.openforum.domain.valueobject.MemberRole.MEMBER,
-                                "default-tenant");
+                memberId = UUID.randomUUID();
+                testMember = Member.reconstitute(memberId, "ext-123", "test@example.com", "Test User", false,
+                                java.time.Instant.now(), java.time.Instant.now(),
+                                com.openforum.domain.valueobject.MemberRole.MEMBER,
+                                "default-tenant", null, 0, null, null, null);
         }
 
         @org.junit.jupiter.api.AfterEach
@@ -129,9 +130,9 @@ class SubscriptionControllerTest {
                                 threadId, com.openforum.domain.valueobject.TargetType.THREAD, "Test Thread",
                                 Instant.now());
 
-                when(subscriptionService.getSubscriptionsForUser(anyString(), any(UUID.class), anyInt(), anyInt()))
+                when(subscriptionService.getSubscriptionsForMember(anyString(), any(UUID.class), anyInt(), anyInt()))
                                 .thenReturn(List.of(dto));
-                when(subscriptionService.countSubscriptionsForUser(any(UUID.class))).thenReturn(1L);
+                when(subscriptionService.countSubscriptionsForMember(any(UUID.class))).thenReturn(1L);
 
                 // When & Then
                 mockMvc.perform(get("/api/v1/subscriptions")

@@ -33,7 +33,7 @@ class TenantRepositoryImplTest {
 
     @Container
     @ServiceConnection
-    public static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+    public static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("pgvector/pgvector:pg16");
 
     @Autowired
     private TenantRepository tenantRepository;
@@ -43,7 +43,7 @@ class TenantRepositoryImplTest {
         // Given
         String tenantId = "tenant-1";
         Tenant tenant = com.openforum.domain.factory.TenantFactory.create(tenantId, "slug-1", "Tenant 1",
-                Map.of("key", "value"));
+                Map.of("key", "value"), java.time.Instant.now(), null, java.time.Instant.now(), null);
 
         // When
         tenantRepository.save(tenant);

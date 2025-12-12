@@ -26,7 +26,7 @@ class VoteServiceTest {
     private VoteService voteService;
 
     private final UUID postId = UUID.randomUUID();
-    private final UUID userId = UUID.randomUUID();
+    private final UUID memberId = UUID.randomUUID();
     private final String tenantId = "test-tenant";
 
     @BeforeEach
@@ -42,14 +42,14 @@ class VoteServiceTest {
         @DisplayName("Scenario A: New upvote creates vote and returns +1")
         void newUpvote_createsVoteAndReturnsPositiveOne() {
             // Given: No existing vote
-            when(voteRepository.findByPostIdAndUserId(postId, userId)).thenReturn(Optional.empty());
+            when(voteRepository.findByPostIdAndMemberId(postId, memberId)).thenReturn(Optional.empty());
 
             // When
-            int result = voteService.vote(postId, userId, tenantId, 1);
+            int result = voteService.vote(postId, memberId, tenantId, 1);
 
             // Then
             assertThat(result).isEqualTo(1);
-            verify(voteRepository).save(postId, userId, tenantId, 1);
+            verify(voteRepository).save(postId, memberId, tenantId, 1);
             verify(voteRepository).updatePostScore(postId, 1);
         }
 
@@ -57,14 +57,14 @@ class VoteServiceTest {
         @DisplayName("Scenario A: New downvote creates vote and returns -1")
         void newDownvote_createsVoteAndReturnsNegativeOne() {
             // Given: No existing vote
-            when(voteRepository.findByPostIdAndUserId(postId, userId)).thenReturn(Optional.empty());
+            when(voteRepository.findByPostIdAndMemberId(postId, memberId)).thenReturn(Optional.empty());
 
             // When
-            int result = voteService.vote(postId, userId, tenantId, -1);
+            int result = voteService.vote(postId, memberId, tenantId, -1);
 
             // Then
             assertThat(result).isEqualTo(-1);
-            verify(voteRepository).save(postId, userId, tenantId, -1);
+            verify(voteRepository).save(postId, memberId, tenantId, -1);
             verify(voteRepository).updatePostScore(postId, -1);
         }
 
@@ -72,15 +72,15 @@ class VoteServiceTest {
         @DisplayName("Scenario B: Changing upvote to downvote returns -2")
         void changeUpvoteToDownvote_returnsNegativeTwo() {
             // Given: Existing upvote
-            when(voteRepository.findByPostIdAndUserId(postId, userId))
-                    .thenReturn(Optional.of(new VoteRecord(postId, userId, 1)));
+            when(voteRepository.findByPostIdAndMemberId(postId, memberId))
+                    .thenReturn(Optional.of(new VoteRecord(postId, memberId, 1)));
 
             // When
-            int result = voteService.vote(postId, userId, tenantId, -1);
+            int result = voteService.vote(postId, memberId, tenantId, -1);
 
             // Then
             assertThat(result).isEqualTo(-2);
-            verify(voteRepository).update(postId, userId, -1);
+            verify(voteRepository).update(postId, memberId, -1);
             verify(voteRepository).updatePostScore(postId, -2);
         }
 
@@ -88,15 +88,15 @@ class VoteServiceTest {
         @DisplayName("Scenario B: Changing downvote to upvote returns +2")
         void changeDownvoteToUpvote_returnsPositiveTwo() {
             // Given: Existing downvote
-            when(voteRepository.findByPostIdAndUserId(postId, userId))
-                    .thenReturn(Optional.of(new VoteRecord(postId, userId, -1)));
+            when(voteRepository.findByPostIdAndMemberId(postId, memberId))
+                    .thenReturn(Optional.of(new VoteRecord(postId, memberId, -1)));
 
             // When
-            int result = voteService.vote(postId, userId, tenantId, 1);
+            int result = voteService.vote(postId, memberId, tenantId, 1);
 
             // Then
             assertThat(result).isEqualTo(2);
-            verify(voteRepository).update(postId, userId, 1);
+            verify(voteRepository).update(postId, memberId, 1);
             verify(voteRepository).updatePostScore(postId, 2);
         }
 
@@ -104,15 +104,15 @@ class VoteServiceTest {
         @DisplayName("Scenario C: Clicking same upvote removes vote and returns -1")
         void unvoteUpvote_deletesVoteAndReturnsNegativeOne() {
             // Given: Existing upvote
-            when(voteRepository.findByPostIdAndUserId(postId, userId))
-                    .thenReturn(Optional.of(new VoteRecord(postId, userId, 1)));
+            when(voteRepository.findByPostIdAndMemberId(postId, memberId))
+                    .thenReturn(Optional.of(new VoteRecord(postId, memberId, 1)));
 
             // When
-            int result = voteService.vote(postId, userId, tenantId, 1);
+            int result = voteService.vote(postId, memberId, tenantId, 1);
 
             // Then
             assertThat(result).isEqualTo(-1);
-            verify(voteRepository).delete(postId, userId);
+            verify(voteRepository).delete(postId, memberId);
             verify(voteRepository).updatePostScore(postId, -1);
         }
 
@@ -120,26 +120,26 @@ class VoteServiceTest {
         @DisplayName("Scenario C: Clicking same downvote removes vote and returns +1")
         void unvoteDownvote_deletesVoteAndReturnsPositiveOne() {
             // Given: Existing downvote
-            when(voteRepository.findByPostIdAndUserId(postId, userId))
-                    .thenReturn(Optional.of(new VoteRecord(postId, userId, -1)));
+            when(voteRepository.findByPostIdAndMemberId(postId, memberId))
+                    .thenReturn(Optional.of(new VoteRecord(postId, memberId, -1)));
 
             // When
-            int result = voteService.vote(postId, userId, tenantId, -1);
+            int result = voteService.vote(postId, memberId, tenantId, -1);
 
             // Then
             assertThat(result).isEqualTo(1);
-            verify(voteRepository).delete(postId, userId);
+            verify(voteRepository).delete(postId, memberId);
             verify(voteRepository).updatePostScore(postId, 1);
         }
 
         @Test
         @DisplayName("Invalid vote value throws exception")
         void invalidVoteValue_throwsException() {
-            assertThatThrownBy(() -> voteService.vote(postId, userId, tenantId, 0))
+            assertThatThrownBy(() -> voteService.vote(postId, memberId, tenantId, 0))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("Vote value must be 1 or -1");
 
-            assertThatThrownBy(() -> voteService.vote(postId, userId, tenantId, 2))
+            assertThatThrownBy(() -> voteService.vote(postId, memberId, tenantId, 2))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("Vote value must be 1 or -1");
         }
@@ -152,10 +152,10 @@ class VoteServiceTest {
         @Test
         @DisplayName("Returns 1 when user has upvoted")
         void returnsOneWhenUpvoted() {
-            when(voteRepository.findByPostIdAndUserId(postId, userId))
-                    .thenReturn(Optional.of(new VoteRecord(postId, userId, 1)));
+            when(voteRepository.findByPostIdAndMemberId(postId, memberId))
+                    .thenReturn(Optional.of(new VoteRecord(postId, memberId, 1)));
 
-            int result = voteService.getUserVote(postId, userId);
+            int result = voteService.getUserVote(postId, memberId);
 
             assertThat(result).isEqualTo(1);
         }
@@ -163,10 +163,10 @@ class VoteServiceTest {
         @Test
         @DisplayName("Returns -1 when user has downvoted")
         void returnsNegativeOneWhenDownvoted() {
-            when(voteRepository.findByPostIdAndUserId(postId, userId))
-                    .thenReturn(Optional.of(new VoteRecord(postId, userId, -1)));
+            when(voteRepository.findByPostIdAndMemberId(postId, memberId))
+                    .thenReturn(Optional.of(new VoteRecord(postId, memberId, -1)));
 
-            int result = voteService.getUserVote(postId, userId);
+            int result = voteService.getUserVote(postId, memberId);
 
             assertThat(result).isEqualTo(-1);
         }
@@ -174,10 +174,10 @@ class VoteServiceTest {
         @Test
         @DisplayName("Returns 0 when user has no vote")
         void returnsZeroWhenNoVote() {
-            when(voteRepository.findByPostIdAndUserId(postId, userId))
+            when(voteRepository.findByPostIdAndMemberId(postId, memberId))
                     .thenReturn(Optional.empty());
 
-            int result = voteService.getUserVote(postId, userId);
+            int result = voteService.getUserVote(postId, memberId);
 
             assertThat(result).isEqualTo(0);
         }

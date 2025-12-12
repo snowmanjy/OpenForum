@@ -30,6 +30,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.time.Instant;
+import com.openforum.domain.valueobject.MemberRole;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -75,7 +77,8 @@ class TenantControllerTest {
                 // Given
                 String tenantId = "tenant-1";
                 Tenant tenant = com.openforum.domain.factory.TenantFactory.create(tenantId, "slug-1", "Tenant 1",
-                                Map.of("key", "value"));
+                                Map.of("key", "value"), Instant.now(), UUID.randomUUID(), Instant.now(),
+                                UUID.randomUUID());
                 when(tenantService.getTenant(tenantId)).thenReturn(Optional.of(tenant));
 
                 // When & Then
@@ -106,7 +109,7 @@ class TenantControllerTest {
                 UpdateTenantConfigRequest request = new UpdateTenantConfigRequest(newConfig);
 
                 Tenant updatedTenant = com.openforum.domain.factory.TenantFactory.create(tenantId, "slug-1", "Tenant 1",
-                                newConfig);
+                                newConfig, Instant.now(), UUID.randomUUID(), Instant.now(), UUID.randomUUID());
                 when(tenantService.updateTenantConfig(eq(tenantId), any())).thenReturn(updatedTenant);
 
                 // When & Then
@@ -124,12 +127,18 @@ class TenantControllerTest {
                 String tenantId = "new-tenant";
                 String slug = "new-slug";
                 String name = "New Tenant";
+                String externalOwnerId = "user_123";
+                String ownerEmail = "test@example.com";
+                String ownerName = "Test User";
                 Map<String, Object> config = Map.of("key", "value");
                 com.openforum.rest.controller.dto.CreateTenantRequest request = new com.openforum.rest.controller.dto.CreateTenantRequest(
-                                tenantId, slug, name, config);
+                                tenantId, slug, name, externalOwnerId, ownerEmail, ownerName, config);
 
-                Tenant createdTenant = com.openforum.domain.factory.TenantFactory.create(tenantId, slug, name, config);
-                when(tenantService.createTenant(eq(tenantId), eq(slug), eq(name), any())).thenReturn(createdTenant);
+                Tenant createdTenant = com.openforum.domain.factory.TenantFactory.create(tenantId, slug, name, config,
+                                Instant.now(), UUID.randomUUID(), Instant.now(), UUID.randomUUID());
+                when(tenantService.createTenant(eq(tenantId), eq(slug), eq(name), eq(externalOwnerId), eq(ownerEmail),
+                                eq(ownerName), any()))
+                                .thenReturn(createdTenant);
 
                 // When & Then
                 mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
@@ -142,15 +151,15 @@ class TenantControllerTest {
                                 .andExpect(jsonPath("$.config.key").value("value"));
         }
 
-        private RequestPostProcessor authWithTenant(String userId, String tenantId) {
+        private RequestPostProcessor authWithTenant(String memberId, String tenantId) {
                 return request -> {
-                        Member member = Member.reconstitute(
-                                        UUID.randomUUID(), "ext-" + userId, "test@example.com", "Test User", false,
-                                        java.time.Instant.now(),
-                                        com.openforum.domain.valueobject.MemberRole.MEMBER, tenantId);
+                        Member requestor = Member.reconstitute(
+                                        UUID.randomUUID(), "ext-1", "a@a.com", "Admin", false, Instant.now(),
+                                        Instant.now(), MemberRole.ADMIN, "tenant-1",
+                                        null, 0, null, null, null);
 
                         Authentication auth = new UsernamePasswordAuthenticationToken(
-                                        member, null, Collections.emptyList());
+                                        requestor, null, Collections.emptyList());
 
                         request = SecurityMockMvcRequestPostProcessors
                                         .authentication(auth)

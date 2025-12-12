@@ -5,15 +5,15 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "subscriptions", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_subscription_user_target", columnNames = { "user_id", "target_id" })
+        @UniqueConstraint(name = "uk_subscription_member_target", columnNames = { "member_id", "target_id" })
 }, indexes = {
         @Index(name = "idx_subscription_target", columnList = "target_id"),
-        @Index(name = "idx_subscription_user", columnList = "user_id")
+        @Index(name = "idx_subscription_member", columnList = "member_id")
 })
 public class SubscriptionEntity extends TenantAwareEntity {
 
-    @Column(name = "user_id", nullable = false)
-    private java.util.UUID userId;
+    @Column(name = "member_id", nullable = false)
+    private java.util.UUID memberId;
 
     @Column(name = "target_id", nullable = false)
     private java.util.UUID targetId;
@@ -22,12 +22,12 @@ public class SubscriptionEntity extends TenantAwareEntity {
     @Column(name = "target_type", nullable = false)
     private TargetType targetType;
 
-    public java.util.UUID getUserId() {
-        return userId;
+    public java.util.UUID getMemberId() {
+        return memberId;
     }
 
-    public void setUserId(java.util.UUID userId) {
-        this.userId = userId;
+    public void setMemberId(java.util.UUID memberId) {
+        this.memberId = memberId;
     }
 
     public java.util.UUID getTargetId() {

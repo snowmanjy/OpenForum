@@ -34,7 +34,7 @@ import com.openforum.infra.jpa.TestApplication;
 class OutboxPublisherTest {
 
     @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("pgvector/pgvector:pg16");
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
@@ -72,7 +72,9 @@ class OutboxPublisherTest {
                 false,
                 "tenant-test",
                 java.time.Instant.now(),
-                "MEMBER");
+                "MEMBER",
+                null,
+                0);
         memberJpaRepository.save(memberEntity);
 
         Thread thread = Thread.builder()

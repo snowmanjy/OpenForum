@@ -88,9 +88,9 @@ public class SubscriptionController {
 
         String tenantId = TenantContext.getTenantId();
         List<com.openforum.application.dto.SubscriptionDto> subscriptions = subscriptionService
-                .getSubscriptionsForUser(tenantId, member.getId(), page, size);
+                .getSubscriptionsForMember(tenantId, member.getId(), page, size);
 
-        long total = subscriptionService.countSubscriptionsForUser(member.getId());
+        long total = subscriptionService.countSubscriptionsForMember(member.getId());
 
         return ResponseEntity.ok(java.util.Map.of(
                 "data", subscriptions,

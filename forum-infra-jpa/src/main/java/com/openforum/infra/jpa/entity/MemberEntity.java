@@ -23,11 +23,17 @@ public class MemberEntity extends TenantAwareEntity {
 
     private String role;
 
+    @Column(name = "avatar_url")
+    private String avatarUrl;
+
+    @Column(nullable = false) // Assuming it's not null, default 0
+    private Integer reputation = 0;
+
     public MemberEntity() {
     }
 
     public MemberEntity(UUID id, String externalId, String email, String name, boolean isBot, String tenantId,
-            java.time.Instant joinedAt, String role) {
+            java.time.Instant joinedAt, String role, String avatarUrl, Integer reputation) {
         this.id = id;
         this.externalId = externalId;
         this.email = email;
@@ -36,6 +42,8 @@ public class MemberEntity extends TenantAwareEntity {
         this.tenantId = tenantId;
         this.joinedAt = joinedAt;
         this.role = role;
+        this.avatarUrl = avatarUrl;
+        this.reputation = reputation;
     }
 
     public String getExternalId() {
@@ -84,5 +92,21 @@ public class MemberEntity extends TenantAwareEntity {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
+    public Integer getReputation() {
+        return reputation;
+    }
+
+    public void setReputation(Integer reputation) {
+        this.reputation = reputation;
     }
 }

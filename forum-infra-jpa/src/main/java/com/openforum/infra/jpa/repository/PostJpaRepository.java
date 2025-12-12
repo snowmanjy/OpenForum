@@ -35,4 +35,11 @@ public interface PostJpaRepository extends JpaRepository<PostEntity, UUID> {
     Optional<PostEntity> findByIdAndTenantId(UUID id, String tenantId);
 
     Page<PostEntity> findByTenantId(String tenantId, Pageable pageable);
+
+    /**
+     * Delete batch of soft-deleted posts older than cutoff.
+     */
+    @org.springframework.data.jpa.repository.Modifying
+    @Query(value = "DELETE FROM posts WHERE id IN (SELECT id FROM posts WHERE deleted = true AND deleted_at < :cutoff LIMIT :limit)", nativeQuery = true)
+    int deleteBatch(@Param("cutoff") java.time.Instant cutoff, @Param("limit") int limit);
 }

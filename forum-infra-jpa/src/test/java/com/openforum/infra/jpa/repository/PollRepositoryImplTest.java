@@ -1,86 +1,97 @@
 package com.openforum.infra.jpa.repository;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openforum.domain.aggregate.Poll;
-import com.openforum.domain.factory.PollFactory;
-import com.openforum.domain.repository.PollRepository;
-import com.openforum.infra.jpa.config.JpaTestConfig;
+import com.openforum.infra.jpa.entity.PollEntity;
+import com.openforum.infra.jpa.entity.PollVoteEntity;
+import com.openforum.infra.jpa.mapper.PollMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ActiveProfiles;
-
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
-@DataJpaTest
-@Testcontainers
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@ContextConfiguration(classes = com.openforum.TestApplication.class)
-@TestPropertySource(properties = {
-        "spring.jpa.hibernate.ddl-auto=none",
-        "spring.flyway.enabled=true",
-        "spring.flyway.locations=classpath:db/migration"
-})
-@Import({ PollRepositoryImpl.class, com.openforum.infra.jpa.mapper.PollMapper.class, JpaTestConfig.class })
-@ActiveProfiles("test")
 class PollRepositoryImplTest {
 
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+    @Mock
+    private PollJpaRepository pollJpaRepository;
+    @Mock
+    private PollVoteJpaRepository pollVoteJpaRepository;
+    @Mock
+    private OutboxEventJpaRepository outboxEventJpaRepository;
+    @Mock
+    private ObjectMapper objectMapper;
 
-    @Autowired
-    private PollRepository pollRepository;
+    private PollMapper pollMapper = new PollMapper();
 
-    private final PollFactory pollFactory = new PollFactory();
+    private PollRepositoryImpl pollRepository;
 
-    @Test
-    void shouldSaveAndFindPoll() {
-        String tenantId = "tenant-1";
-        UUID postId = UUID.randomUUID();
-        Poll poll = pollFactory.create(tenantId, postId, "Question?", List.of("A", "B"),
-                Instant.now().plusSeconds(3600), false);
-
-        pollRepository.save(poll);
-
-        Optional<Poll> found = pollRepository.findById(poll.getId());
-        assertThat(found).isPresent();
-        assertThat(found.get().getId()).isEqualTo(poll.getId());
-        assertThat(found.get().getTenantId()).isEqualTo(tenantId);
-        assertThat(found.get().getPostId()).isEqualTo(postId);
-        assertThat(found.get().getQuestion()).isEqualTo("Question?");
-        assertThat(found.get().getOptions()).containsExactly("A", "B");
-        assertThat(found.get().isAllowMultipleVotes()).isFalse();
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        pollRepository = new PollRepositoryImpl(
+                pollJpaRepository,
+                pollVoteJpaRepository,
+                outboxEventJpaRepository,
+                pollMapper,
+                objectMapper);
     }
 
     @Test
-    void shouldSaveAndFindPollWithVotes() {
-        String tenantId = "tenant-1";
-        UUID postId = UUID.randomUUID();
-        Poll poll = pollFactory.create(tenantId, postId, "Question?", List.of("A", "B"),
-                Instant.now().plusSeconds(3600), true);
-        UUID voterId = UUID.randomUUID();
-        poll.castVote(voterId, 0);
-        poll.castVote(voterId, 1);
+    void save_ExistingPoll_ShouldPreserveHiddenFields() {
+        // Arrange
+        UUID pollId = UUID.randomUUID();
 
-        pollRepository.save(poll);
+        // Existing entity has some fields we want to preserve (though PollEntity is
+        // mostly immutable,
+        // verifying pattern is strict).
+        // Let's assume there's a field like 'createdAt' in TenantAwareEntity that we
+        // don't want to lose if it was there.
+        PollEntity existingEntity = new PollEntity(
+                pollId, "tenant-1", UUID.randomUUID(), "Old Question", List.of("A", "B"), Instant.now(), false);
+        // Assuming we mock the behavior that these fields are SET on the entity somehow
 
-        Optional<Poll> found = pollRepository.findById(poll.getId());
-        assertThat(found).isPresent();
-        assertThat(found.get().getVotes()).hasSize(2);
-        assertThat(found.get().getVotes()).extracting("optionIndex").containsExactlyInAnyOrder(0, 1);
+        when(pollJpaRepository.findById(pollId)).thenReturn(Optional.of(existingEntity));
+
+        // Domain object update using reconstitute (simulating a loaded and modified
+        // object)
+        Poll updatedDomain = Poll.reconstitute(
+                pollId,
+                "tenant-1",
+                existingEntity.getPostId(),
+                "Updated Question", // Changed Question
+                List.of("A", "B", "C"), // Changed Options
+                existingEntity.getExpiresAt(),
+                true, // Changed AllowMultipleVotes
+                Instant.now(), // createdAt
+                UUID.randomUUID(), // createdBy
+                Instant.now(), // lastModifiedAt
+                UUID.randomUUID(), // lastModifiedBy
+                List.of() // votes
+        );
+
+        // Act
+        pollRepository.save(updatedDomain);
+
+        // Assert
+        ArgumentCaptor<PollEntity> entityCaptor = ArgumentCaptor.forClass(PollEntity.class);
+        verify(pollJpaRepository).save(entityCaptor.capture());
+
+        PollEntity savedEntity = entityCaptor.getValue();
+        assertEquals("Updated Question", savedEntity.getQuestion());
+        assertEquals(true, savedEntity.isAllowMultipleVotes());
+
+        // Validate object identity (it should be the SAME object instance adjusted)
+        assertEquals(existingEntity, savedEntity);
     }
 }

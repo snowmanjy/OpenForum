@@ -8,6 +8,6 @@ public record ThreadTitleChanged(
         String tenantId,
         String oldTitle,
         String newTitle,
-        UUID byUserId,
+        UUID byMemberId,
         Instant changedAt) implements DomainEvent {
 }

@@ -13,7 +13,7 @@ import java.util.UUID;
 public class PostFactory {
         public static Post create(String tenantId, UUID threadId, UUID authorId, String content, UUID replyToPostId,
                         boolean isBot,
-                        List<UUID> mentionedUserIds) {
+                        List<UUID> mentionedMemberIds) {
                 java.util.Objects.requireNonNull(tenantId, "Tenant ID cannot be null when creating a Post");
                 if (content == null || content.isBlank()) {
                         throw new IllegalArgumentException("Post content cannot be empty");
@@ -28,7 +28,7 @@ public class PostFactory {
                                 .replyToPostId(replyToPostId)
                                 .isNew(true)
                                 .isBot(isBot)
-                                .mentionedUserIds(mentionedUserIds)
+                                .mentionedMemberIds(mentionedMemberIds)
                                 .build();
         }
 

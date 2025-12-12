@@ -13,11 +13,11 @@ import java.util.UUID;
 public interface SubscriptionJpaRepository extends JpaRepository<SubscriptionEntity, UUID> {
     List<SubscriptionEntity> findByTargetId(UUID targetId);
 
-    boolean existsByUserIdAndTargetId(UUID userId, UUID targetId);
+    boolean existsByMemberIdAndTargetId(UUID memberId, UUID targetId);
 
-    void deleteByTenantIdAndUserIdAndTargetId(String tenantId, UUID userId, UUID targetId);
+    void deleteByTenantIdAndMemberIdAndTargetId(String tenantId, UUID memberId, UUID targetId);
 
-    Page<SubscriptionEntity> findByUserId(UUID userId, Pageable pageable);
+    Page<SubscriptionEntity> findByMemberId(UUID memberId, Pageable pageable);
 
-    long countByUserId(UUID userId);
+    long countByMemberId(UUID memberId);
 }

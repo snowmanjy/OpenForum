@@ -15,6 +15,8 @@ public interface MemberRepository {
 
     Optional<Member> findById(UUID id);
 
+    List<Member> findByIds(List<UUID> ids);
+
     boolean existsAllById(List<UUID> ids);
 
     void saveAll(List<Member> members);

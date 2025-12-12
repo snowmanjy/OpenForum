@@ -19,11 +19,12 @@ public class CategoryService {
     }
 
     @Transactional
-    public Category createCategory(String tenantId, String name, String slug, String description, boolean isReadOnly) {
+    public Category createCategory(String tenantId, String name, String slug, String description, boolean isReadOnly,
+            UUID createdBy) {
         if (categoryRepository.findBySlug(tenantId, slug).isPresent()) {
             throw new IllegalArgumentException("Category with slug '" + slug + "' already exists for this tenant.");
         }
-        Category category = CategoryFactory.create(tenantId, name, slug, description, isReadOnly);
+        Category category = CategoryFactory.create(tenantId, name, slug, description, isReadOnly, createdBy);
         return categoryRepository.save(category);
     }
 

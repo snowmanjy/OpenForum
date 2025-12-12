@@ -54,12 +54,12 @@ class PollControllerTest {
         private java.security.interfaces.RSAPublicKey publicKey;
 
         private MockedStatic<SecurityContext> securityContextMock;
-        private final UUID currentUserId = UUID.randomUUID();
+        private final UUID currentMemberId = UUID.randomUUID();
 
         @BeforeEach
         void setUp() {
                 securityContextMock = mockStatic(SecurityContext.class);
-                securityContextMock.when(SecurityContext::getCurrentUserId).thenReturn(currentUserId);
+                securityContextMock.when(SecurityContext::getCurrentMemberId).thenReturn(currentMemberId);
                 TenantContext.setTenantId("tenant-1");
         }
 
@@ -79,7 +79,7 @@ class PollControllerTest {
                                 Instant.now().plusSeconds(3600), false);
 
                 when(pollService.createPoll(eq("tenant-1"), eq(postId),
-                                any(CreatePollRequest.class))).thenReturn(pollId);
+                                any(CreatePollRequest.class), eq(currentMemberId))).thenReturn(pollId);
 
                 mockMvc.perform(post("/api/v1/posts/{postId}/polls", postId)
                                 .header("X-Tenant-ID", "tenant-1")
@@ -103,7 +103,7 @@ class PollControllerTest {
                                 .with(csrf()))
                                 .andExpect(status().isOk());
 
-                verify(pollService).castVote(eq("tenant-1"), eq(pollId), eq(currentUserId),
+                verify(pollService).castVote(eq("tenant-1"), eq(pollId), eq(currentMemberId),
                                 any(VotePollRequest.class));
         }
 
@@ -124,7 +124,7 @@ class PollControllerTest {
                                 List.of(0));
 
                 when(pollService.getPoll(eq("tenant-1"), eq(pollId),
-                                eq(currentUserId))).thenReturn(pollDto);
+                                eq(currentMemberId))).thenReturn(pollDto);
 
                 mockMvc.perform(get("/api/v1/polls/{pollId}", pollId)
                                 .header("X-Tenant-ID", "tenant-1")

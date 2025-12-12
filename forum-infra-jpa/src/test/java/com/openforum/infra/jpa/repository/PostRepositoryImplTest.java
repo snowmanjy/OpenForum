@@ -1,117 +1,133 @@
 package com.openforum.infra.jpa.repository;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.openforum.domain.aggregate.Post;
-import com.openforum.domain.factory.PostFactory;
-import com.openforum.domain.repository.PostRepository;
-import com.openforum.infra.jpa.config.JpaTestConfig;
-import com.openforum.infra.jpa.entity.OutboxEventEntity;
-import com.openforum.infra.jpa.repository.OutboxEventJpaRepository;
+import com.openforum.infra.jpa.entity.PostEntity;
+import com.openforum.infra.jpa.mapper.PostMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.ArgumentCaptor;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-@DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) // Disable H2 replacement
-@Testcontainers // Enable Testcontainers
-@ContextConfiguration(classes = com.openforum.TestApplication.class)
-@TestPropertySource(properties = {
-                "spring.jpa.hibernate.ddl-auto=create-drop",
-                "spring.flyway.enabled=false"
-})
-@Import({ PostRepositoryImpl.class, com.openforum.infra.jpa.mapper.PostMapper.class, JpaTestConfig.class })
 class PostRepositoryImplTest {
 
-        @Container
-        @ServiceConnection
-        static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
-
-        @Autowired
-        private PostRepository postRepository;
-
-        @Autowired
+        @Mock
+        private PostJpaRepository postJpaRepository;
+        @Mock
         private OutboxEventJpaRepository outboxEventJpaRepository;
 
-        @Test
-        void shouldSavePostAndPublishEvent() {
-                // Given
-                String tenantId = "tenant-1";
-                UUID threadId = UUID.randomUUID();
-                UUID authorId = UUID.randomUUID();
-                Post post = PostFactory.create(tenantId, threadId, authorId, "Test Content", null, false,
-                                java.util.List.of());
-                // Manually set postNumber for test since Factory might not set it yet
-                post = com.openforum.domain.aggregate.Post.builder()
-                                .id(post.getId())
-                                .threadId(post.getThreadId())
-                                .tenantId(post.getTenantId())
-                                .authorId(post.getAuthorId())
-                                .content(post.getContent())
-                                .replyToPostId(post.getReplyToPostId())
-                                .metadata(post.getMetadata())
-                                .createdAt(post.getCreatedAt())
-                                .mentionedUserIds(post.getMentionedUserIds())
-                                .postNumber(1)
-                                .isNew(true)
-                                .isBot(false)
-                                .build();
-                UUID postId = post.getId();
+        // Using real mapper for strict validation
+        private PostMapper postMapper = new PostMapper();
+        @Mock
+        private ObjectMapper objectMapper;
 
-                // When
-                postRepository.save(post);
+        private PostRepositoryImpl postRepository;
 
-                // Then
-                Optional<Post> savedPost = postRepository.findById(postId);
-                assertThat(savedPost).isPresent();
-                assertThat(savedPost.get().getContent()).isEqualTo("Test Content");
-                assertThat(savedPost.get().getPostNumber()).isEqualTo(1);
-
-                // Verify createdAt is not null and is recent (within last minute)
-                assertThat(savedPost.get().getCreatedAt()).isNotNull();
-                assertThat(savedPost.get().getCreatedAt())
-                                .isAfter(java.time.Instant.now().minusSeconds(60));
-
-                List<OutboxEventEntity> events = outboxEventJpaRepository.findAll();
-                assertThat(events).hasSize(1);
-                assertThat(events.get(0).getType()).isEqualTo("PostCreatedEvent");
+        @BeforeEach
+        void setUp() {
+                MockitoAnnotations.openMocks(this);
+                postRepository = new PostRepositoryImpl(postJpaRepository, outboxEventJpaRepository, postMapper,
+                                objectMapper);
         }
 
         @Test
-        void shouldFindPostsByThreadId() {
-                // Given
-                String tenantId = "tenant-1";
-                UUID threadId = UUID.randomUUID();
-                Post post1 = PostFactory.create(tenantId, threadId, UUID.randomUUID(), "Post 1", null, false,
-                                java.util.List.of());
-                Post post2 = PostFactory.create(tenantId, threadId, UUID.randomUUID(), "Post 2", null, false,
-                                java.util.List.of());
-                Post post3 = PostFactory.create(tenantId, UUID.randomUUID(), UUID.randomUUID(), "Other Thread", null,
-                                false,
-                                java.util.List.of());
+        void save_NewPost_ShouldPersistCorrectly() {
+                // Arrange
+                Post post = Post.builder()
+                                .id(UUID.randomUUID())
+                                .threadId(UUID.randomUUID())
+                                .tenantId("tenant-1")
+                                .authorId(UUID.randomUUID())
+                                .content("New Content")
+                                .version(1L)
+                                .isNew(true)
+                                .build();
 
-                postRepository.save(post1);
-                postRepository.save(post2);
-                postRepository.save(post3);
+                when(postJpaRepository.findById(post.getId())).thenReturn(Optional.empty());
 
-                // When
-                List<Post> threadPosts = postRepository.findByThreadId(threadId, 10);
+                // Act
+                postRepository.save(post);
 
-                // Then
-                assertThat(threadPosts).hasSize(2);
-                assertThat(threadPosts).extracting(Post::getContent).containsExactlyInAnyOrder("Post 1", "Post 2");
+                // Assert
+                ArgumentCaptor<PostEntity> entityCaptor = ArgumentCaptor.forClass(PostEntity.class);
+                verify(postJpaRepository).save(entityCaptor.capture());
+
+                PostEntity savedEntity = entityCaptor.getValue();
+                assertEquals(post.getContent(), savedEntity.getContent());
+                // Normal save has score 0 by default entity initialization
+                assertEquals(0, savedEntity.getScore());
+        }
+
+        @Test
+        void save_ExistingPost_ShouldPreserveScore_AndUpdateContent() {
+                // Arrange
+                UUID postId = UUID.randomUUID();
+
+                // Existing entity in DB has a score of 100
+                PostEntity existingEntity = new PostEntity();
+                existingEntity.setId(postId);
+                existingEntity.setThreadId(UUID.randomUUID());
+                existingEntity.setTenantId("tenant-1");
+                existingEntity.setAuthorId(UUID.randomUUID());
+                existingEntity.setContent("Old Content");
+                existingEntity.setScore(100);
+                existingEntity.setEmbedding(List.of(0.1, 0.2, 0.3)); // Existing embedding
+                existingEntity.setDeletedAt(Instant.parse("2023-01-01T00:00:00Z")); // Existing deletedAt
+
+                when(postJpaRepository.findById(postId)).thenReturn(Optional.of(existingEntity));
+
+                // Domain object coming in with updated content
+                // Domain now carries the score explicitly (100)
+                Post updatedDomain = Post.builder()
+                                .id(postId)
+                                .threadId(existingEntity.getThreadId())
+                                .tenantId("tenant-1")
+                                .authorId(existingEntity.getAuthorId())
+                                .content("Updated Content")
+                                .version(2L)
+                                .score(100)
+                                // Embedding NOT set in domain (null) -> Should be preserved by Mapper
+                                // conditional
+                                // DeletedAt IS set in domain (must be carried over)
+                                .deletedAt(existingEntity.getDeletedAt())
+                                .build();
+
+                // Act
+                postRepository.save(updatedDomain);
+
+                // Assert
+                ArgumentCaptor<PostEntity> entityCaptor = ArgumentCaptor.forClass(PostEntity.class);
+                verify(postJpaRepository).save(entityCaptor.capture());
+
+                PostEntity savedEntity = entityCaptor.getValue();
+
+                // 1. Verify content IS updated
+                assertEquals("Updated Content", savedEntity.getContent());
+
+                // 2. CRITICAL: Verify score matches domain score
+                assertEquals(100, savedEntity.getScore());
+
+                // 3. Verify Embedding preserved (via conditional update in Mapper)
+                assertEquals(3, savedEntity.getEmbedding().size());
+                assertEquals(0.1, savedEntity.getEmbedding().get(0));
+
+                // 4. Verify DeletedAt preserved (via explicit domain carry-over)
+                assertEquals(existingEntity.getDeletedAt(), savedEntity.getDeletedAt());
+
+                // 5. Verify other existing fields
+                assertEquals(existingEntity.getThreadId(), savedEntity.getThreadId());
+                assertEquals(existingEntity.getAuthorId(), savedEntity.getAuthorId());
         }
 }

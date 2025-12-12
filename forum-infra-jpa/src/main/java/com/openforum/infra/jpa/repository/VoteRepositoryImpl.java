@@ -21,29 +21,29 @@ public class VoteRepositoryImpl implements VoteRepository {
     }
 
     @Override
-    public Optional<VoteRecord> findByPostIdAndUserId(UUID postId, UUID userId) {
-        return postVoteJpaRepository.findByPostIdAndUserId(postId, userId)
-                .map(entity -> new VoteRecord(entity.getPostId(), entity.getUserId(), entity.getValue()));
+    public Optional<VoteRecord> findByPostIdAndMemberId(UUID postId, UUID memberId) {
+        return postVoteJpaRepository.findByPostIdAndMemberId(postId, memberId)
+                .map(entity -> new VoteRecord(entity.getPostId(), entity.getMemberId(), entity.getValue()));
     }
 
     @Override
-    public List<VoteRecord> findByPostIdsAndUserId(List<UUID> postIds, UUID userId) {
-        return postVoteJpaRepository.findByPostIdInAndUserId(postIds, userId).stream()
-                .map(entity -> new VoteRecord(entity.getPostId(), entity.getUserId(), entity.getValue()))
+    public List<VoteRecord> findByPostIdsAndMemberId(List<UUID> postIds, UUID memberId) {
+        return postVoteJpaRepository.findByPostIdInAndMemberId(postIds, memberId).stream()
+                .map(entity -> new VoteRecord(entity.getPostId(), entity.getMemberId(), entity.getValue()))
                 .toList();
     }
 
     @Override
     @Transactional
-    public void save(UUID postId, UUID userId, String tenantId, int value) {
-        PostVoteEntity entity = new PostVoteEntity(postId, userId, tenantId, (short) value);
+    public void save(UUID postId, UUID memberId, String tenantId, int value) {
+        PostVoteEntity entity = new PostVoteEntity(postId, memberId, tenantId, (short) value);
         postVoteJpaRepository.save(entity);
     }
 
     @Override
     @Transactional
-    public void update(UUID postId, UUID userId, int value) {
-        postVoteJpaRepository.findByPostIdAndUserId(postId, userId)
+    public void update(UUID postId, UUID memberId, int value) {
+        postVoteJpaRepository.findByPostIdAndMemberId(postId, memberId)
                 .ifPresent(entity -> {
                     entity.setValue((short) value);
                     postVoteJpaRepository.save(entity);
@@ -52,8 +52,8 @@ public class VoteRepositoryImpl implements VoteRepository {
 
     @Override
     @Transactional
-    public void delete(UUID postId, UUID userId) {
-        postVoteJpaRepository.findByPostIdAndUserId(postId, userId)
+    public void delete(UUID postId, UUID memberId) {
+        postVoteJpaRepository.findByPostIdAndMemberId(postId, memberId)
                 .ifPresent(postVoteJpaRepository::delete);
     }
 

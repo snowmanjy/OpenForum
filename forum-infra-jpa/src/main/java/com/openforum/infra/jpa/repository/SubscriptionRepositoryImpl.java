@@ -23,16 +23,19 @@ public class SubscriptionRepositoryImpl implements SubscriptionRepository {
         SubscriptionEntity entity = new SubscriptionEntity();
         entity.setId(subscription.getId());
         entity.setTenantId(subscription.getTenantId());
-        entity.setUserId(subscription.getUserId());
+        entity.setMemberId(subscription.getMemberId());
         entity.setTargetId(subscription.getTargetId());
         entity.setTargetType(subscription.getTargetType());
         entity.setCreatedAt(subscription.getCreatedAt());
+        entity.setCreatedBy(subscription.getCreatedBy());
+        entity.setLastModifiedAt(subscription.getLastModifiedAt());
+        entity.setLastModifiedBy(subscription.getLastModifiedBy());
         jpaRepository.save(entity);
     }
 
     @Override
-    public void delete(String tenantId, UUID userId, UUID targetId) {
-        jpaRepository.deleteByTenantIdAndUserIdAndTargetId(tenantId, userId, targetId);
+    public void delete(String tenantId, UUID memberId, UUID targetId) {
+        jpaRepository.deleteByTenantIdAndMemberIdAndTargetId(tenantId, memberId, targetId);
     }
 
     @Override
@@ -43,31 +46,34 @@ public class SubscriptionRepositoryImpl implements SubscriptionRepository {
     }
 
     @Override
-    public boolean exists(UUID userId, UUID targetId) {
-        return jpaRepository.existsByUserIdAndTargetId(userId, targetId);
+    public boolean exists(UUID memberId, UUID targetId) {
+        return jpaRepository.existsByMemberIdAndTargetId(memberId, targetId);
     }
 
     @Override
-    public List<Subscription> findByUserId(UUID userId, int page, int size) {
+    public List<Subscription> findByMemberId(UUID memberId, int page, int size) {
         org.springframework.data.domain.PageRequest pageRequest = org.springframework.data.domain.PageRequest.of(page,
                 size, org.springframework.data.domain.Sort.by("createdAt").descending());
-        return jpaRepository.findByUserId(userId, pageRequest).stream()
+        return jpaRepository.findByMemberId(memberId, pageRequest).stream()
                 .map(this::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public long countByUserId(UUID userId) {
-        return jpaRepository.countByUserId(userId);
+    public long countByMemberId(UUID memberId) {
+        return jpaRepository.countByMemberId(memberId);
     }
 
     private Subscription toDomain(SubscriptionEntity entity) {
         return Subscription.reconstitute(
                 entity.getId(),
                 entity.getTenantId(),
-                entity.getUserId(),
+                entity.getMemberId(),
                 entity.getTargetId(),
                 entity.getTargetType(),
-                entity.getCreatedAt());
+                entity.getCreatedAt(),
+                entity.getCreatedBy(),
+                entity.getLastModifiedAt(),
+                entity.getLastModifiedBy());
     }
 }

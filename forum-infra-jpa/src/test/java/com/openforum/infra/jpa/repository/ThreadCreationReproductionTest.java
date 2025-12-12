@@ -4,12 +4,14 @@ import com.openforum.domain.aggregate.ThreadStatus;
 import com.openforum.infra.jpa.config.JpaTestConfig;
 import com.openforum.infra.jpa.entity.PostEntity;
 import com.openforum.infra.jpa.entity.ThreadEntity;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Import;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -28,15 +30,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ContextConfiguration(classes = com.openforum.TestApplication.class)
 @TestPropertySource(properties = {
-        "spring.jpa.hibernate.ddl-auto=create-drop",
-        "spring.flyway.enabled=false"
+        "spring.jpa.hibernate.ddl-auto=none",
+        "spring.flyway.enabled=true",
+        "spring.flyway.locations=classpath:db/migration"
 })
 @Import({
         JpaTestConfig.class,
         com.openforum.infra.jpa.mapper.ThreadMapper.class,
         com.openforum.infra.jpa.mapper.PostMapper.class,
         com.openforum.infra.jpa.repository.ThreadRepositoryImpl.class,
-        com.openforum.infra.jpa.repository.PostRepositoryImpl.class
+        com.openforum.infra.jpa.repository.PostRepositoryImpl.class,
+        com.openforum.infra.jpa.repository.CategoryRepositoryImpl.class,
+        com.openforum.infra.jpa.repository.MemberRepositoryImpl.class,
+        com.openforum.infra.jpa.mapper.MemberMapper.class
 })
 public class ThreadCreationReproductionTest {
 
@@ -45,14 +51,13 @@ public class ThreadCreationReproductionTest {
         @org.springframework.context.annotation.Bean
         @org.springframework.context.annotation.Primary
         public com.fasterxml.jackson.databind.ObjectMapper objectMapper() {
-            // Intentionally missing JavaTimeModule to simulate serialization failure
             return new com.fasterxml.jackson.databind.ObjectMapper();
         }
     }
 
     @Container
     @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+    static PostgreSQLContainer postgres = new PostgreSQLContainer("pgvector/pgvector:pg16");
 
     @Autowired
     private com.openforum.domain.repository.ThreadRepository threadRepository;
@@ -61,34 +66,49 @@ public class ThreadCreationReproductionTest {
     private com.openforum.domain.repository.PostRepository postRepository;
 
     @Autowired
+    private com.openforum.domain.repository.CategoryRepository categoryRepository;
+
+    @Autowired
+    private com.openforum.domain.repository.MemberRepository memberRepository;
+
+    @Autowired
     private ThreadJpaRepository threadJpaRepository;
 
     @Autowired
     private PostJpaRepository postJpaRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    private UUID authorId;
+    private final String tenantId = "test-tenant";
+
+    @BeforeEach
+    void setUp() {
+        // Create a member to satisfy foreign key constraints
+        authorId = UUID.randomUUID();
+        // Updated to include tenant_id and role for validation
+        jdbcTemplate.update(
+                "INSERT INTO members (id, external_id, email, name, is_bot, tenant_id, role) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                authorId, "ext-" + authorId, "test@example.com", "Test User", false, tenantId, "MEMBER");
+    }
+
     @Test
     void shouldCreateThreadUsingService() {
-        String tenantId = "test-tenant";
-        UUID authorId = UUID.randomUUID();
         String title = "Service Created Thread";
         String content = "Service Created Content";
 
-        // Manually instantiate ThreadService with Autowired repositories
-        // Note: ThreadService is in forum-application which is a dependency.
         com.openforum.application.service.ThreadService threadService = new com.openforum.application.service.ThreadService(
-                threadRepository, postRepository);
+                threadRepository, postRepository, categoryRepository, memberRepository);
 
         com.openforum.domain.aggregate.Thread createdThread = threadService.createThread(tenantId, authorId, title,
-                content);
+                content, null);
 
         assertThat(createdThread).isNotNull();
         assertThat(createdThread.getId()).isNotNull();
         assertThat(createdThread.getTitle()).isEqualTo(title);
         assertThat(createdThread.getPostCount()).isEqualTo(1);
 
-        // Verify Persistence
-        // Flush via JPA repository because Domain Repository doesn't expose flush (it
-        // relies on transaction commit)
         threadJpaRepository.flush();
         postJpaRepository.flush();
 
@@ -96,7 +116,6 @@ public class ThreadCreationReproductionTest {
         assertThat(savedThread.getPostCount()).isEqualTo(1);
         assertThat(savedThread.getCreatedAt()).isNotNull();
 
-        // Verify Post
         List<PostEntity> posts = postJpaRepository.findAll();
         assertThat(posts).hasSize(1);
         PostEntity savedPost = posts.get(0);
@@ -108,9 +127,6 @@ public class ThreadCreationReproductionTest {
 
     @Test
     void shouldSaveThreadAndPostChecksAuditing() {
-        String tenantId = "test-tenant";
-        UUID authorId = UUID.randomUUID();
-
         // 1. Save Thread
         ThreadEntity thread = new ThreadEntity();
         thread.setId(UUID.randomUUID());
@@ -120,25 +136,24 @@ public class ThreadCreationReproductionTest {
         thread.setStatus(ThreadStatus.OPEN);
         thread.setPostCount(1);
         thread.setMetadata(Map.of());
+        thread.setLastActivityAt(Instant.now());
 
-        // Ensure createdAt is null initially
         assertThat(thread.getCreatedAt()).isNull();
 
         ThreadEntity savedThread = threadJpaRepository.save(thread);
-        threadJpaRepository.flush(); // Force flush to trigger DB constraints
+        threadJpaRepository.flush();
 
         assertThat(savedThread.getCreatedAt()).isNotNull();
-        System.out.println("Thread CreatedAt: " + savedThread.getCreatedAt());
 
         // 2. Save Post
         PostEntity post = new PostEntity();
         post.setId(UUID.randomUUID());
         post.setTenantId(tenantId);
-        post.setThreadId(savedThread.getId()); // Set FK
+        post.setThreadId(savedThread.getId());
         post.setAuthorId(authorId);
         post.setContent("Content");
         post.setPostNumber(1);
-        post.setMentionedUserIds(List.of());
+        post.setMentionedMemberIds(List.of());
         post.setMetadata(Map.of());
 
         assertThat(post.getCreatedAt()).isNull();
@@ -147,6 +162,5 @@ public class ThreadCreationReproductionTest {
         postJpaRepository.flush();
 
         assertThat(savedPost.getCreatedAt()).isNotNull();
-        System.out.println("Post CreatedAt: " + savedPost.getCreatedAt());
     }
 }

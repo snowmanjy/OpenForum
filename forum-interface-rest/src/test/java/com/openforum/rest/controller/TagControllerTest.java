@@ -23,6 +23,8 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.time.Instant;
+import com.openforum.domain.valueobject.MemberRole;
 
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -49,13 +51,15 @@ class TagControllerTest {
     private java.security.interfaces.RSAPublicKey publicKey;
 
     private Member testMember;
-    private UUID userId;
+    private UUID memberId;
 
     @BeforeEach
     void setUp() {
-        userId = UUID.randomUUID();
-        testMember = Member.reconstitute(userId, "ext-123", "test@example.com", "Test User", false,
-                java.time.Instant.now(), com.openforum.domain.valueobject.MemberRole.MEMBER, "test-tenant");
+        memberId = UUID.randomUUID();
+        testMember = Member.reconstitute(
+                memberId, "ext-123", "test@example.com", "Test User", false, Instant.now(), Instant.now(),
+                MemberRole.MEMBER,
+                "test-tenant", null, 0, null, null, null);
     }
 
     @AfterEach
@@ -68,7 +72,8 @@ class TagControllerTest {
     void searchTags_shouldReturnMatchingTags_whenAuthenticated() throws Exception {
         // Given
         UUID tagId = UUID.randomUUID();
-        Tag tag = Tag.reconstitute(tagId, "default-tenant", "java", 42L);
+        Tag tag = Tag.reconstitute(tagId, "default-tenant", "java", 42L, Instant.now(), UUID.randomUUID(),
+                Instant.now(), UUID.randomUUID());
         when(tagRepository.findByNameStartingWith(anyString(), anyString(), anyInt())).thenReturn(List.of(tag));
 
         // When & Then

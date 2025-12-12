@@ -8,13 +8,13 @@ import java.util.UUID;
 public interface SubscriptionRepository {
     void save(Subscription subscription);
 
-    void delete(String tenantId, UUID userId, UUID targetId);
+    void delete(String tenantId, UUID memberId, UUID targetId);
 
     List<Subscription> findByTarget(UUID targetId);
 
-    boolean exists(UUID userId, UUID targetId);
+    boolean exists(UUID memberId, UUID targetId);
 
-    List<Subscription> findByUserId(UUID userId, int page, int size);
+    List<Subscription> findByMemberId(UUID memberId, int page, int size);
 
-    long countByUserId(UUID userId);
+    long countByMemberId(UUID memberId);
 }

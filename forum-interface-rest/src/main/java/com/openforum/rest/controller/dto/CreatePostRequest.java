@@ -8,5 +8,5 @@ public record CreatePostRequest(
                 String content,
                 UUID replyToPostId,
                 Map<String, Object> metadata,
-                List<UUID> mentionedUserIds) {
+                List<UUID> mentionedMemberIds) {
 }

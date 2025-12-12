@@ -94,4 +94,37 @@ public class ThreadEntity extends TenantAwareEntity {
     public void setPostCount(Integer postCount) {
         this.postCount = postCount;
     }
+
+    @Column(nullable = false)
+    private Boolean deleted = false;
+
+    @Column(name = "deleted_at")
+    private java.time.Instant deletedAt;
+
+    public Boolean getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
+    }
+
+    public java.time.Instant getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(java.time.Instant deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
+    @Column(name = "last_activity_at", nullable = false)
+    private java.time.Instant lastActivityAt;
+
+    public java.time.Instant getLastActivityAt() {
+        return lastActivityAt;
+    }
+
+    public void setLastActivityAt(java.time.Instant lastActivityAt) {
+        this.lastActivityAt = lastActivityAt;
+    }
 }

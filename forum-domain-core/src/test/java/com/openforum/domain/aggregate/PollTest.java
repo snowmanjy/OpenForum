@@ -22,7 +22,7 @@ class PollTest {
         Instant expiresAt = Instant.now().plusSeconds(3600);
         boolean allowMultipleVotes = false;
 
-        Poll poll = Poll.create(tenantId, postId, question, options, expiresAt, allowMultipleVotes);
+        Poll poll = Poll.create(tenantId, postId, question, options, expiresAt, allowMultipleVotes, UUID.randomUUID());
 
         assertThat(poll.getId()).isNotNull();
         assertThat(poll.getTenantId()).isEqualTo(tenantId);
@@ -42,7 +42,7 @@ class PollTest {
     @Test
     void shouldCastVote() {
         Poll poll = Poll.create("tenant-1", UUID.randomUUID(), "Question?", List.of("A", "B"),
-                Instant.now().plusSeconds(3600), false);
+                Instant.now().plusSeconds(3600), false, UUID.randomUUID());
         UUID voterId = UUID.randomUUID();
 
         poll.castVote(voterId, 0);
@@ -60,7 +60,7 @@ class PollTest {
     @Test
     void shouldPreventDoubleVotingWhenNotAllowed() {
         Poll poll = Poll.create("tenant-1", UUID.randomUUID(), "Question?", List.of("A", "B"),
-                Instant.now().plusSeconds(3600), false);
+                Instant.now().plusSeconds(3600), false, UUID.randomUUID());
         UUID voterId = UUID.randomUUID();
 
         poll.castVote(voterId, 0);
@@ -73,7 +73,7 @@ class PollTest {
     @Test
     void shouldAllowMultipleVotesWhenAllowed() {
         Poll poll = Poll.create("tenant-1", UUID.randomUUID(), "Question?", List.of("A", "B"),
-                Instant.now().plusSeconds(3600), true);
+                Instant.now().plusSeconds(3600), true, UUID.randomUUID());
         UUID voterId = UUID.randomUUID();
 
         poll.castVote(voterId, 0);
@@ -95,6 +95,9 @@ class PollTest {
                 Instant.now().minusSeconds(1),
                 false,
                 Instant.now().minusSeconds(3600),
+                UUID.randomUUID(), // createdBy
+                Instant.now(), // lastModifiedAt
+                UUID.randomUUID(), // lastModifiedBy
                 List.of());
         UUID voterId = UUID.randomUUID();
 
@@ -105,7 +108,7 @@ class PollTest {
 
     @Test
     void shouldValidateOptions() {
-        assertThatThrownBy(() -> Poll.create("t", UUID.randomUUID(), "Q", List.of("A"), null, false))
+        assertThatThrownBy(() -> Poll.create("t", UUID.randomUUID(), "Q", List.of("A"), null, false, UUID.randomUUID()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Poll must have at least 2 options");
     }
