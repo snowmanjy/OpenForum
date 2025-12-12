@@ -58,8 +58,32 @@ public class ThreadQueryService {
          */
         @Transactional(readOnly = true)
         public List<ThreadQueryResult> getRichThreads(String tenantId, int page, int size) {
-                Page<ThreadWithOPProjection> richThreads = threadJpaRepository.findRichThreads(
-                                tenantId, PageRequest.of(page, size));
+                return getRichThreads(tenantId, page, size, null, null);
+        }
+
+        /**
+         * Retrieves paginated threads with OP content for a tenant, optionally filtered
+         * by metadata.
+         *
+         * @param tenantId      Tenant identifier
+         * @param page          Page number (0-indexed)
+         * @param size          Page size
+         * @param metadataKey   Optional metadata key to filter by
+         * @param metadataValue Optional metadata value to match
+         * @return List of ThreadQueryResult with author names resolved
+         */
+        @Transactional(readOnly = true)
+        public List<ThreadQueryResult> getRichThreads(String tenantId, int page, int size,
+                        String metadataKey, String metadataValue) {
+                Page<ThreadWithOPProjection> richThreads;
+
+                if (metadataKey != null && metadataValue != null) {
+                        richThreads = threadJpaRepository.findRichThreadsByMetadata(
+                                        tenantId, metadataKey, metadataValue, PageRequest.of(page, size));
+                } else {
+                        richThreads = threadJpaRepository.findRichThreads(
+                                        tenantId, PageRequest.of(page, size));
+                }
 
                 // Batch fetch author names to avoid N+1
                 List<UUID> authorIds = richThreads.getContent().stream()

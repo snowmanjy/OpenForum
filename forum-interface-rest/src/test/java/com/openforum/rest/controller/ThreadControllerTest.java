@@ -118,6 +118,38 @@ class ThreadControllerTest {
                                 .andExpect(jsonPath("$.content").value("OP Content"));
         }
 
+        @Test
+        void getThreads_shouldFilterByMetadata_whenParamsProvided() throws Exception {
+                // Given
+                UUID threadId = UUID.randomUUID();
+                com.openforum.rest.service.ThreadQueryService.ThreadQueryResult queryResult = new com.openforum.rest.service.ThreadQueryService.ThreadQueryResult(
+                                threadId,
+                                "SAT Question Discussion",
+                                "OPEN",
+                                "Discussing question 102",
+                                java.time.Instant.now(),
+                                testMember.getId(),
+                                "Test User",
+                                3);
+
+                when(threadQueryService.getRichThreads(
+                                anyString(),
+                                org.mockito.ArgumentMatchers.eq(0),
+                                org.mockito.ArgumentMatchers.eq(10),
+                                org.mockito.ArgumentMatchers.eq("questionId"),
+                                org.mockito.ArgumentMatchers.eq("102")))
+                                .thenReturn(java.util.List.of(queryResult));
+
+                // When & Then
+                mockMvc.perform(get("/api/v1/threads")
+                                .with(authWithTenant(testMember, "tenant-1"))
+                                .param("metadataKey", "questionId")
+                                .param("metadataValue", "102"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$", org.hamcrest.Matchers.hasSize(1)))
+                                .andExpect(jsonPath("$[0].title").value("SAT Question Discussion"));
+        }
+
         private RequestPostProcessor authWithTenant(Member member, String tenantId) {
                 return request -> {
                         // First set authentication using Spring Security Test utilities

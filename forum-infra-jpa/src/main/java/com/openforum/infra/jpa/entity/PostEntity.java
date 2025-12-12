@@ -39,6 +39,9 @@ public class PostEntity extends TenantAwareEntity {
     @Column(nullable = false)
     private Integer score = 0;
 
+    @Column(name = "bookmark_count", nullable = false)
+    private Integer bookmarkCount = 0;
+
     /**
      * AI-generated semantic embedding vector for similarity search.
      * Dimension: 1536 (OpenAI text-embedding-3-small standard).
@@ -140,6 +143,14 @@ public class PostEntity extends TenantAwareEntity {
 
     public void setScore(Integer score) {
         this.score = score;
+    }
+
+    public Integer getBookmarkCount() {
+        return bookmarkCount;
+    }
+
+    public void setBookmarkCount(Integer bookmarkCount) {
+        this.bookmarkCount = bookmarkCount;
     }
 
     public List<Double> getEmbedding() {

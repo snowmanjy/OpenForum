@@ -19,18 +19,25 @@ public record PostResponse(
         Integer postNumber,
         Integer score,
         Integer userVote,
+        Integer bookmarkCount,
+        Boolean isBookmarked,
         Instant deletedAt,
         Instant lastModifiedAt) {
 
     public static PostResponse from(Post post) {
-        return from(post, null, 0, 0);
+        return from(post, null, 0, 0, 0, false);
     }
 
     public static PostResponse from(Post post, String authorName) {
-        return from(post, authorName, 0, 0);
+        return from(post, authorName, 0, 0, post.getBookmarkCount(), false);
     }
 
     public static PostResponse from(Post post, String authorName, int score, int userVote) {
+        return from(post, authorName, score, userVote, post.getBookmarkCount(), false);
+    }
+
+    public static PostResponse from(Post post, String authorName, int score, int userVote, int bookmarkCount,
+            boolean isBookmarked) {
         return new PostResponse(
                 post.getId(),
                 post.getThreadId(),
@@ -44,6 +51,8 @@ public record PostResponse(
                 post.getPostNumber(),
                 score,
                 userVote,
+                bookmarkCount,
+                isBookmarked,
                 post.getDeletedAt(),
                 post.getLastModifiedAt());
     }
@@ -55,6 +64,11 @@ public record PostResponse(
      */
     public static PostResponse fromEntity(com.openforum.infra.jpa.entity.PostEntity entity, String authorName,
             Integer userVote) {
+        return fromEntity(entity, authorName, userVote, false);
+    }
+
+    public static PostResponse fromEntity(com.openforum.infra.jpa.entity.PostEntity entity, String authorName,
+            Integer userVote, boolean isBookmarked) {
         String displayContent = Boolean.TRUE.equals(entity.getDeleted())
                 ? "[This post has been deleted]"
                 : entity.getContent();
@@ -72,6 +86,8 @@ public record PostResponse(
                 entity.getPostNumber(),
                 entity.getScore(),
                 userVote,
+                entity.getBookmarkCount(),
+                isBookmarked,
                 entity.getDeletedAt(),
                 entity.getLastModifiedAt());
     }

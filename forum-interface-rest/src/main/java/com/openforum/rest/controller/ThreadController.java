@@ -78,14 +78,17 @@ public class ThreadController {
                                 .orElse(ResponseEntity.notFound().build());
         }
 
-        @Operation(summary = "List Threads", description = "Retrieves a list of threads with OP content for a tenant")
+        @Operation(summary = "List Threads", description = "Retrieves a list of threads with OP content for a tenant. Supports optional metadata filtering.")
         @GetMapping
         public ResponseEntity<List<ThreadResponse>> getThreads(
                         @TenantId String tenantId,
                         @RequestParam(defaultValue = "0") int page,
-                        @RequestParam(defaultValue = "10") int size) {
+                        @RequestParam(defaultValue = "10") int size,
+                        @RequestParam(required = false) String metadataKey,
+                        @RequestParam(required = false) String metadataValue) {
 
-                List<ThreadResponse> response = threadQueryService.getRichThreads(tenantId, page, size).stream()
+                List<ThreadResponse> response = threadQueryService.getRichThreads(
+                                tenantId, page, size, metadataKey, metadataValue).stream()
                                 .map(result -> new ThreadResponse(
                                                 result.id(),
                                                 result.title(),

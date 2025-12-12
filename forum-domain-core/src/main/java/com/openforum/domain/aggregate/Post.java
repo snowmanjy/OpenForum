@@ -23,6 +23,7 @@ public class Post {
     private Integer postNumber;
     private boolean isDeleted = false;
     private int score = 0;
+    private int bookmarkCount = 0;
 
     private final List<Double> embedding;
     private Instant deletedAt;
@@ -47,6 +48,7 @@ public class Post {
         this.postNumber = builder.postNumber;
         this.isDeleted = builder.isDeleted;
         this.score = builder.score;
+        this.bookmarkCount = builder.bookmarkCount;
         this.embedding = builder.embedding != null ? List.copyOf(builder.embedding) : null;
         this.deletedAt = builder.deletedAt;
         this.lastModifiedAt = builder.lastModifiedAt;
@@ -79,6 +81,7 @@ public class Post {
         private boolean isBot = false;
         private boolean isDeleted = false;
         private int score = 0;
+        private int bookmarkCount = 0;
         private List<Double> embedding;
         private Instant deletedAt;
         private Instant lastModifiedAt;
@@ -160,6 +163,11 @@ public class Post {
             return this;
         }
 
+        public Builder bookmarkCount(int bookmarkCount) {
+            this.bookmarkCount = bookmarkCount;
+            return this;
+        }
+
         public Builder embedding(List<Double> embedding) {
             this.embedding = embedding;
             return this;
@@ -232,6 +240,26 @@ public class Post {
 
     public int getScore() {
         return score;
+    }
+
+    public int getBookmarkCount() {
+        return bookmarkCount;
+    }
+
+    /**
+     * Increments the bookmark count when a user bookmarks this post.
+     */
+    public void incrementBookmarkCount() {
+        this.bookmarkCount++;
+    }
+
+    /**
+     * Decrements the bookmark count when a user removes their bookmark.
+     */
+    public void decrementBookmarkCount() {
+        if (this.bookmarkCount > 0) {
+            this.bookmarkCount--;
+        }
     }
 
     public List<Double> getEmbedding() {
