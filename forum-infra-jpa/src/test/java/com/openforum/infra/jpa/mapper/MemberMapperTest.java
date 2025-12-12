@@ -4,6 +4,7 @@ import com.openforum.domain.aggregate.Member;
 import com.openforum.infra.jpa.entity.MemberEntity;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,8 +17,8 @@ class MemberMapperTest {
     void toDomain_shouldMapAllFields() {
         // Given
         UUID id = UUID.randomUUID();
-        MemberEntity entity = new MemberEntity(id, "ext-123", "test@example.com", "Test User", false, "tenant-1",
-                java.time.Instant.now(), "MEMBER");
+        MemberEntity entity = new MemberEntity(
+                id, "ext-123", "test@example.com", "Test User", false, "tenant-1", Instant.now(), "MEMBER", null, 0);
 
         // When
         Member member = mapper.toDomain(entity);

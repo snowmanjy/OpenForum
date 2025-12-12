@@ -59,9 +59,11 @@ class CategoryControllerTest {
 
         @BeforeEach
         void setUp() {
-                testMember = Member.reconstitute(UUID.randomUUID(), "ext-123", "test@example.com", "Test User", false,
-                                java.time.Instant.now(), com.openforum.domain.valueobject.MemberRole.MEMBER,
-                                "default-tenant");
+                testMember = Member.reconstitute(
+                                UUID.randomUUID(), "ext-1", "a@a.com", "CategoryCreator", false,
+                                java.time.Instant.now(), java.time.Instant.now(),
+                                com.openforum.domain.valueobject.MemberRole.MODERATOR,
+                                "tenant-1", null, 0, null, null, null);
         }
 
         @AfterEach
@@ -75,7 +77,7 @@ class CategoryControllerTest {
                 // Given
                 UUID categoryId = UUID.randomUUID();
                 Category category = Category.reconstitute(categoryId, "default-tenant", "General", "general",
-                                "General discussions", false);
+                                "General discussions", false, java.time.Instant.now(), null, testMember.getId(), null);
                 when(categoryService.getCategories(anyString())).thenReturn(List.of(category));
 
                 // When & Then
@@ -94,9 +96,11 @@ class CategoryControllerTest {
                 CreateCategoryRequest request = new CreateCategoryRequest("News", "news", "News and announcements",
                                 false);
                 Category category = Category.reconstitute(categoryId, "default-tenant", "News", "news",
-                                "News and announcements", false);
+                                "News and announcements", false, java.time.Instant.now(), null, testMember.getId(),
+                                null);
 
-                when(categoryService.createCategory(anyString(), anyString(), anyString(), anyString(), anyBoolean()))
+                when(categoryService.createCategory(anyString(), anyString(), anyString(), anyString(), anyBoolean(),
+                                org.mockito.ArgumentMatchers.any(UUID.class)))
                                 .thenReturn(category);
 
                 // When & Then

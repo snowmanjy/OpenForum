@@ -79,7 +79,13 @@ public class ThreadRepositoryImpl implements ThreadRepository {
     @Transactional
     public void save(Thread thread) {
         // Step 1: Save Thread Entity (if this fails, entire transaction rolls back)
-        ThreadEntity entity = threadMapper.toEntity(thread);
+        ThreadEntity entity = threadJpaRepository.findById(thread.getId())
+                .map(existing -> {
+                    threadMapper.updateEntity(thread, existing);
+                    return existing;
+                })
+                .orElseGet(() -> threadMapper.toEntity(thread));
+
         threadJpaRepository.save(entity);
 
         // Step 2: Poll and Save Events atomically
@@ -126,8 +132,8 @@ public class ThreadRepositoryImpl implements ThreadRepository {
 
         // 1. Batch Insert Threads
         String threadSql = """
-                INSERT INTO threads (id, tenant_id, author_id, title, status, metadata, version, created_at, post_count)
-                VALUES (?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?)
+                INSERT INTO threads (id, tenant_id, author_id, title, status, metadata, version, created_at, post_count, last_activity_at, deleted)
+                VALUES (?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?)
                 """;
 
         jdbcTemplate.batchUpdate(threadSql, threads, threads.size(), (ps, thread) -> {
@@ -144,6 +150,9 @@ public class ThreadRepositoryImpl implements ThreadRepository {
             ps.setObject(7, thread.getVersion() != null ? thread.getVersion() : 0L);
             ps.setTimestamp(8, Timestamp.from(thread.getCreatedAt()));
             ps.setInt(9, thread.getPostCount());
+            ps.setTimestamp(10, Timestamp
+                    .from(thread.getLastActivityAt() != null ? thread.getLastActivityAt() : thread.getCreatedAt()));
+            ps.setBoolean(11, false);
         });
 
         // 2. Batch Insert Posts
@@ -154,7 +163,7 @@ public class ThreadRepositoryImpl implements ThreadRepository {
 
         if (!allPosts.isEmpty()) {
             String postSql = """
-                    INSERT INTO posts (id, thread_id, tenant_id, author_id, content, reply_to_post_id, metadata, version, created_at, mentioned_user_ids, post_number, score)
+                    INSERT INTO posts (id, thread_id, tenant_id, author_id, content, reply_to_post_id, metadata, version, created_at, mentioned_member_ids, post_number, score)
                     VALUES (?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?::jsonb, ?, ?)
                     """;
 
@@ -173,9 +182,9 @@ public class ThreadRepositoryImpl implements ThreadRepository {
                 ps.setObject(8, post.getVersion() != null ? post.getVersion() : 0L);
                 ps.setTimestamp(9, Timestamp.from(post.getCreatedAt()));
                 try {
-                    ps.setString(10, objectMapper.writeValueAsString(post.getMentionedUserIds()));
+                    ps.setString(10, objectMapper.writeValueAsString(post.getMentionedMemberIds()));
                 } catch (JsonProcessingException e) {
-                    throw new RuntimeException("Failed to serialize mentionedUserIds", e);
+                    throw new RuntimeException("Failed to serialize mentionedMemberIds", e);
                 }
                 ps.setObject(11, post.getPostNumber());
                 ps.setInt(12, 0); // Default score for imports
@@ -264,6 +273,16 @@ public class ThreadRepositoryImpl implements ThreadRepository {
         return threadJpaRepository.findByTenantId(tenantId, pageRequest)
                 .map(threadMapper::toDomain)
                 .getContent();
+    }
+
+    @Override
+    public int deleteBatch(java.time.Instant cutoff, int limit) {
+        return threadJpaRepository.deleteBatch(cutoff, limit);
+    }
+
+    @Override
+    public int archiveStaleThreads(java.time.Instant cutoff) {
+        return threadJpaRepository.archiveStaleThreads(cutoff);
     }
 
     private OutboxEventEntity toOutboxEntity(Object event) {

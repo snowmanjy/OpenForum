@@ -39,7 +39,9 @@ class TenantMapperTest {
     void toEntity_shouldMapAllFields() {
         // Given
         Map<String, Object> config = Map.of("language", "en", "timezone", "UTC");
-        Tenant tenant = com.openforum.domain.factory.TenantFactory.create("tenant-2", "slug-2", "Tenant 2", config);
+        Tenant tenant = com.openforum.domain.factory.TenantFactory.create("tenant-2", "slug-2", "Tenant 2", config,
+                java.time.Instant.now(), java.util.UUID.randomUUID(), java.time.Instant.now(),
+                java.util.UUID.randomUUID());
 
         // When
         TenantEntity entity = mapper.toEntity(tenant);

@@ -25,6 +25,18 @@ public class PollVoteEntity extends BaseEntity {
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
 
+    @org.springframework.data.annotation.CreatedBy
+    @Column(name = "created_by")
+    private UUID createdBy;
+
+    @org.springframework.data.annotation.LastModifiedDate
+    @Column(name = "last_modified_at")
+    private Instant lastModifiedAt;
+
+    @org.springframework.data.annotation.LastModifiedBy
+    @Column(name = "last_modified_by")
+    private UUID lastModifiedBy;
+
     public PollVoteEntity() {
     }
 
@@ -66,5 +78,29 @@ public class PollVoteEntity extends BaseEntity {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public UUID getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(UUID createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public Instant getLastModifiedAt() {
+        return lastModifiedAt;
+    }
+
+    public void setLastModifiedAt(Instant lastModifiedAt) {
+        this.lastModifiedAt = lastModifiedAt;
+    }
+
+    public UUID getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    public void setLastModifiedBy(UUID lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
     }
 }

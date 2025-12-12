@@ -38,20 +38,20 @@ class SubscriptionServiceTest {
     @Test
     void should_get_subscriptions_for_user_with_thread_titles() {
         // Given
-        UUID userId = UUID.randomUUID();
+        UUID memberId = UUID.randomUUID();
         UUID threadId = UUID.randomUUID();
         String threadTitle = "Test Thread";
-        Subscription subscription = Subscription.create("tenant-1", userId, threadId, TargetType.THREAD);
+        Subscription subscription = Subscription.create("tenant-1", memberId, threadId, TargetType.THREAD);
 
         Thread thread = org.mockito.Mockito.mock(Thread.class);
         when(thread.getTitle()).thenReturn(threadTitle);
 
-        when(subscriptionRepository.findByUserId(eq(userId), anyInt(), anyInt()))
+        when(subscriptionRepository.findByMemberId(eq(memberId), anyInt(), anyInt()))
                 .thenReturn(List.of(subscription));
         when(threadRepository.findById(threadId)).thenReturn(Optional.of(thread));
 
         // When
-        List<com.openforum.application.dto.SubscriptionDto> result = subscriptionService.getSubscriptionsForUser("tenant-1", userId, 0, 10);
+        List<com.openforum.application.dto.SubscriptionDto> result = subscriptionService.getSubscriptionsForMember("tenant-1", memberId, 0, 10);
 
         // Then
                 

@@ -21,22 +21,22 @@ public class VoteService {
      * Cast or update a vote on a post.
      * 
      * @param postId   The post to vote on
-     * @param userId   The user casting the vote
+     * @param memberId   The user casting the vote
      * @param tenantId The tenant context
      * @param value    The vote value: 1 (upvote), -1 (downvote)
      * @return The resulting score delta applied to the post
      */
     @Transactional
-    public int vote(UUID postId, UUID userId, String tenantId, int value) {
+    public int vote(UUID postId, UUID memberId, String tenantId, int value) {
         if (value != 1 && value != -1) {
             throw new IllegalArgumentException("Vote value must be 1 or -1");
         }
 
-        Optional<VoteRecord> existingVote = voteRepository.findByPostIdAndUserId(postId, userId);
+        Optional<VoteRecord> existingVote = voteRepository.findByPostIdAndMemberId(postId, memberId);
 
         if (existingVote.isEmpty()) {
             // Scenario A: New Vote
-            voteRepository.save(postId, userId, tenantId, value);
+            voteRepository.save(postId, memberId, tenantId, value);
             voteRepository.updatePostScore(postId, value);
             return value;
         }
@@ -46,13 +46,13 @@ public class VoteService {
 
         if (existingValue == value) {
             // Scenario C: Un-vote (clicking same vote removes it)
-            voteRepository.delete(postId, userId);
+            voteRepository.delete(postId, memberId);
             voteRepository.updatePostScore(postId, -existingValue);
             return -existingValue;
         } else {
             // Scenario B: Change Vote (e.g., Up to Down)
             int delta = value - existingValue; // e.g., -1 - 1 = -2 or 1 - (-1) = 2
-            voteRepository.update(postId, userId, value);
+            voteRepository.update(postId, memberId, value);
             voteRepository.updatePostScore(postId, delta);
             return delta;
         }
@@ -62,11 +62,11 @@ public class VoteService {
      * Get the current user's vote on a post.
      * 
      * @param postId The post ID
-     * @param userId The user ID
+     * @param memberId The user ID
      * @return 1, -1, or 0 (no vote)
      */
-    public int getUserVote(UUID postId, UUID userId) {
-        return voteRepository.findByPostIdAndUserId(postId, userId)
+    public int getUserVote(UUID postId, UUID memberId) {
+        return voteRepository.findByPostIdAndMemberId(postId, memberId)
                 .map(VoteRecord::value)
                 .orElse(0);
     }

@@ -36,116 +36,100 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(ThreadController.class)
 @Import({ SecurityConfig.class, HybridJwtAuthenticationConverter.class, MemberJwtAuthenticationConverter.class,
-        JwtConfig.class })
+                JwtConfig.class })
 class ThreadControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private ThreadService threadService;
+        @MockitoBean
+        private ThreadService threadService;
 
-    @MockitoBean
-    private MemberRepository memberRepository;
+        @MockitoBean
+        private MemberRepository memberRepository;
 
-    @MockitoBean
-    private com.openforum.infra.jpa.repository.ThreadJpaRepository threadJpaRepository;
+        @MockitoBean
+        private com.openforum.rest.service.ThreadQueryService threadQueryService;
 
-    @MockitoBean
-    private java.security.interfaces.RSAPublicKey publicKey; // Required by HybridJwtAuthenticationConverter
+        @MockitoBean
+        private java.security.interfaces.RSAPublicKey publicKey; // Required by HybridJwtAuthenticationConverter
 
-    private Member testMember;
+        private Member testMember;
 
-    @org.junit.jupiter.api.BeforeEach
-    void setUp() {
-        UUID userId = UUID.randomUUID();
-        testMember = Member.reconstitute(userId, "ext-123", "test@example.com", "Test User", false,
-                java.time.Instant.now(), com.openforum.domain.valueobject.MemberRole.MEMBER, "test-tenant");
-    }
+        @org.junit.jupiter.api.BeforeEach
+        void setUp() {
+                UUID memberId = UUID.randomUUID();
+                testMember = Member.reconstitute(memberId, "ext-123", "test@example.com", "Test User", false,
+                                java.time.Instant.now(), java.time.Instant.now(),
+                                com.openforum.domain.valueobject.MemberRole.MEMBER, "test-tenant",
+                                null, 0, null, null, null);
+        }
 
-    @org.junit.jupiter.api.AfterEach
-    void tearDown() {
-        com.openforum.domain.context.TenantContext.clear();
-        org.springframework.security.core.context.SecurityContextHolder.clearContext();
-    }
+        @org.junit.jupiter.api.AfterEach
+        void tearDown() {
+                com.openforum.domain.context.TenantContext.clear();
+                org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        }
 
-    @Test
-    void createThread_shouldReturnCreated_whenAuthenticated() throws Exception {
-        // Given
-        CreateThreadRequest request = new CreateThreadRequest("Test Thread", "Content");
-        Thread thread = ThreadFactory.create("default-tenant", testMember.getId(), null, "Test Thread",
-                java.util.Map.of());
+        @Test
+        void createThread_shouldReturnCreated_whenAuthenticated() throws Exception {
+                // Given
+                CreateThreadRequest request = new CreateThreadRequest("Test Thread", "Content", null);
+                Thread thread = ThreadFactory.create("default-tenant", testMember.getId(), null, "Test Thread",
+                                java.util.Map.of());
 
-        when(threadService.createThread(anyString(), any(UUID.class), anyString(), anyString())).thenReturn(thread);
+                when(threadService.createThread(anyString(), any(UUID.class), anyString(), anyString(), any()))
+                                .thenReturn(thread);
 
-        // When & Then
-        mockMvc.perform(post("/api/v1/threads")
-                .with(authWithTenant(testMember, "default-tenant"))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.title").value("Test Thread"))
-                .andExpect(jsonPath("$.status").value("OPEN"));
-    }
+                // When & Then
+                mockMvc.perform(post("/api/v1/threads")
+                                .with(authWithTenant(testMember, "default-tenant"))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(request)))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.title").value("Test Thread"))
+                                .andExpect(jsonPath("$.status").value("OPEN"));
+        }
 
-    @Test
-    void getThread_shouldReturnThread_whenExistsAndAuthenticated() throws Exception {
-        // Given
-        UUID threadId = UUID.randomUUID();
-        com.openforum.infra.jpa.projection.ThreadWithOPProjection projection = new com.openforum.infra.jpa.projection.ThreadWithOPProjection() {
-            public UUID getId() {
-                return threadId;
-            }
+        @Test
+        void getThread_shouldReturnThread_whenExistsAndAuthenticated() throws Exception {
+                // Given
+                UUID threadId = UUID.randomUUID();
+                com.openforum.rest.service.ThreadQueryService.ThreadQueryResult queryResult = new com.openforum.rest.service.ThreadQueryService.ThreadQueryResult(
+                                threadId,
+                                "Existing Thread",
+                                "OPEN",
+                                "OP Content",
+                                java.time.Instant.now(),
+                                testMember.getId(),
+                                "Test User",
+                                5);
 
-            public String getTitle() {
-                return "Existing Thread";
-            }
+                when(threadQueryService.getRichThread(any(UUID.class))).thenReturn(Optional.of(queryResult));
 
-            public String getStatus() {
-                return "OPEN";
-            }
+                // When & Then
+                mockMvc.perform(get("/api/v1/threads/" + threadId)
+                                .with(authWithTenant(testMember, "tenant-1")))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.title").value("Existing Thread"))
+                                .andExpect(jsonPath("$.content").value("OP Content"));
+        }
 
-            public String getContent() {
-                return "OP Content";
-            }
+        private RequestPostProcessor authWithTenant(Member member, String tenantId) {
+                return request -> {
+                        // First set authentication using Spring Security Test utilities
+                        Authentication auth = new UsernamePasswordAuthenticationToken(member, null,
+                                        Collections.emptyList());
+                        request = org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
+                                        .authentication(auth)
+                                        .postProcessRequest(request);
 
-            public java.time.Instant getCreatedAt() {
-                return java.time.Instant.now();
-            }
-
-            public UUID getAuthorId() {
-                return testMember.getId();
-            }
-
-            public Integer getPostCount() {
-                return 5;
-            }
-        };
-
-        when(threadJpaRepository.findRichThreadById(any(UUID.class))).thenReturn(Optional.of(projection));
-
-        // When & Then
-        mockMvc.perform(get("/api/v1/threads/" + threadId)
-                .with(authWithTenant(testMember, "tenant-1")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("Existing Thread"))
-                .andExpect(jsonPath("$.content").value("OP Content"));
-    }
-
-    private RequestPostProcessor authWithTenant(Member member, String tenantId) {
-        return request -> {
-            // First set authentication using Spring Security Test utilities
-            Authentication auth = new UsernamePasswordAuthenticationToken(member, null, Collections.emptyList());
-            request = org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors
-                    .authentication(auth)
-                    .postProcessRequest(request);
-
-            // Then set tenant context
-            com.openforum.domain.context.TenantContext.setTenantId(tenantId);
-            return request;
-        };
-    }
+                        // Then set tenant context
+                        com.openforum.domain.context.TenantContext.setTenantId(tenantId);
+                        return request;
+                };
+        }
 }

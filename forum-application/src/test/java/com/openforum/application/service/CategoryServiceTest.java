@@ -41,7 +41,8 @@ class CategoryServiceTest {
         when(categoryRepository.save(any(Category.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
-        Category category = categoryService.createCategory(tenantId, name, slug, description, isReadOnly);
+        Category category = categoryService.createCategory(tenantId, name, slug, description, isReadOnly,
+                UUID.randomUUID());
 
         // Then
         assertThat(category).isNotNull();
@@ -58,11 +59,12 @@ class CategoryServiceTest {
         String tenantId = "default-tenant";
         String slug = "general";
         Category existingCategory = Category.reconstitute(UUID.randomUUID(), tenantId, "General", slug, "Existing",
-                false);
+                false, java.time.Instant.now(), java.time.Instant.now(), UUID.randomUUID(), UUID.randomUUID());
         when(categoryRepository.findBySlug(tenantId, slug)).thenReturn(Optional.of(existingCategory));
 
         // When & Then
-        assertThatThrownBy(() -> categoryService.createCategory(tenantId, "New Cat", slug, "New", false))
+        assertThatThrownBy(() -> categoryService.createCategory(tenantId, "New Cat", slug, "New", false,
+                UUID.randomUUID()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Category with slug 'general' already exists for this tenant.");
     }
@@ -72,9 +74,9 @@ class CategoryServiceTest {
         // Given
         String tenantId = "default-tenant";
         Category cat1 = Category.reconstitute(UUID.randomUUID(), tenantId, "General", "general", "General discussions",
-                false);
+                false, java.time.Instant.now(), java.time.Instant.now(), UUID.randomUUID(), UUID.randomUUID());
         Category cat2 = Category.reconstitute(UUID.randomUUID(), tenantId, "News", "news", "News and announcements",
-                false);
+                false, java.time.Instant.now(), java.time.Instant.now(), UUID.randomUUID(), UUID.randomUUID());
         when(categoryRepository.findAll(tenantId)).thenReturn(List.of(cat1, cat2));
 
         // When

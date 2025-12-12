@@ -41,7 +41,13 @@ public class PollRepositoryImpl implements PollRepository {
     @Transactional
     public void save(Poll poll) {
         // Save Poll
-        PollEntity pollEntity = pollMapper.toEntity(poll);
+        PollEntity pollEntity = pollJpaRepository.findById(poll.getId())
+                .map(existing -> {
+                    pollMapper.updateEntity(poll, existing);
+                    return existing;
+                })
+                .orElseGet(() -> pollMapper.toEntity(poll));
+
         pollJpaRepository.save(pollEntity);
 
         // Save Votes (New ones)

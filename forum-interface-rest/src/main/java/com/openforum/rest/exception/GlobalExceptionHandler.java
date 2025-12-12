@@ -53,4 +53,29 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(com.openforum.application.service.PostService.ForbiddenException.class)
+    public ResponseEntity<Object> handleForbidden(com.openforum.application.service.PostService.ForbiddenException ex) {
+        log.warn("Forbidden action: {}", ex.getMessage());
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", Instant.now().toString());
+        body.put("message", ex.getMessage());
+        body.put("type", "ForbiddenException");
+
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(com.openforum.application.service.ThreadService.ForbiddenException.class)
+    public ResponseEntity<Object> handleThreadForbidden(
+            com.openforum.application.service.ThreadService.ForbiddenException ex) {
+        log.warn("Forbidden action: {}", ex.getMessage());
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", Instant.now().toString());
+        body.put("message", ex.getMessage());
+        body.put("type", "ForbiddenException");
+
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+    }
 }

@@ -28,7 +28,7 @@ class TenantControllerIntegrationTest {
 
         @Container
         @ServiceConnection
-        static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+        static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("pgvector/pgvector:pg16");
 
         @Autowired
         private MockMvc mockMvc;
@@ -40,6 +40,7 @@ class TenantControllerIntegrationTest {
         void shouldCreateTenant() throws Exception {
                 CreateTenantRequest request = new CreateTenantRequest("tenant-integration-test", "slug-integration",
                                 "Integration Tenant",
+                                "user_integration", "integration@example.com", "Integration User",
                                 Map.<String, Object>of("theme", "dark"));
 
                 mockMvc.perform(post("/api/v1/tenants")
@@ -55,6 +56,7 @@ class TenantControllerIntegrationTest {
         void shouldReturn400WhenIdIsMissing() throws Exception {
                 // Create request with null id
                 CreateTenantRequest request = new CreateTenantRequest(null, "slug-missing-id", "Missing ID Tenant",
+                                "user_missing", "missing@example.com", "Missing User",
                                 Map.<String, Object>of("theme", "dark"));
 
                 mockMvc.perform(post("/api/v1/tenants")
@@ -72,6 +74,7 @@ class TenantControllerIntegrationTest {
                 String tenantId = java.util.UUID.randomUUID().toString();
                 String slug = "lookup-slug";
                 CreateTenantRequest request = new CreateTenantRequest(tenantId, slug, "Lookup Tenant",
+                                "user_lookup", "lookup@example.com", "Lookup User",
                                 java.util.Map.of("primaryColor", "#000000", "logoUrl", "http://logo.com"));
 
                 mockMvc.perform(post("/api/v1/tenants")

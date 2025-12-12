@@ -1,46 +1,34 @@
 package com.openforum.rest.controller;
 
+import com.openforum.rest.service.PostQueryService;
 import com.openforum.application.service.PostService;
 import com.openforum.domain.aggregate.Member;
 import com.openforum.domain.aggregate.Post;
 import com.openforum.domain.context.TenantContext;
-import com.openforum.domain.repository.MemberRepository;
-import com.openforum.infra.jpa.entity.PostEntity;
-import com.openforum.infra.jpa.repository.PostJpaRepository;
 import com.openforum.rest.controller.dto.CreatePostRequest;
 import com.openforum.rest.controller.dto.PageResponse;
 import com.openforum.rest.controller.dto.PostResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "Posts", description = "Post management APIs")
 public class PostController {
 
-        private static final int MAX_PAGE_SIZE = 50;
-
         private final PostService postService;
-        private final PostJpaRepository postJpaRepository;
-        private final MemberRepository memberRepository;
+        private final PostQueryService postQueryService;
 
-        public PostController(PostService postService,
-                        PostJpaRepository postJpaRepository,
-                        MemberRepository memberRepository) {
+        public PostController(PostService postService, PostQueryService postQueryService) {
                 this.postService = postService;
-                this.postJpaRepository = postJpaRepository;
-                this.memberRepository = memberRepository;
+                this.postQueryService = postQueryService;
         }
 
         @Operation(summary = "Create Post", description = "Creates a new post (reply) in a thread")
@@ -51,7 +39,6 @@ public class PostController {
                         @com.openforum.shared.api.TenantId String tenantId,
                         @AuthenticationPrincipal Member member) {
 
-                // Use createReply with pessimistic locking for race condition prevention
                 Post post = postService.createReply(
                                 threadId,
                                 member.getId(),
@@ -59,9 +46,8 @@ public class PostController {
                                 request.content(),
                                 request.replyToPostId(),
                                 request.metadata(),
-                                request.mentionedUserIds());
+                                request.mentionedMemberIds());
 
-                // API Aggregation: get author name from authenticated member
                 return ResponseEntity.status(HttpStatus.CREATED)
                                 .body(PostResponse.from(post, member.getName()));
         }
@@ -74,46 +60,67 @@ public class PostController {
                         @RequestParam(defaultValue = "20") int size,
                         @RequestParam(defaultValue = "oldest") String sort) {
 
-                // Enforce maximum page size
-                int effectiveSize = Math.min(size, MAX_PAGE_SIZE);
-
-                // Get tenantId from context
                 String tenantId = TenantContext.getTenantId();
 
-                // Build PageRequest with appropriate sort
-                org.springframework.data.domain.Sort sortOrder;
-                if ("top".equalsIgnoreCase(sort)) {
-                        // Primary: High Score first, Secondary: Oldest Post first (stable tie-breaker)
-                        sortOrder = org.springframework.data.domain.Sort.by(
-                                        org.springframework.data.domain.Sort.Order.desc("score"),
-                                        org.springframework.data.domain.Sort.Order.asc("createdAt"));
-                } else {
-                        // Default: oldest first (chronological)
-                        sortOrder = org.springframework.data.domain.Sort.by(
-                                        org.springframework.data.domain.Sort.Direction.ASC, "postNumber");
-                }
+                PostQueryService.PostQueryPage queryPage = postQueryService.getPostsByThread(
+                                threadId, tenantId, page, size, sort);
 
-                // Execute tenant-aware, paginated query with dynamic sorting
-                Page<PostEntity> postPage = postJpaRepository.findByThreadIdAndTenantId(
-                                threadId, tenantId, PageRequest.of(page, effectiveSize, sortOrder));
-
-                // API Aggregation: batch fetch all author IDs to avoid N+1
-                List<UUID> authorIds = postPage.getContent().stream()
-                                .map(PostEntity::getAuthorId)
-                                .distinct()
+                List<PostResponse> content = queryPage.content().stream()
+                                .map(result -> new PostResponse(
+                                                result.id(),
+                                                result.threadId(),
+                                                result.authorId(),
+                                                result.authorName(),
+                                                result.content(),
+                                                null, // version not needed for list view
+                                                result.replyToPostId(),
+                                                null, // metadata not needed for list view
+                                                result.createdAt(),
+                                                result.postNumber(),
+                                                result.score(),
+                                                null, // userVote not available in this query
+                                                null, // deletedAt
+                                                null)) // lastModifiedAt
                                 .toList();
 
-                Map<UUID, String> authorNames = authorIds.stream()
-                                .map(id -> memberRepository.findById(id).orElse(null))
-                                .filter(m -> m != null)
-                                .collect(Collectors.toMap(Member::getId, Member::getName));
+                return ResponseEntity.ok(new PageResponse<>(
+                                content,
+                                queryPage.page(),
+                                queryPage.size(),
+                                queryPage.totalElements(),
+                                queryPage.totalPages(),
+                                queryPage.first(),
+                                queryPage.last()));
+        }
 
-                // Map entities directly to response DTOs to preserve score
-                List<PostResponse> content = postPage.getContent().stream()
-                                .map(entity -> PostResponse.fromEntity(entity, authorNames.get(entity.getAuthorId()),
-                                                null))
-                                .toList();
+        @Operation(summary = "Update Post", description = "Updates post content. Only the author can edit their own posts.")
+        @PutMapping("/posts/{postId}")
+        public ResponseEntity<PostResponse> updatePost(
+                        @PathVariable UUID postId,
+                        @RequestBody UpdatePostRequest request,
+                        @com.openforum.shared.api.TenantId String tenantId,
+                        @AuthenticationPrincipal Member member) {
 
-                return ResponseEntity.ok(PageResponse.of(postPage, content));
+                Post post = postService.updatePost(postId, tenantId, member.getId(), request.content());
+
+                return ResponseEntity.ok(PostResponse.from(post, member.getName()));
+        }
+
+        @Operation(summary = "Delete Post", description = "Soft-deletes a post. Only the author can delete their own posts.")
+        @DeleteMapping("/posts/{postId}")
+        public ResponseEntity<Void> deletePost(
+                        @PathVariable UUID postId,
+                        @com.openforum.shared.api.TenantId String tenantId,
+                        @AuthenticationPrincipal Member member) {
+
+                postService.deletePost(postId, tenantId, member.getId(), null);
+
+                return ResponseEntity.noContent().build();
+        }
+
+        /**
+         * Request DTO for updating post content.
+         */
+        public record UpdatePostRequest(String content) {
         }
 }

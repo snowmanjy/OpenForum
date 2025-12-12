@@ -18,7 +18,9 @@ public record PostResponse(
         Instant createdAt,
         Integer postNumber,
         Integer score,
-        Integer userVote) {
+        Integer userVote,
+        Instant deletedAt,
+        Instant lastModifiedAt) {
 
     public static PostResponse from(Post post) {
         return from(post, null, 0, 0);
@@ -41,27 +43,36 @@ public record PostResponse(
                 post.getCreatedAt(),
                 post.getPostNumber(),
                 score,
-                userVote);
+                userVote,
+                post.getDeletedAt(),
+                post.getLastModifiedAt());
     }
 
     /**
      * Factory method for creating PostResponse directly from PostEntity.
      * This preserves the score field which lives on the entity.
+     * If the post is deleted, content is masked.
      */
     public static PostResponse fromEntity(com.openforum.infra.jpa.entity.PostEntity entity, String authorName,
             Integer userVote) {
+        String displayContent = Boolean.TRUE.equals(entity.getDeleted())
+                ? "[This post has been deleted]"
+                : entity.getContent();
+
         return new PostResponse(
                 entity.getId(),
                 entity.getThreadId(),
                 entity.getAuthorId(),
                 authorName,
-                entity.getContent(),
+                displayContent,
                 entity.getVersion(),
                 entity.getReplyToPostId(),
                 entity.getMetadata(),
                 entity.getCreatedAt(),
                 entity.getPostNumber(),
                 entity.getScore(),
-                userVote);
+                userVote,
+                entity.getDeletedAt(),
+                entity.getLastModifiedAt());
     }
 }

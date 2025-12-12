@@ -352,6 +352,47 @@ Behavior: Persists data but suppresses ThreadCreated notification events (or mar
 - **Update Logic:** Generated Column or Trigger to update `search_vector` from `title` + `metadata`.
 - **Query:** `SELECT * FROM threads WHERE tenant_id = :tenantId AND search_vector @@ websearch_to_tsquery('english', :query)`
 
+### 4. Hybrid Search Strategy (Full-Text + Semantic)
+
+**Goal:** Combine traditional keyword search with AI-powered semantic search for superior results.
+
+**1. Keyword Search (PostgreSQL FTS)**
+
+- **Column:** `search_vector` (tsvector) on `posts` and `threads`
+- **Index:** GIN Index for fast full-text lookups
+- **Use Case:** Exact term matching, technical queries, known terminology
+
+**2. Semantic Search (pgvector)**
+
+- **Column:** `embedding` (vector(1536)) on `posts`
+- **Index:** HNSW Index with cosine similarity (`vector_cosine_ops`)
+- **Use Case:** "Related threads", conceptual queries, natural language search
+- **Dimension:** 1536 (OpenAI text-embedding-3-small) or 768 (Gemini/Vertex AI)
+
+**3. Embedding Generation (Async)**
+
+- **Service:** `EmbeddingService` (future implementation)
+- **Trigger:** Async processing when `PostCreatedEvent` is published
+- **Provider:** Configurable AI provider (OpenAI, Google Vertex AI)
+- **Null Handling:** NULL embedding indicates pending generation
+
+**4. Query Strategy:**
+
+```sql
+-- Keyword Search (exact matches)
+SELECT * FROM posts WHERE search_vector @@ websearch_to_tsquery('english', :query);
+
+-- Semantic Search (similar concepts)
+SELECT * FROM posts ORDER BY embedding <=> :query_embedding LIMIT 10;
+
+-- Hybrid: Combine scores from both for optimal results
+```
+
+**5. Infrastructure Requirements:**
+
+- **Docker Image:** `pgvector/pgvector:pg16` (includes vector extension)
+- **Extension:** `CREATE EXTENSION IF NOT EXISTS vector;`
+
 **4. Subscription Logic Update**
 
 - **DTO:** `SubscriptionDto` (Generic: `targetId`, `targetType`, `title`, `subscribedAt`).

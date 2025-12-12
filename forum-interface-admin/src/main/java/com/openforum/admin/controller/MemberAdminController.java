@@ -33,7 +33,8 @@ public class MemberAdminController {
                 request.email(),
                 request.name(),
                 request.role(),
-                request.tenantId());
+                request.tenantId(),
+                request.avatarUrl());
         return ResponseEntity.ok().build();
     }
 }

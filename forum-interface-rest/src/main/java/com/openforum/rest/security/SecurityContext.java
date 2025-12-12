@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public class SecurityContext {
 
-    public static UUID getCurrentUserId() {
+    public static UUID getCurrentMemberId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof Member) {
             return ((Member) authentication.getPrincipal()).getId();

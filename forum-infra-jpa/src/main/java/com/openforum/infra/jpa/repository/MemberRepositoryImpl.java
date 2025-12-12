@@ -25,7 +25,13 @@ public class MemberRepositoryImpl implements MemberRepository {
 
     @Override
     public Member save(Member member) {
-        MemberEntity entity = toEntity(member);
+        MemberEntity entity = memberJpaRepository.findById(member.getId())
+                .map(existing -> {
+                    memberMapper.updateEntity(member, existing);
+                    return existing;
+                })
+                .orElseGet(() -> memberMapper.toEntity(member));
+
         MemberEntity savedEntity = memberJpaRepository.save(entity);
         return memberMapper.toDomain(savedEntity);
     }
@@ -40,6 +46,17 @@ public class MemberRepositoryImpl implements MemberRepository {
     public Optional<Member> findById(UUID id) {
         return memberJpaRepository.findById(id)
                 .map(memberMapper::toDomain);
+    }
+
+    @Override
+    public List<Member> findByIds(List<UUID> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return memberJpaRepository.findAllById(ids)
+                .stream()
+                .map(memberMapper::toDomain)
+                .toList();
     }
 
     @Override
@@ -61,7 +78,7 @@ public class MemberRepositoryImpl implements MemberRepository {
     @Override
     public void saveAll(List<Member> members) {
         List<MemberEntity> entities = members.stream()
-                .map(this::toEntity)
+                .map(memberMapper::toEntity)
                 .collect(Collectors.toList());
         memberJpaRepository.saveAll(entities);
     }
@@ -72,17 +89,5 @@ public class MemberRepositoryImpl implements MemberRepository {
                 .stream()
                 .map(memberMapper::toDomain)
                 .collect(Collectors.toList());
-    }
-
-    private MemberEntity toEntity(Member domain) {
-        return new MemberEntity(
-                domain.getId(),
-                domain.getExternalId(),
-                domain.getEmail(),
-                domain.getName(),
-                domain.isBot(),
-                domain.getTenantId(),
-                domain.getJoinedAt(),
-                domain.getRole().name());
     }
 }

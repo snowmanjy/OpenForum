@@ -14,12 +14,12 @@ import java.util.UUID;
 @Repository
 public interface PostVoteJpaRepository extends JpaRepository<PostVoteEntity, UUID> {
 
-    Optional<PostVoteEntity> findByPostIdAndUserId(UUID postId, UUID userId);
+    Optional<PostVoteEntity> findByPostIdAndMemberId(UUID postId, UUID memberId);
 
     List<PostVoteEntity> findByPostIdIn(List<UUID> postIds);
 
-    @Query("SELECT pv FROM PostVoteEntity pv WHERE pv.postId IN :postIds AND pv.userId = :userId")
-    List<PostVoteEntity> findByPostIdInAndUserId(@Param("postIds") List<UUID> postIds, @Param("userId") UUID userId);
+    @Query("SELECT pv FROM PostVoteEntity pv WHERE pv.postId IN :postIds AND pv.memberId = :memberId")
+    List<PostVoteEntity> findByPostIdInAndMemberId(@Param("postIds") List<UUID> postIds, @Param("memberId") UUID memberId);
 
     @Modifying
     @Query("UPDATE PostEntity p SET p.score = p.score + :delta WHERE p.id = :postId")

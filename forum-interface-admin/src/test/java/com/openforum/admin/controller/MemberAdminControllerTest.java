@@ -42,7 +42,8 @@ class MemberAdminControllerTest {
                                 "test@example.com",
                                 "Test User",
                                 "ADMIN",
-                                "tenant-1");
+                                "tenant-1",
+                                null);
 
                 // When
                 mockMvc.perform(put("/admin/v1/members")
@@ -58,6 +59,7 @@ class MemberAdminControllerTest {
                                 "test@example.com",
                                 "Test User",
                                 "ADMIN",
-                                "tenant-1");
+                                "tenant-1",
+                                null);
         }
 }

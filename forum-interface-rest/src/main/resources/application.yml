@@ -25,6 +25,13 @@ spring:
         options:
           model: gpt-3.5-turbo
 
+app:
+  retention:
+    soft-delete-days: 30
+    archive-days: 365
+  cors:
+    allowed-origins: "*"
+
 management:
   endpoints:
     web:

@@ -48,11 +48,12 @@ class PollServiceTest {
         UUID pollId = UUID.randomUUID();
         Poll poll = mock(Poll.class);
         when(poll.getId()).thenReturn(pollId);
-        when(pollFactory.create(anyString(), any(UUID.class), anyString(), anyList(), any(), anyBoolean()))
+        when(pollFactory.create(anyString(), any(UUID.class), anyString(), anyList(), any(), anyBoolean(),
+                any(UUID.class)))
                 .thenReturn(poll);
 
         // When
-        UUID result = pollService.createPoll(tenantId, postId, request);
+        UUID result = pollService.createPoll(tenantId, postId, request, UUID.randomUUID());
 
         // Then
         assertThat(result).isEqualTo(pollId);

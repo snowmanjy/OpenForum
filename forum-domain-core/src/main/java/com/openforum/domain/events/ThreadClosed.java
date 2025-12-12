@@ -7,6 +7,6 @@ public record ThreadClosed(
         UUID threadId,
         String tenantId,
         String reason,
-        UUID byUserId,
+        UUID byMemberId,
         Instant closedAt) implements DomainEvent {
 }

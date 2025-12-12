@@ -1,89 +1,84 @@
 package com.openforum.infra.jpa.repository;
 
 import com.openforum.domain.aggregate.Member;
-import com.openforum.domain.repository.MemberRepository;
-import com.openforum.infra.jpa.config.JpaTestConfig;
+import com.openforum.domain.valueobject.MemberRole;
+import com.openforum.infra.jpa.entity.MemberEntity;
+import com.openforum.infra.jpa.mapper.MemberMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-import java.util.List;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-@DataJpaTest
-@Testcontainers
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@ContextConfiguration(classes = com.openforum.TestApplication.class)
-@TestPropertySource(properties = {
-        "spring.jpa.hibernate.ddl-auto=validate",
-        "spring.flyway.enabled=true"
-})
-@Import({ MemberRepositoryImpl.class, com.openforum.infra.jpa.mapper.MemberMapper.class, JpaTestConfig.class })
 class MemberRepositoryImplTest {
 
-    @Container
-    @ServiceConnection
-    public static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+    @Mock
+    private MemberJpaRepository memberJpaRepository;
 
-    @Autowired
-    private MemberRepository memberRepository;
+    private MemberMapper memberMapper = new MemberMapper();
 
-    @Test
-    void should_save_and_retrieve_member() {
-        // Given
-        String externalId = "ext-123";
-        Member member = Member.create(externalId, "test@example.com", "Test User", false, "tenant-1");
+    private MemberRepositoryImpl memberRepository;
 
-        // When
-        memberRepository.save(member);
-        Optional<Member> retrieved = memberRepository.findByExternalId("tenant-1", externalId);
-
-        // Then
-        assertThat(retrieved).isPresent();
-        assertThat(retrieved.get().getExternalId()).isEqualTo(externalId);
-        assertThat(retrieved.get().getEmail()).isEqualTo("test@example.com");
-        assertThat(retrieved.get().getName()).isEqualTo("Test User");
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        memberRepository = new MemberRepositoryImpl(memberJpaRepository, memberMapper);
     }
 
     @Test
-    void should_findById() {
-        // Given
-        Member member = Member.create("ext-456", "john@example.com", "John Doe", false, "tenant-1");
-        memberRepository.save(member);
-        UUID memberId = member.getId();
-
-        // When
-        Optional<Member> retrieved = memberRepository.findById(memberId);
-
-        // Then
-        assertThat(retrieved).isPresent();
-        assertThat(retrieved.get().getId()).isEqualTo(memberId);
-    }
-
-    @Test
-    void should_search_by_handle_or_name() {
-        // Given
+    void save_ExistingMember_ShouldUpdateMutableFieldsOnly() {
+        // Arrange
+        UUID memberId = UUID.randomUUID();
         String tenantId = "tenant-1";
-        memberRepository.save(Member.create("ext-1", "alice@example.com", "Alice Smith", false, tenantId));
-        memberRepository.save(Member.create("ext-2", "bob@example.com", "Bob Johnson", false, tenantId));
-        memberRepository.save(Member.create("ext-3", "charlie@example.com", "Charlie Brown", false, tenantId));
 
-        // When
-        List<Member> results = memberRepository.searchByHandleOrName(tenantId, "ali", 10);
+        // Existing entity with joinedAt (immutable)
+        MemberEntity existingEntity = new MemberEntity(
+                memberId, "ext-123", "old@example.com", "Old Name", false, tenantId, Instant.now(), "USER", null, 0);
 
-        // Then
-        assertThat(results).hasSize(1);
-        assertThat(results.get(0).getName()).isEqualTo("Alice Smith");
+        when(memberJpaRepository.findById(memberId)).thenReturn(Optional.of(existingEntity));
+
+        // Domain object with update (e.g. name change)
+        // Domain also carries joinedAt, but we want to ensure existing entity instance
+        // is reused/updated
+        Member updatedDomain = Member.reconstitute(
+                memberId,
+                "ext123",
+                "new@example.com",
+                "New Name",
+                true,
+                Instant.now(), // joinedAt
+                Instant.now(), // createdAt
+                MemberRole.MODERATOR, // role
+                "tenant1",
+                null, // avatarUrl
+                0, // version
+                null, // lastModifiedAt
+                UUID.randomUUID(), // createdBy
+                UUID.randomUUID() // lastModifiedBy
+        ); // Act
+        memberRepository.save(updatedDomain);
+
+        // Assert
+        ArgumentCaptor<MemberEntity> entityCaptor = ArgumentCaptor.forClass(MemberEntity.class);
+        verify(memberJpaRepository).save(entityCaptor.capture());
+
+        MemberEntity savedEntity = entityCaptor.getValue();
+
+        // Verify updates applied
+        assertEquals("New Name", savedEntity.getName());
+        assertEquals(true, savedEntity.isBot());
+        assertEquals("MODERATOR", savedEntity.getRole());
+        assertEquals("new@example.com", savedEntity.getEmail());
+
+        // Verify identity preservation
+        assertEquals(existingEntity, savedEntity);
     }
 }

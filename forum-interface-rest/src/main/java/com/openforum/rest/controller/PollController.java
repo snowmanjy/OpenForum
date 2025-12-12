@@ -32,7 +32,8 @@ public class PollController {
         // Assuming current user is authorized to create poll on post (e.g. author of
         // post)
         // For now, we just create it.
-        UUID pollId = pollService.createPoll(tenantId, postId, request);
+        UUID currentMemberId = SecurityContext.getCurrentMemberId();
+        UUID pollId = pollService.createPoll(tenantId, postId, request, currentMemberId);
         return ResponseEntity.created(URI.create("/api/v1/polls/" + pollId)).build();
     }
 
@@ -40,8 +41,8 @@ public class PollController {
     @PostMapping("/polls/{pollId}/votes")
     public ResponseEntity<Void> castVote(@PathVariable UUID pollId, @RequestBody VotePollRequest request) {
         String tenantId = TenantContext.getTenantId();
-        UUID currentUserId = SecurityContext.getCurrentUserId();
-        pollService.castVote(tenantId, pollId, currentUserId, request);
+        UUID currentMemberId = SecurityContext.getCurrentMemberId();
+        pollService.castVote(tenantId, pollId, currentMemberId, request);
         return ResponseEntity.ok().build();
     }
 
@@ -49,8 +50,8 @@ public class PollController {
     @GetMapping("/polls/{pollId}")
     public ResponseEntity<PollDto> getPoll(@PathVariable UUID pollId) {
         String tenantId = TenantContext.getTenantId();
-        UUID currentUserId = SecurityContext.getCurrentUserId();
-        PollDto pollDto = pollService.getPoll(tenantId, pollId, currentUserId);
+        UUID currentMemberId = SecurityContext.getCurrentMemberId();
+        PollDto pollDto = pollService.getPoll(tenantId, pollId, currentMemberId);
         return ResponseEntity.ok(pollDto);
     }
 }

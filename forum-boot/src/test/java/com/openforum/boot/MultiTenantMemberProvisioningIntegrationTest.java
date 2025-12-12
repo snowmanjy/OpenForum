@@ -46,7 +46,7 @@ class MultiTenantMemberProvisioningIntegrationTest {
 
     @Container
     @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("pgvector/pgvector:pg16");
 
     @Autowired
     private MockMvc mockMvc;
@@ -95,7 +95,8 @@ class MultiTenantMemberProvisioningIntegrationTest {
         mockMvc.perform(post("/api/v1/tenants")
                 .header("Authorization", "Bearer " + token1)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"id\": \"t1\", \"name\": \"T1\", \"slug\": \"t1\", \"config\": {}}"))
+                .content(
+                        "{\"id\": \"t1\", \"name\": \"T1\", \"slug\": \"t1\", \"externalOwnerId\": \"owner1\", \"ownerEmail\": \"owner1@test.com\", \"ownerName\": \"Owner One\", \"config\": {}}"))
                 .andExpect(status().isOk());
 
         // Verify member created in Tenant A
@@ -108,7 +109,8 @@ class MultiTenantMemberProvisioningIntegrationTest {
         mockMvc.perform(post("/api/v1/tenants")
                 .header("Authorization", "Bearer " + token2)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"id\": \"t2\", \"name\": \"T2\", \"slug\": \"t2\", \"config\": {}}"))
+                .content(
+                        "{\"id\": \"t2\", \"name\": \"T2\", \"slug\": \"t2\", \"externalOwnerId\": \"owner2\", \"ownerEmail\": \"owner2@test.com\", \"ownerName\": \"Owner Two\", \"config\": {}}"))
                 .andExpect(status().isOk());
         // If race condition/constraint failed, we might see 500 or 403
         // without member creation.
@@ -122,13 +124,13 @@ class MultiTenantMemberProvisioningIntegrationTest {
         assertThat(memberA.get().getId()).isNotEqualTo(memberB.get().getId());
     }
 
-    private String createValidToken(String tenantId, String userId) throws Exception {
+    private String createValidToken(String tenantId, String memberId) throws Exception {
         JWSSigner signer = new RSASSASigner(privateKey);
 
         JWTClaimsSet claims = new JWTClaimsSet.Builder()
-                .subject(userId)
+                .subject(memberId)
                 .claim("tenant_id", tenantId)
-                .claim("email", userId + "@test.com")
+                .claim("email", memberId + "@test.com")
                 .claim("name", "Test User")
                 .issuer("openforum-saas")
                 .expirationTime(new Date(System.currentTimeMillis() + 3600000))

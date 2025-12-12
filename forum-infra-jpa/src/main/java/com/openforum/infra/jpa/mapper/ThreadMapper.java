@@ -17,7 +17,15 @@ public class ThreadMapper {
         entity.setStatus(domain.getStatus());
         entity.setMetadata(domain.getMetadata());
         entity.setVersion(domain.getVersion());
+        entity.setCreatedAt(domain.getCreatedAt());
+        entity.setLastActivityAt(domain.getLastActivityAt());
         entity.setPostCount(domain.getPostCount());
+
+        entity.setCreatedBy(domain.getCreatedBy());
+        entity.setLastModifiedAt(domain.getLastModifiedAt());
+        entity.setLastModifiedBy(domain.getLastModifiedBy());
+        entity.setDeleted(domain.isDeleted());
+        entity.setDeletedAt(domain.getDeletedAt());
         return entity;
     }
 
@@ -35,7 +43,33 @@ public class ThreadMapper {
                 .metadata(entity.getMetadata())
                 .version(entity.getVersion())
                 .createdAt(entity.getCreatedAt())
+                .lastActivityAt(entity.getLastActivityAt())
                 .postCount(entity.getPostCount())
+
+                .createdBy(entity.getCreatedBy())
+                .lastModifiedAt(entity.getLastModifiedAt())
+                .lastModifiedBy(entity.getLastModifiedBy())
+                .deleted(entity.getDeleted() != null ? entity.getDeleted() : false)
+                .deletedAt(entity.getDeletedAt())
                 .build();
+    }
+
+    public void updateEntity(Thread domain, ThreadEntity target) {
+        // ID and TenantID and CreatedAt match
+
+        target.setAuthorId(domain.getAuthorId());
+        target.setCategoryId(domain.getCategoryId());
+        target.setTitle(domain.getTitle());
+        target.setStatus(domain.getStatus());
+        target.setMetadata(domain.getMetadata());
+        target.setVersion(domain.getVersion());
+        target.setPostCount(domain.getPostCount());
+        target.setLastActivityAt(domain.getLastActivityAt());
+
+        target.setLastModifiedAt(domain.getLastModifiedAt());
+        target.setLastModifiedBy(domain.getLastModifiedBy());
+        target.setCreatedBy(domain.getCreatedBy());
+        target.setDeleted(domain.isDeleted());
+        target.setDeletedAt(domain.getDeletedAt());
     }
 }

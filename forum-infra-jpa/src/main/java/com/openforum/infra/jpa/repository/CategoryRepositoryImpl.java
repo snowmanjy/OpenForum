@@ -51,6 +51,18 @@ public class CategoryRepositoryImpl implements CategoryRepository {
         entity.setSlug(domain.getSlug());
         entity.setDescription(domain.getDescription());
         entity.setReadOnly(domain.isReadOnly());
+        if (domain.getCreatedAt() != null) {
+            entity.setCreatedAt(domain.getCreatedAt());
+        }
+        if (domain.getCreatedBy() != null) {
+            entity.setCreatedBy(domain.getCreatedBy());
+        }
+        if (domain.getLastModifiedAt() != null) {
+            entity.setLastModifiedAt(domain.getLastModifiedAt());
+        }
+        if (domain.getLastModifiedBy() != null) {
+            entity.setLastModifiedBy(domain.getLastModifiedBy());
+        }
         return entity;
     }
 
@@ -61,6 +73,10 @@ public class CategoryRepositoryImpl implements CategoryRepository {
                 entity.getName(),
                 entity.getSlug(),
                 entity.getDescription(),
-                entity.isReadOnly());
+                entity.isReadOnly(),
+                entity.getCreatedAt(),
+                entity.getLastModifiedAt(),
+                entity.getCreatedBy(),
+                entity.getLastModifiedBy());
     }
 }

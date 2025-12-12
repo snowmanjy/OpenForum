@@ -24,4 +24,14 @@ public interface ThreadRepository {
     Optional<Thread> findByIdWithLock(UUID id, String tenantId);
 
     List<Thread> findByTenantId(String tenantId, int page, int size);
+
+    int deleteBatch(java.time.Instant cutoff, int limit);
+
+    /**
+     * Archives threads that have been inactive since the cutoff date.
+     * 
+     * @param cutoff The cutoff timestamp
+     * @return number of threads archived
+     */
+    int archiveStaleThreads(java.time.Instant cutoff);
 }

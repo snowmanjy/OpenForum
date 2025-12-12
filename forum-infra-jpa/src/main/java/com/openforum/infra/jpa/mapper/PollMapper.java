@@ -31,6 +31,15 @@ public class PollMapper {
                 domain.getOptionIndex());
     }
 
+    public void updateEntity(Poll domain, PollEntity target) {
+        target.setPostId(domain.getPostId());
+        target.setQuestion(domain.getQuestion());
+        target.setOptions(domain.getOptions());
+        target.setExpiresAt(domain.getExpiresAt());
+        target.setAllowMultipleVotes(domain.isAllowMultipleVotes());
+        // Preserved: createdAt, etc.
+    }
+
     public Poll toDomain(PollEntity entity, List<PollVoteEntity> votes) {
         if (entity == null) {
             return null;
@@ -44,6 +53,9 @@ public class PollMapper {
                 entity.getExpiresAt(),
                 entity.isAllowMultipleVotes(),
                 entity.getCreatedAt(),
+                entity.getCreatedBy(),
+                entity.getLastModifiedAt(),
+                entity.getLastModifiedBy(),
                 votes.stream().map(this::toDomain).collect(Collectors.toList()));
     }
 
@@ -53,6 +65,9 @@ public class PollMapper {
                 entity.getPollId(),
                 entity.getVoterId(),
                 entity.getOptionIndex(),
-                entity.getCreatedAt());
+                entity.getCreatedAt(),
+                entity.getCreatedBy(),
+                entity.getLastModifiedAt(),
+                entity.getLastModifiedBy());
     }
 }

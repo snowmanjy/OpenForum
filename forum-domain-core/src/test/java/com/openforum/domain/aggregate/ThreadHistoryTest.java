@@ -76,7 +76,7 @@ class ThreadHistoryTest {
         ThreadTitleChanged event = (ThreadTitleChanged) events.get(0);
         assertThat(event.oldTitle()).isEqualTo("Original Title");
         assertThat(event.newTitle()).isEqualTo(newTitle);
-        assertThat(event.byUserId()).isEqualTo(editorId);
+        assertThat(event.byMemberId()).isEqualTo(editorId);
         assertThat(event.threadId()).isEqualTo(thread.getId());
         assertThat(event.tenantId()).isEqualTo("tenant-1");
     }
@@ -174,7 +174,7 @@ class ThreadHistoryTest {
 
         ThreadClosed event = (ThreadClosed) events.get(0);
         assertThat(event.reason()).isEqualTo(reason);
-        assertThat(event.byUserId()).isEqualTo(closerId);
+        assertThat(event.byMemberId()).isEqualTo(closerId);
         assertThat(event.threadId()).isEqualTo(thread.getId());
         assertThat(event.tenantId()).isEqualTo("tenant-1");
     }

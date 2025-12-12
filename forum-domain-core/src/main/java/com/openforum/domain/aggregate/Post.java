@@ -19,9 +19,16 @@ public class Post {
     private final UUID replyToPostId;
     private final Map<String, Object> metadata;
     private final Instant createdAt;
-    private final List<UUID> mentionedUserIds;
-    private final Integer postNumber;
+    private final List<UUID> mentionedMemberIds;
+    private Integer postNumber;
     private boolean isDeleted = false;
+    private int score = 0;
+
+    private final List<Double> embedding;
+    private Instant deletedAt;
+    private final Instant lastModifiedAt;
+    private final UUID lastModifiedBy;
+    private final UUID createdBy;
 
     private final List<Object> domainEvents = new ArrayList<>();
 
@@ -35,13 +42,20 @@ public class Post {
         this.replyToPostId = builder.replyToPostId;
         this.metadata = builder.metadata != null ? Map.copyOf(builder.metadata) : Map.of();
         this.createdAt = builder.createdAt != null ? builder.createdAt : Instant.now();
-        this.mentionedUserIds = builder.mentionedUserIds != null ? List.copyOf(builder.mentionedUserIds) : List.of();
+        this.mentionedMemberIds = builder.mentionedMemberIds != null ? List.copyOf(builder.mentionedMemberIds)
+                : List.of();
         this.postNumber = builder.postNumber;
+        this.isDeleted = builder.isDeleted;
+        this.score = builder.score;
+        this.embedding = builder.embedding != null ? List.copyOf(builder.embedding) : null;
+        this.deletedAt = builder.deletedAt;
+        this.lastModifiedAt = builder.lastModifiedAt;
+        this.lastModifiedBy = builder.lastModifiedBy;
+        this.createdBy = builder.createdBy;
 
         if (builder.isNew) {
-            this.domainEvents
-                    .add(new PostCreatedEvent(id, threadId, authorId, content, createdAt, builder.isBot,
-                            mentionedUserIds));
+            this.domainEvents.add(new PostCreatedEvent(id, threadId, authorId, content, createdAt, builder.isBot,
+                    mentionedMemberIds));
         }
     }
 
@@ -59,10 +73,17 @@ public class Post {
         private UUID replyToPostId;
         private Map<String, Object> metadata;
         private Instant createdAt;
-        private List<UUID> mentionedUserIds;
+        private List<UUID> mentionedMemberIds;
         private Integer postNumber;
         private boolean isNew = false;
         private boolean isBot = false;
+        private boolean isDeleted = false;
+        private int score = 0;
+        private List<Double> embedding;
+        private Instant deletedAt;
+        private Instant lastModifiedAt;
+        private UUID lastModifiedBy;
+        private UUID createdBy;
 
         public Builder id(UUID id) {
             this.id = id;
@@ -109,8 +130,8 @@ public class Post {
             return this;
         }
 
-        public Builder mentionedUserIds(List<UUID> mentionedUserIds) {
-            this.mentionedUserIds = mentionedUserIds;
+        public Builder mentionedMemberIds(List<UUID> mentionedMemberIds) {
+            this.mentionedMemberIds = mentionedMemberIds;
             return this;
         }
 
@@ -126,6 +147,41 @@ public class Post {
 
         public Builder isBot(boolean isBot) {
             this.isBot = isBot;
+            return this;
+        }
+
+        public Builder isDeleted(boolean isDeleted) {
+            this.isDeleted = isDeleted;
+            return this;
+        }
+
+        public Builder score(int score) {
+            this.score = score;
+            return this;
+        }
+
+        public Builder embedding(List<Double> embedding) {
+            this.embedding = embedding;
+            return this;
+        }
+
+        public Builder deletedAt(Instant deletedAt) {
+            this.deletedAt = deletedAt;
+            return this;
+        }
+
+        public Builder lastModifiedAt(Instant lastModifiedAt) {
+            this.lastModifiedAt = lastModifiedAt;
+            return this;
+        }
+
+        public Builder lastModifiedBy(UUID lastModifiedBy) {
+            this.lastModifiedBy = lastModifiedBy;
+            return this;
+        }
+
+        public Builder createdBy(UUID createdBy) {
+            this.createdBy = createdBy;
             return this;
         }
 
@@ -166,12 +222,36 @@ public class Post {
         return createdAt;
     }
 
-    public List<UUID> getMentionedUserIds() {
-        return mentionedUserIds;
+    public List<UUID> getMentionedMemberIds() {
+        return mentionedMemberIds;
     }
 
     public Integer getPostNumber() {
         return postNumber;
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public List<Double> getEmbedding() {
+        return embedding;
+    }
+
+    public Instant getDeletedAt() {
+        return deletedAt;
+    }
+
+    public Instant getLastModifiedAt() {
+        return lastModifiedAt;
+    }
+
+    public UUID getLastModifiedBy() {
+        return lastModifiedBy;
+    }
+
+    public UUID getCreatedBy() {
+        return createdBy;
     }
 
     public List<Object> pollEvents() {
@@ -193,11 +273,11 @@ public class Post {
      * Emits a PostContentEdited event for history tracking.
      * 
      * @param newContent The new content for the post
-     * @param byUserId   The user making the edit
+     * @param byMemberId The user making the edit
      * @throws IllegalArgumentException if newContent is null or empty
      * @throws IllegalStateException    if post is deleted
      */
-    public void editContent(String newContent, UUID byUserId) {
+    public void editContent(String newContent, UUID byMemberId) {
         if (newContent == null || newContent.trim().isEmpty()) {
             throw new IllegalArgumentException("Post content cannot be null or empty");
         }
@@ -215,7 +295,7 @@ public class Post {
                             this.tenantId,
                             this.content,
                             newContent,
-                            byUserId,
+                            byMemberId,
                             Instant.now()));
             this.content = newContent;
         }
@@ -225,14 +305,16 @@ public class Post {
      * Marks the post as deleted.
      * Emits a PostDeleted event for history tracking.
      * 
-     * @param reason   The reason for deletion
-     * @param byUserId The user deleting the post
+     * @param reason     The reason for deletion
+     * @param byMemberId The user deleting the post
      * @throws IllegalStateException if post is already deleted
      */
-    public void delete(String reason, UUID byUserId) {
+    public void delete(String reason, UUID byMemberId) {
         if (this.isDeleted) {
             throw new IllegalStateException("Post is already deleted");
         }
+
+        Instant now = Instant.now();
 
         this.domainEvents.add(
                 new com.openforum.domain.events.PostDeleted(
@@ -240,8 +322,9 @@ public class Post {
                         this.threadId,
                         this.tenantId,
                         reason,
-                        byUserId,
-                        Instant.now()));
+                        byMemberId,
+                        now));
         this.isDeleted = true;
+        this.deletedAt = now;
     }
 }

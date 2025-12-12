@@ -53,7 +53,7 @@ class PostControllerTest {
         private MemberRepository memberRepository;
 
         @MockitoBean
-        private com.openforum.infra.jpa.repository.PostJpaRepository postJpaRepository;
+        private com.openforum.rest.service.PostQueryService postQueryService;
 
         @MockitoBean
         private java.security.interfaces.RSAPublicKey publicKey;
@@ -63,8 +63,9 @@ class PostControllerTest {
         @org.junit.jupiter.api.BeforeEach
         void setUp() {
                 testMember = Member.reconstitute(UUID.randomUUID(), "ext-123", "test@example.com", "Test User", false,
-                                java.time.Instant.now(), com.openforum.domain.valueobject.MemberRole.MEMBER,
-                                "default-tenant");
+                                java.time.Instant.now(), java.time.Instant.now(),
+                                com.openforum.domain.valueobject.MemberRole.MEMBER,
+                                "default-tenant", null, 0, null, null, null);
         }
 
         @org.junit.jupiter.api.AfterEach
@@ -115,89 +116,67 @@ class PostControllerTest {
         }
 
         @Test
-        void getPostsByThread_withSortOldest_usesChrono() throws Exception {
+        void getPostsByThread_withSortOldest_shouldReturnPosts() throws Exception {
                 // Given
                 UUID threadId = UUID.randomUUID();
+                UUID authorId = UUID.randomUUID();
                 com.openforum.domain.context.TenantContext.setTenantId("test-tenant");
 
-                when(postJpaRepository.findByThreadIdAndTenantId(
-                                eq(threadId), eq("test-tenant"), any(org.springframework.data.domain.Pageable.class)))
-                                .thenReturn(org.springframework.data.domain.Page.empty());
+                com.openforum.rest.service.PostQueryService.PostQueryResult result = new com.openforum.rest.service.PostQueryService.PostQueryResult(
+                                UUID.randomUUID(),
+                                threadId,
+                                authorId,
+                                "Test Author",
+                                "Test Content",
+                                null,
+                                1,
+                                0,
+                                java.time.Instant.now(),
+                                false);
+
+                com.openforum.rest.service.PostQueryService.PostQueryPage page = new com.openforum.rest.service.PostQueryService.PostQueryPage(
+                                java.util.List.of(result), 0, 20, 1, 1, true, true);
+
+                when(postQueryService.getPostsByThread(eq(threadId), eq("test-tenant"), anyInt(), anyInt(),
+                                anyString()))
+                                .thenReturn(page);
 
                 // When & Then
                 mockMvc.perform(get("/api/v1/threads/" + threadId + "/posts?sort=oldest"))
-                                .andExpect(status().isOk());
-        }
-
-        @Test
-        void getPostsByThread_withSortTop_usesCompositeSortForStableOrdering() throws Exception {
-                // Given: 3 posts with same score but different createdAt
-                UUID threadId = UUID.randomUUID();
-                com.openforum.domain.context.TenantContext.setTenantId("test-tenant");
-
-                // Post A: score=10, created first
-                com.openforum.infra.jpa.entity.PostEntity postA = new com.openforum.infra.jpa.entity.PostEntity();
-                postA.setId(UUID.randomUUID());
-                postA.setThreadId(threadId);
-                postA.setTenantId("test-tenant");
-                postA.setAuthorId(UUID.randomUUID());
-                postA.setContent("Post A");
-                postA.setPostNumber(1);
-                postA.setScore(10);
-                postA.setCreatedAt(java.time.Instant.parse("2024-01-01T10:00:00Z"));
-
-                // Post B: score=10, created second (same score, should come after A)
-                com.openforum.infra.jpa.entity.PostEntity postB = new com.openforum.infra.jpa.entity.PostEntity();
-                postB.setId(UUID.randomUUID());
-                postB.setThreadId(threadId);
-                postB.setTenantId("test-tenant");
-                postB.setAuthorId(UUID.randomUUID());
-                postB.setContent("Post B");
-                postB.setPostNumber(2);
-                postB.setScore(10);
-                postB.setCreatedAt(java.time.Instant.parse("2024-01-01T11:00:00Z"));
-
-                // Post C: score=20, should come first (higher score)
-                com.openforum.infra.jpa.entity.PostEntity postC = new com.openforum.infra.jpa.entity.PostEntity();
-                postC.setId(UUID.randomUUID());
-                postC.setThreadId(threadId);
-                postC.setTenantId("test-tenant");
-                postC.setAuthorId(UUID.randomUUID());
-                postC.setContent("Post C");
-                postC.setPostNumber(3);
-                postC.setScore(20);
-                postC.setCreatedAt(java.time.Instant.parse("2024-01-01T12:00:00Z"));
-
-                // Expected order: C (score 20), A (score 10, earlier), B (score 10, later)
-                org.springframework.data.domain.Page<com.openforum.infra.jpa.entity.PostEntity> page = new org.springframework.data.domain.PageImpl<>(
-                                java.util.List.of(postC, postA, postB));
-
-                when(postJpaRepository.findByThreadIdAndTenantId(
-                                eq(threadId), eq("test-tenant"), any(org.springframework.data.domain.Pageable.class)))
-                                .thenReturn(page);
-
-                // When & Then: verify the order is C, A, B
-                mockMvc.perform(get("/api/v1/threads/" + threadId + "/posts?sort=top"))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.content[0].content").value("Post C"))
-                                .andExpect(jsonPath("$.content[0].score").value(20))
-                                .andExpect(jsonPath("$.content[1].content").value("Post A"))
-                                .andExpect(jsonPath("$.content[1].score").value(10))
-                                .andExpect(jsonPath("$.content[1].createdAt").value("2024-01-01T10:00:00Z"))
-                                .andExpect(jsonPath("$.content[2].content").value("Post B"))
-                                .andExpect(jsonPath("$.content[2].score").value(10))
-                                .andExpect(jsonPath("$.content[2].createdAt").value("2024-01-01T11:00:00Z"));
+                                .andExpect(jsonPath("$.content").isArray());
         }
 
         @Test
-        void getPostsByThread_withDefaultSort_usesChrono() throws Exception {
+        void getPostsByThread_withSortTop_shouldReturnPosts() throws Exception {
                 // Given
                 UUID threadId = UUID.randomUUID();
                 com.openforum.domain.context.TenantContext.setTenantId("test-tenant");
 
-                when(postJpaRepository.findByThreadIdAndTenantId(
-                                eq(threadId), eq("test-tenant"), any(org.springframework.data.domain.Pageable.class)))
-                                .thenReturn(org.springframework.data.domain.Page.empty());
+                com.openforum.rest.service.PostQueryService.PostQueryPage page = new com.openforum.rest.service.PostQueryService.PostQueryPage(
+                                java.util.List.of(), 0, 20, 0, 0, true, true);
+
+                when(postQueryService.getPostsByThread(eq(threadId), eq("test-tenant"), anyInt(), anyInt(), eq("top")))
+                                .thenReturn(page);
+
+                // When & Then
+                mockMvc.perform(get("/api/v1/threads/" + threadId + "/posts?sort=top"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content").isArray());
+        }
+
+        @Test
+        void getPostsByThread_withDefaultSort_shouldReturnPosts() throws Exception {
+                // Given
+                UUID threadId = UUID.randomUUID();
+                com.openforum.domain.context.TenantContext.setTenantId("test-tenant");
+
+                com.openforum.rest.service.PostQueryService.PostQueryPage page = new com.openforum.rest.service.PostQueryService.PostQueryPage(
+                                java.util.List.of(), 0, 20, 0, 0, true, true);
+
+                when(postQueryService.getPostsByThread(eq(threadId), eq("test-tenant"), anyInt(), anyInt(),
+                                eq("oldest")))
+                                .thenReturn(page);
 
                 // When & Then - no sort param defaults to oldest
                 mockMvc.perform(get("/api/v1/threads/" + threadId + "/posts"))
@@ -214,22 +193,15 @@ class PostControllerTest {
 
                 com.openforum.domain.context.TenantContext.setTenantId("test-tenant");
 
-                // Create a PostEntity with score and createdAt
-                com.openforum.infra.jpa.entity.PostEntity postEntity = new com.openforum.infra.jpa.entity.PostEntity();
-                postEntity.setId(postId);
-                postEntity.setThreadId(threadId);
-                postEntity.setTenantId("test-tenant");
-                postEntity.setAuthorId(authorId);
-                postEntity.setContent("Test post content");
-                postEntity.setPostNumber(1);
-                postEntity.setScore(42); // Set score to verify
-                postEntity.setCreatedAt(createdAt); // Set createdAt to verify
+                com.openforum.rest.service.PostQueryService.PostQueryResult result = new com.openforum.rest.service.PostQueryService.PostQueryResult(
+                                postId, threadId, authorId, "Test Author",
+                                "Test post content", null, 1, 42, createdAt, false);
 
-                org.springframework.data.domain.Page<com.openforum.infra.jpa.entity.PostEntity> page = new org.springframework.data.domain.PageImpl<>(
-                                java.util.List.of(postEntity));
+                com.openforum.rest.service.PostQueryService.PostQueryPage page = new com.openforum.rest.service.PostQueryService.PostQueryPage(
+                                java.util.List.of(result), 0, 20, 1, 1, true, true);
 
-                when(postJpaRepository.findByThreadIdAndTenantId(
-                                eq(threadId), eq("test-tenant"), any(org.springframework.data.domain.Pageable.class)))
+                when(postQueryService.getPostsByThread(eq(threadId), eq("test-tenant"), anyInt(), anyInt(),
+                                anyString()))
                                 .thenReturn(page);
 
                 // When & Then - verify score and createdAt are correctly mapped

@@ -9,6 +9,6 @@ public record PostContentEdited(
         String tenantId,
         String oldContent,
         String newContent,
-        UUID byUserId,
+        UUID byMemberId,
         Instant editedAt) implements DomainEvent {
 }

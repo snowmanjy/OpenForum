@@ -19,11 +19,15 @@ public class Poll {
     private final Instant expiresAt;
     private final boolean allowMultipleVotes;
     private final Instant createdAt;
+    private final UUID createdBy;
+    private final Instant lastModifiedAt;
+    private final UUID lastModifiedBy;
     private final List<PollVote> votes;
     private final List<Object> domainEvents = new ArrayList<>();
 
     private Poll(UUID id, String tenantId, UUID postId, String question, List<String> options, Instant expiresAt,
-            boolean allowMultipleVotes, Instant createdAt, List<PollVote> votes) {
+            boolean allowMultipleVotes, Instant createdAt, UUID createdBy, Instant lastModifiedAt, UUID lastModifiedBy,
+            List<PollVote> votes) {
         this.id = id;
         this.tenantId = tenantId;
         this.postId = postId;
@@ -32,11 +36,14 @@ public class Poll {
         this.expiresAt = expiresAt;
         this.allowMultipleVotes = allowMultipleVotes;
         this.createdAt = createdAt;
+        this.createdBy = createdBy;
+        this.lastModifiedAt = lastModifiedAt;
+        this.lastModifiedBy = lastModifiedBy;
         this.votes = new ArrayList<>(votes);
     }
 
     public static Poll create(String tenantId, UUID postId, String question, List<String> options, Instant expiresAt,
-            boolean allowMultipleVotes) {
+            boolean allowMultipleVotes, UUID createdBy) {
         if (options == null || options.size() < 2) {
             throw new IllegalArgumentException("Poll must have at least 2 options");
         }
@@ -47,7 +54,8 @@ public class Poll {
         UUID id = UUID.randomUUID();
         Instant now = Instant.now();
 
-        Poll poll = new Poll(id, tenantId, postId, question, options, expiresAt, allowMultipleVotes, now,
+        Poll poll = new Poll(id, tenantId, postId, question, options, expiresAt, allowMultipleVotes, now, createdBy,
+                now, createdBy,
                 new ArrayList<>());
         poll.domainEvents
                 .add(new PollCreatedEvent(id, tenantId, postId, question, options, expiresAt, allowMultipleVotes, now));
@@ -56,8 +64,10 @@ public class Poll {
 
     public static Poll reconstitute(UUID id, String tenantId, UUID postId, String question, List<String> options,
             Instant expiresAt,
-            boolean allowMultipleVotes, Instant createdAt, List<PollVote> votes) {
-        return new Poll(id, tenantId, postId, question, options, expiresAt, allowMultipleVotes, createdAt, votes);
+            boolean allowMultipleVotes, Instant createdAt, UUID createdBy, Instant lastModifiedAt, UUID lastModifiedBy,
+            List<PollVote> votes) {
+        return new Poll(id, tenantId, postId, question, options, expiresAt, allowMultipleVotes, createdAt, createdBy,
+                lastModifiedAt, lastModifiedBy, votes);
     }
 
     public void castVote(UUID voterId, int optionIndex) {

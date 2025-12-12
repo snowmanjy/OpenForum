@@ -53,6 +53,10 @@ public class TagRepositoryImpl implements TagRepository {
         entity.setTenantId(tag.getTenantId());
         entity.setName(tag.getName());
         entity.setUsageCount(tag.getUsageCount());
+        entity.setCreatedAt(tag.getCreatedAt());
+        entity.setCreatedBy(tag.getCreatedBy());
+        entity.setLastModifiedAt(tag.getLastModifiedAt());
+        entity.setLastModifiedBy(tag.getLastModifiedBy());
         return entity;
     }
 
@@ -61,6 +65,10 @@ public class TagRepositoryImpl implements TagRepository {
                 entity.getId(),
                 entity.getTenantId(),
                 entity.getName(),
-                entity.getUsageCount());
+                entity.getUsageCount(),
+                entity.getCreatedAt(),
+                entity.getCreatedBy(),
+                entity.getLastModifiedAt(),
+                entity.getLastModifiedBy());
     }
 }

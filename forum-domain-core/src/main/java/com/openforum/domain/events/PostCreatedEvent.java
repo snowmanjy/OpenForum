@@ -11,5 +11,5 @@ public record PostCreatedEvent(
         String content,
         Instant createdAt,
         boolean isBot,
-        List<UUID> mentionedUserIds) implements DomainEvent {
+        List<UUID> mentionedMemberIds) implements DomainEvent {
 }

@@ -35,14 +35,16 @@ public class CategoryController {
 
     @Operation(summary = "Create Category", description = "Creates a new category")
     @PostMapping
-    public ResponseEntity<CategoryResponse> createCategory(@RequestBody CreateCategoryRequest request) {
+    public ResponseEntity<CategoryResponse> createCategory(@RequestBody CreateCategoryRequest request,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.openforum.domain.aggregate.Member member) {
         String tenantId = TenantContext.getTenantId();
         Category category = categoryService.createCategory(
                 tenantId,
                 request.name(),
                 request.slug(),
                 request.description(),
-                request.isReadOnly());
+                request.isReadOnly(),
+                member.getId());
         return ResponseEntity.ok(CategoryResponse.from(category));
     }
 

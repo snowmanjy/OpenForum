@@ -38,7 +38,8 @@ class TenantAiConfigServiceTest {
         config.put("ai.systemPrompt", "Be helpful");
         config.put("ai.apiKey", "key123");
 
-        Tenant tenant = TenantFactory.create("tenant123", "slug-123", "Tenant 123", config);
+        Tenant tenant = TenantFactory.create("tenant123", "slug-123", "Tenant 123", config,
+                java.time.Instant.now(), null, java.time.Instant.now(), null);
 
         when(tenantRepository.findById("tenant123")).thenReturn(Optional.of(tenant));
 

@@ -3,7 +3,8 @@ package com.openforum.domain.factory;
 import com.openforum.domain.aggregate.*;
 
 public class CategoryFactory {
-    public static Category create(String tenantId, String name, String slug, String description, boolean isReadOnly) {
+    public static Category create(String tenantId, String name, String slug, String description, boolean isReadOnly,
+            java.util.UUID createdBy) {
         if (tenantId == null || tenantId.isBlank()) {
             throw new IllegalArgumentException("TenantId cannot be empty");
         }
@@ -13,6 +14,6 @@ public class CategoryFactory {
         if (slug == null || slug.isBlank()) {
             throw new IllegalArgumentException("Slug cannot be empty");
         }
-        return Category.create(tenantId, name, slug, description, isReadOnly);
+        return Category.create(tenantId, name, slug, description, isReadOnly, createdBy);
     }
 }

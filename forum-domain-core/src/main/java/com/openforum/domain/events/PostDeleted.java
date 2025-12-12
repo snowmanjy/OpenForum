@@ -8,6 +8,6 @@ public record PostDeleted(
         UUID threadId,
         String tenantId,
         String reason,
-        UUID byUserId,
+        UUID byMemberId,
         Instant deletedAt) implements DomainEvent {
 }

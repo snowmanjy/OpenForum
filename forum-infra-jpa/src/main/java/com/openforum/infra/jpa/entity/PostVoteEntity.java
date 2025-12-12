@@ -10,8 +10,8 @@ public class PostVoteEntity extends TenantAwareEntity {
     @Column(name = "post_id", nullable = false)
     private UUID postId;
 
-    @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    @Column(name = "member_id", nullable = false)
+    private UUID memberId;
 
     @Column(nullable = false)
     private short value;
@@ -19,10 +19,10 @@ public class PostVoteEntity extends TenantAwareEntity {
     public PostVoteEntity() {
     }
 
-    public PostVoteEntity(UUID postId, UUID userId, String tenantId, short value) {
+    public PostVoteEntity(UUID postId, UUID memberId, String tenantId, short value) {
         this.id = UUID.randomUUID();
         this.postId = postId;
-        this.userId = userId;
+        this.memberId = memberId;
         this.tenantId = tenantId;
         this.value = value;
     }
@@ -35,12 +35,12 @@ public class PostVoteEntity extends TenantAwareEntity {
         this.postId = postId;
     }
 
-    public UUID getUserId() {
-        return userId;
+    public UUID getMemberId() {
+        return memberId;
     }
 
-    public void setUserId(UUID userId) {
-        this.userId = userId;
+    public void setMemberId(UUID memberId) {
+        this.memberId = memberId;
     }
 
     public short getValue() {

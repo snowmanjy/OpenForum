@@ -34,7 +34,7 @@ class CategoryRepositoryImplTest {
 
     @Container
     @ServiceConnection
-    public static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+    public static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("pgvector/pgvector:pg16");
 
     @Autowired
     private CategoryRepository categoryRepository;
@@ -43,7 +43,8 @@ class CategoryRepositoryImplTest {
     void should_save_and_retrieve_category() {
         // Given
         String tenantId = "tenant-1";
-        Category category = CategoryFactory.create(tenantId, "General", "general", "General discussions", false);
+        Category category = CategoryFactory.create(tenantId, "General", "general", "General discussions", false,
+                java.util.UUID.randomUUID());
 
         // When
         categoryRepository.save(category);
@@ -60,9 +61,12 @@ class CategoryRepositoryImplTest {
     void should_findAll_by_tenant() {
         // Given
         String tenantId = "tenant-1";
-        categoryRepository.save(CategoryFactory.create(tenantId, "General", "general", "General", false));
-        categoryRepository.save(CategoryFactory.create(tenantId, "News", "news", "News", false));
-        categoryRepository.save(CategoryFactory.create("tenant-2", "Other", "other", "Other", false));
+        categoryRepository.save(CategoryFactory.create(tenantId, "General", "general", "General", false,
+                java.util.UUID.randomUUID()));
+        categoryRepository.save(CategoryFactory.create(tenantId, "News", "news", "News", false,
+                java.util.UUID.randomUUID()));
+        categoryRepository.save(CategoryFactory.create("tenant-2", "Other", "other", "Other", false,
+                java.util.UUID.randomUUID()));
 
         // When
         List<Category> categories = categoryRepository.findAll(tenantId);

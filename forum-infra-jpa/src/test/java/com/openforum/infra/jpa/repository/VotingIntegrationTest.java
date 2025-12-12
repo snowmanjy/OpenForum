@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class VotingIntegrationTest {
 
     @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("pgvector/pgvector:pg16")
             .withDatabaseName("testdb")
             .withUsername("test")
             .withPassword("test");
@@ -58,7 +58,7 @@ class VotingIntegrationTest {
     private MemberJpaRepository memberJpaRepository;
 
     private UUID postId;
-    private UUID userId;
+    private UUID memberId;
     private UUID threadId;
     private final String tenantId = "test-tenant";
 
@@ -74,16 +74,17 @@ class VotingIntegrationTest {
         member.setJoinedAt(java.time.Instant.now());
         member.setRole("USER");
         member = memberJpaRepository.save(member);
-        userId = member.getId();
+        memberId = member.getId();
 
         // Create a thread
         ThreadEntity thread = new ThreadEntity();
         thread.setId(UUID.randomUUID());
         thread.setTitle("Test Thread");
         thread.setTenantId(tenantId);
-        thread.setAuthorId(userId);
+        thread.setAuthorId(memberId);
         thread.setStatus(com.openforum.domain.aggregate.ThreadStatus.OPEN);
         thread.setPostCount(1);
+        thread.setLastActivityAt(java.time.Instant.now());
         thread = threadJpaRepository.save(thread);
         threadId = thread.getId();
 
@@ -91,7 +92,7 @@ class VotingIntegrationTest {
         PostEntity post = new PostEntity();
         post.setId(UUID.randomUUID());
         post.setThreadId(threadId);
-        post.setAuthorId(userId);
+        post.setAuthorId(memberId);
         post.setTenantId(tenantId);
         post.setContent("Test post content");
         post.setScore(0);
@@ -103,14 +104,14 @@ class VotingIntegrationTest {
     @DisplayName("New upvote increases post score by 1")
     void newUpvote_increasesScoreByOne() {
         // When
-        voteRepository.save(postId, userId, tenantId, 1);
+        voteRepository.save(postId, memberId, tenantId, 1);
         voteRepository.updatePostScore(postId, 1);
 
         // Then
         PostEntity post = postJpaRepository.findById(postId).orElseThrow();
         assertThat(post.getScore()).isEqualTo(1);
 
-        var vote = postVoteJpaRepository.findByPostIdAndUserId(postId, userId);
+        var vote = postVoteJpaRepository.findByPostIdAndMemberId(postId, memberId);
         assertThat(vote).isPresent();
         assertThat(vote.get().getValue()).isEqualTo((short) 1);
     }
@@ -119,14 +120,14 @@ class VotingIntegrationTest {
     @DisplayName("New downvote decreases post score by 1")
     void newDownvote_decreasesScoreByOne() {
         // When
-        voteRepository.save(postId, userId, tenantId, -1);
+        voteRepository.save(postId, memberId, tenantId, -1);
         voteRepository.updatePostScore(postId, -1);
 
         // Then
         PostEntity post = postJpaRepository.findById(postId).orElseThrow();
         assertThat(post.getScore()).isEqualTo(-1);
 
-        var vote = postVoteJpaRepository.findByPostIdAndUserId(postId, userId);
+        var vote = postVoteJpaRepository.findByPostIdAndMemberId(postId, memberId);
         assertThat(vote).isPresent();
         assertThat(vote.get().getValue()).isEqualTo((short) -1);
     }
@@ -135,18 +136,18 @@ class VotingIntegrationTest {
     @DisplayName("Changing upvote to downvote changes score by -2")
     void changeUpvoteToDownvote_changesScoreByMinusTwo() {
         // Given: existing upvote
-        voteRepository.save(postId, userId, tenantId, 1);
+        voteRepository.save(postId, memberId, tenantId, 1);
         voteRepository.updatePostScore(postId, 1);
 
         // When: change to downvote
-        voteRepository.update(postId, userId, -1);
+        voteRepository.update(postId, memberId, -1);
         voteRepository.updatePostScore(postId, -2);
 
         // Then
         PostEntity post = postJpaRepository.findById(postId).orElseThrow();
         assertThat(post.getScore()).isEqualTo(-1);
 
-        var vote = postVoteJpaRepository.findByPostIdAndUserId(postId, userId);
+        var vote = postVoteJpaRepository.findByPostIdAndMemberId(postId, memberId);
         assertThat(vote).isPresent();
         assertThat(vote.get().getValue()).isEqualTo((short) -1);
     }
@@ -155,18 +156,18 @@ class VotingIntegrationTest {
     @DisplayName("Removing upvote decreases score by 1")
     void removeUpvote_decreasesScoreByOne() {
         // Given: existing upvote
-        voteRepository.save(postId, userId, tenantId, 1);
+        voteRepository.save(postId, memberId, tenantId, 1);
         voteRepository.updatePostScore(postId, 1);
 
         // When: remove vote
-        voteRepository.delete(postId, userId);
+        voteRepository.delete(postId, memberId);
         voteRepository.updatePostScore(postId, -1);
 
         // Then
         PostEntity post = postJpaRepository.findById(postId).orElseThrow();
         assertThat(post.getScore()).isEqualTo(0);
 
-        var vote = postVoteJpaRepository.findByPostIdAndUserId(postId, userId);
+        var vote = postVoteJpaRepository.findByPostIdAndMemberId(postId, memberId);
         assertThat(vote).isEmpty();
     }
 
@@ -177,18 +178,18 @@ class VotingIntegrationTest {
         PostEntity post2 = new PostEntity();
         post2.setId(UUID.randomUUID());
         post2.setThreadId(threadId);
-        post2.setAuthorId(userId);
+        post2.setAuthorId(memberId);
         post2.setTenantId(tenantId);
         post2.setContent("Second post");
         post2.setScore(0);
         post2 = postJpaRepository.save(post2);
 
-        voteRepository.save(postId, userId, tenantId, 1);
-        voteRepository.save(post2.getId(), userId, tenantId, -1);
+        voteRepository.save(postId, memberId, tenantId, 1);
+        voteRepository.save(post2.getId(), memberId, tenantId, -1);
 
         // When
-        var votes = voteRepository.findByPostIdsAndUserId(
-                java.util.List.of(postId, post2.getId()), userId);
+        var votes = voteRepository.findByPostIdsAndMemberId(
+                java.util.List.of(postId, post2.getId()), memberId);
 
         // Then
         assertThat(votes).hasSize(2);

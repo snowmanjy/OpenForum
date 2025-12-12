@@ -36,7 +36,7 @@ class SubscriptionRepositoryImplTest {
 
     @Container
     @ServiceConnection
-    public static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+    public static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("pgvector/pgvector:pg16");
 
     @Autowired
     private SubscriptionRepository subscriptionRepository;
@@ -47,29 +47,29 @@ class SubscriptionRepositoryImplTest {
     @Test
     void should_save_and_retrieve_subscription() {
         // Given
-        UUID userId = UUID.randomUUID();
+        UUID memberId = UUID.randomUUID();
         UUID targetId = UUID.randomUUID();
-        Subscription subscription = Subscription.create("tenant-1", userId, targetId, TargetType.THREAD);
+        Subscription subscription = Subscription.create("tenant-1", memberId, targetId, TargetType.THREAD);
 
         // When
         subscriptionRepository.save(subscription);
 
         // Then
-        boolean exists = subscriptionRepository.exists(userId, targetId);
+        boolean exists = subscriptionRepository.exists(memberId, targetId);
         assertThat(exists).isTrue();
 
         List<Subscription> subscriptions = subscriptionRepository.findByTarget(targetId);
         assertThat(subscriptions).hasSize(1);
-        assertThat(subscriptions.get(0).getUserId()).isEqualTo(userId);
+        assertThat(subscriptions.get(0).getMemberId()).isEqualTo(memberId);
     }
 
     @Test
     void should_prevent_duplicate_subscriptions() {
         // Given
-        UUID userId = UUID.randomUUID();
+        UUID memberId = UUID.randomUUID();
         UUID targetId = UUID.randomUUID();
-        Subscription sub1 = Subscription.create("tenant-1", userId, targetId, TargetType.THREAD);
-        Subscription sub2 = Subscription.create("tenant-1", userId, targetId, TargetType.THREAD);
+        Subscription sub1 = Subscription.create("tenant-1", memberId, targetId, TargetType.THREAD);
+        Subscription sub2 = Subscription.create("tenant-1", memberId, targetId, TargetType.THREAD);
 
         // When
         subscriptionRepository.save(sub1);
@@ -84,32 +84,32 @@ class SubscriptionRepositoryImplTest {
     @Test
     void should_delete_subscription() {
         // Given
-        UUID userId = UUID.randomUUID();
+        UUID memberId = UUID.randomUUID();
         UUID targetId = UUID.randomUUID();
         String tenantId = "tenant-1";
-        Subscription subscription = Subscription.create(tenantId, userId, targetId, TargetType.THREAD);
+        Subscription subscription = Subscription.create(tenantId, memberId, targetId, TargetType.THREAD);
         subscriptionRepository.save(subscription);
 
         // When
-        subscriptionRepository.delete(tenantId, userId, targetId);
+        subscriptionRepository.delete(tenantId, memberId, targetId);
 
         // Then
-        boolean exists = subscriptionRepository.exists(userId, targetId);
+        boolean exists = subscriptionRepository.exists(memberId, targetId);
         assertThat(exists).isFalse();
     }
 
     @Test
     void should_find_subscriptions_by_user_id_paginated() {
         // Given
-        UUID userId = UUID.randomUUID();
+        UUID memberId = UUID.randomUUID();
         for (int i = 0; i < 5; i++) {
-            Subscription sub = Subscription.create("tenant-1", userId, UUID.randomUUID(), TargetType.THREAD);
+            Subscription sub = Subscription.create("tenant-1", memberId, UUID.randomUUID(), TargetType.THREAD);
             subscriptionRepository.save(sub);
         }
 
         // When
-        List<Subscription> page1 = subscriptionRepository.findByUserId(userId, 0, 3);
-        List<Subscription> page2 = subscriptionRepository.findByUserId(userId, 1, 3);
+        List<Subscription> page1 = subscriptionRepository.findByMemberId(memberId, 0, 3);
+        List<Subscription> page2 = subscriptionRepository.findByMemberId(memberId, 1, 3);
 
         // Then
         assertThat(page1).hasSize(3);
@@ -119,12 +119,12 @@ class SubscriptionRepositoryImplTest {
     @Test
     void should_count_subscriptions_by_user_id() {
         // Given
-        UUID userId = UUID.randomUUID();
-        subscriptionRepository.save(Subscription.create("tenant-1", userId, UUID.randomUUID(), TargetType.THREAD));
-        subscriptionRepository.save(Subscription.create("tenant-1", userId, UUID.randomUUID(), TargetType.THREAD));
+        UUID memberId = UUID.randomUUID();
+        subscriptionRepository.save(Subscription.create("tenant-1", memberId, UUID.randomUUID(), TargetType.THREAD));
+        subscriptionRepository.save(Subscription.create("tenant-1", memberId, UUID.randomUUID(), TargetType.THREAD));
 
         // When
-        long count = subscriptionRepository.countByUserId(userId);
+        long count = subscriptionRepository.countByMemberId(memberId);
 
         // Then
         assertThat(count).isEqualTo(2);
